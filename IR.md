@@ -1,3 +1,102 @@
+# Initial notes, scope
+
+The IR described here is intended to be used for most of the flow, from right after elaboration to right before bitstream generation.
+
+It is expected that the IR will be produced in one of the following ways:
+
+- a standalone language frontend emitting the IR directly (eg. the amaranth backend)
+- a converter from another IR in common use (eg. FIRRTL, RTLIL) for compatibility with external language front-ends
+- the prjunnamed cross-language elaboration driver
+  - a piece of software which starts from a top module in arbitrary supported language and, whenever an external module instantiation is encountered, relays the request to another language frontend in turn
+  - the language frontends may be built in, or connected via a RPC protocol
+  - as a special case, one supported input language is simply "pre-elaborated piece of IR"
+
+The language frontends will presumably wish to use their own internal IRs.   The details of the such IRs, the elaboration process, the cross-language elaboration driver, and the RPC protocol are out of scope of this document.
+
+Once the initial IR is produced by any of the above means and the synthesis flow starts, no further elaboration will be done (unless the user manually re-feeds synthesis output IR as an input to a future elaboration run).  One possible exception to this may be the elaboration of blackbox/whitebox cell modules, to be done in a target-specific way (which will probably not involve a "normal" HDL as an input anyway).
+
+The allowed subset of this IR will change depending on the current flow stage, roughly:
+
+- at the beginning, the netlist contains mostly target-independent coarse cells without any restrictions
+- moving through the coarse stages, some vendor-specific cells (DSPs, BRAMs) will be mapped; target-independent memories will be forbidden at a certain point
+- after bitblasting, only target-dependent cells and fine target-independent cells are allowed
+- after fine techmapping, only target-dependent cells are allowed
+- after P&R, only target-dependent cells with P&R annotations are allowed
+
+The details of this will be described later.
+
+Depending on flow mode, the above list of flow stages will be stopped at one of a set of predefined points, and output emitted:
+
+- in the degenerate case, one may stop the flow right at the beginning (or after only a bunch of simple optimizations have run) — this is used for the case of simply converting the design to Verilog for an external toolchain, or for CXXRTL
+- stop after bitblasting, to feed the design to an external logic optimizer (eg. abc for benchmarking purposes)
+- stop after fine techmapping, to use unnamed synthesis with external P&R, or to perform OOC synthesis for further linking
+- stop after P&R, to use the full integrated flow
+
+We may also want an option to *start* the flow somewhere else than the beginning (with appropriate validation), but that may be considered a debug-only option.  Synthesis passes should be designed to be able to harmlessly pass through a later-stage netlist, so that pre-synthesized (and maybe even pre-P&R-ed) hierarchy chunks can be linked into freshly elaborated code.
+
+TODO: list a bunch of example flow use cases here and how we would handle these; particularly interesting ones are:
+
+- anything involving OOC synthesis
+- integration with external tools (other than straightforward cases of "emit IR from frontend" and "feed Verilog into external synthesis/P&R")
+- partial reconfiguration (for this, we'll need to invent some representation of "this PR slot covers this area on the FPGA and has the following input/outputs which are mapped to the following routing points")
+- ECO-like uses
+- scripting cases where the user wants to modify the netlist in a custom (but automated) way between some synthesis steps
+
+## IR formats and versions
+
+This IR actually manifests as several closely related but ultimately distinct constructs:
+
+- the abstract model of the IR
+- the in-memory data structures that Rust code operates on
+- the scripting interface to manipulate those, as exposed to eg. Python or TCL
+- the at-rest binary storage format
+- the interchange text format
+
+The text format will need compatibility guarantees, as it will be used for interchange purposes (in particular, it will be emitted by external frontends).  The IR versions will thus be assigned semver-compliant version numbers, which will be contained in the text and binary formats.  Starting with the first stable release, we will provide the following guarantees:
+
+- a new minor version will only add new functionality (cell types, annotations, etc.)
+- for the text format, a design can be trivially upgraded to a new minor version by simply bumping the number in the header
+- the text format reader will transparently accept any earlier version within the current major
+- a new major version can change the IR in an arbitrary backwards-incompatible way (except retaining just enough of the header format that the version itself can be unambiguously parsed)
+- the text format reader may accept earlier major versions on a best-effort basis (it may reject older versions entirely, or reject just some specific constructs of the older version); this needs to be documented and commited to in the usual semver way
+- bumping the text format major version requires bumping the major version of prjunnamed itself; likewise for the minor version
+  - though we may also want to bump the prjunnamed version for other reasons, so they'll not be necessarily in sync
+
+Note: this gives us the power to break backwards IR compatibility when it's really needed, though that should be used sparingly.
+
+At this point, the binary storage format is not considered to be an interchange format, nor does it come with compatibility guarantees (in fact, it'll probably be just a serde dump of internaal structures).  This may change in the future.
+
+No provision is currently made for version downgrading, or emitting an IR version other than current from prjunnamed.
+
+The text format in particular should be designed for readability and manual edittability, as it will be used for prjunnamed testsuite and problem diagnosis.
+
+## On fields, annotations, and attributes
+
+IR entities have three kinds of data associated with them:
+
+1. Fields
+   - data that is stored for every instance of a given entity type
+   - may be required or optional
+   - used for data expected to be used on all or most instances, or for very-often-accesed data
+   - corresponds directly to a struct field at the Rust level
+   - corresponds to dedicated syntax in the containing entity in the text format
+2. Annotations
+   - optional data, but still represented by a first-class IR structure
+   - in general, does not take memory if not present
+   - in Rust, all annotations on a given entity are stored in one set field, containing a bunch of `enum Annotation` objects, which is an enum containing every possible annotation type
+   - in text format, annotations are listed after an entity, are introduced by the `!` sigil, and have annotation-specific syntax
+3. Attributes
+   - optional data that is not natively understood by prjunnamed
+   - is a key-value pair, where the key is a string and the value can be of one of several supported types (same variant type as parameters)
+   - corresponds directly to Verilog and VHDL attributes that are not otherwise recognized
+   - actually stored as an annotation subtype
+   - is the key (and value) case-sensitive? do keys have to be unique? we do not know or care
+   - emitted by frontend for unrecognized source attributes
+   - when emitting Verilog (or similar format) at the output, serialized back to attributes
+   - ... but we may have an early pass that converts common attributes to native annotations, so that the logic doesn't have to exist in every frontend
+
+TODO: do we have target-specific annotations?  How aggressively do we want to deduplicate similar annotation types between targets (ie. is it `xilinx_iob_drive_strength` or general `iob_drive_strength`)?  This may cause an unwanted proliferation of first-class entities in the IR that eg. all text format parsers would need to understand, and it would also require us to bump the minor IR version way more often that would be otherwise necessary.
+
 # Design
 
 The design is:
@@ -10,6 +109,8 @@ Design annotations:
 
 - target selection
 - assorted target-specific global attributes (eg. Spartan 6 VCCAUX setting)
+
+The design, as the top-level IR entity, also contains the interning pools for strings and possibly other values used throughout the structure.  This is considered an implementation detail and is not reflected in eg. the text format.
 
 
 ## Target selection
@@ -41,6 +142,8 @@ The question of data types allowed for parameters and attributes is much more co
 - integer
 - string
 - float
+- language-specific data: a pair of (language id, serialized bytes)
+  - opaque to prjunnamed proper, can only be interpretted by an actor with knowledge of the given language
 
 As far as I know, this should be enough for vendor cell libraries, which is the main concern.  However, if we wanted to faithfully preserve elaboration-time values of parameters, we'd theoretically need to replicate the entire SystemVerilog and VHDL type systems, which is insane.  We may want to just serialize those into a string when they're of a "weird" type.
 
@@ -51,12 +154,12 @@ While synthesis doesn't care about bitvec value interpretation, we still want to
 - (no type information)
 - signed or unsigned integer
 - enum, list of (value, name) pairs
-- record, list of (start bit, len, field type) tuples
+- record, list of (start bit, len, field name, field type) tuples
 - custom type (identified by user-defined name)
 
 Such data should probably be stored deduplicated at top design level, and just referenced at the point of use.
 
-TODO: tagged union or something?
+TODO: this is a very rough and incomplete sketch of the interpretation type system (for one, needs tagged union support); a proper type system here is still TBD
 
 # Modules
 
@@ -856,6 +959,39 @@ TODO: Verilog specify also has a per-bit version here, how useful is it in pract
 
 Marks a port as an async reset associated with a clock.  Essentially can be used to mark the port as needing a reset synchronizer.
 
+## On vendor-specific cells and mapped cells
+
+I propose minimizing the number of vendor-speficic cells used for fine techmapping.  Whenever possible, instead of introducing a target-specific cell, a target-independent cell type will be used, with a "mapped primitive type" annotation type designating the actual hardware implementation.  The set of values used in this annotation will be target-specific, and having such an annotation will impose target-specific validity rules on the cell.  A pass may only operate on a mapped cell if it understands these rules.
+
+Specifically:
+
+- LUTs should be represented as the target-independent fine cell throughout the flow
+- FFs and latches should be represented as the target-independent register cell (unless the vendor register truly is too fancy to be contained by this cursed cell type)
+- hard muxes (like `MUXF7`, `MUXCY`) should be represented as the target-independent mux cell
+- simple hard gates (`XORCY`, `MULT_AND`, `ORCY`) should be represented as the corresponding bitop cell
+- CPLD product terms should be represented as the fine `eq` cell
+- more complex ASIC-like gates (AND-OR-NOT etc.) and combinatorial FPGA hard cells (like carry chains) should be represented as a fine LUT cell with a fixed LUT value
+
+For vendor primitives that are impossible or impractical to represent as above, one of two options will be used:
+
+1. The primitive will be represented as an instantiation of a blackbox or whitebox module
+
+   - the module will be marked by a special annotation type as corresponding to a vendor cell
+   - the target-specific code may rely on exact parameter and port ordering (ie. port indices may be hardcoded as Rust-level consts)
+   - the module should only be created by target-specific code, to ensure the above requirements are met
+   - the module can be created in an early "linking" pass, where existing unresolved instances are resolved to use it, and existing frontend-provided blackbox modules (if any) are replaced with the tightly-defined target cell
+   - the module can also be created on-demand whenever a target-specific pass needs to emit a cell (eg. DSP inference)
+
+2. The primitive will be represented as a first-class target-specific cell type
+
+   - the cell will have to be supported *everywhere* (including every text format parser) and require an IR version bump, so this option should be reserved for very well-justified circumstances
+     - cell needs to be common and actively manipulated (eg. used in fine techmapping)
+     - not easily representable as a mapped cell
+     - not easily representable as a blackbox/whitebox cell (presumably because of having variable port widths)
+   - it is not currently clear that such cells should even exist
+
+All targets should provide a way to convert all mapped (and first-class target-specific, if any) cells to (possibly unresolved) instances, for use with Verilog emitters and similar backends.
+
 # Various notes, validity checks, etc.
 
 ## The planes of existence
@@ -948,4 +1084,4 @@ However, note that we cannot rely on it when any unresolved instances are presen
 - list validity checks we want to have, both general and context-dependent ones (eg. what is a fine netlist)
 - describe what the netlist looks like post-P&R
 - source location annotations
-- 
+- in general, list the annotation types we want to have; make it clear what is an annotation and what is a field
