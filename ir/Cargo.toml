@@ -1,0 +1,15 @@
+[package]
+name = "prjunnamed_ir"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+prjunnamed_entity.workspace = true
+serde.workspace = true
+pest.workspace = true
+pest_derive.workspace = true
+smallvec.workspace = true
+enumflags2.workspace = true
+thin-vec.workspace = true
+lexical.workspace = true
+delegate.workspace = true

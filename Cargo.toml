@@ -1,0 +1,21 @@
+[workspace]
+members = ["cli", "ir", "helpers/entity"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+prjunnamed_ir = { path = "ir" }
+serde = { version = "1", features = ["derive"] }
+smallvec = { version = "1.10", features = ["union", "serde"] }
+bitvec = "1"
+indexmap = "1.9"
+prjunnamed_entity.path = "helpers/entity"
+pest = "2.5"
+pest_derive = "2.5"
+clap = { version = "4", features = ["derive"] }
+enumflags2 = { version = "0.7.5", features = ["serde"] }
+thin-vec = { version = "0.2", features = ["serde"] }
+lexical = "6.1"
+delegate = "0.9"

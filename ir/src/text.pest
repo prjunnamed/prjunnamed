@@ -1,0 +1,187 @@
+design = _{ SOI ~ version ~ design_annotation* ~ (kw_void ~ ";" | module)* ~ EOI }
+version = { "version" ~ string ~ ";" }
+module = { "module" ~ global_id ~ module_annotation* ~ "{" ~ cell* ~ "}" }
+
+cell = {
+    (local_id ~ "=")? ~ (
+        kw_void ~ cell_annotation* ~ ";"
+        | kw_param ~ uint ~ (width | kw_bitvec | kw_int | kw_float | kw_string) ~ cell_annotation* ~ ";"
+        | kw_input ~ uint ~ width? ~ cell_annotation* ~ ";"
+        | kw_output ~ uint ~ (width ~ val?)? ~ cell_annotation* ~ ";"
+        | kw_busport ~ uint ~ width? ~ kw_bus_kind? ~ cell_annotation* ~ ";"
+        | kw_const ~ (bits | string | int | float) ~ cell_annotation* ~ ";"
+        | kw_swizzle ~ width ~ (swizzle_chunk ~ ",")* ~ swizzle_chunk? ~ cell_annotation* ~ ";"
+        | kw_busswizzle ~ width ~ (busswizzle_chunk ~ ",")* ~ busswizzle_chunk? ~ cell_annotation* ~ ";"
+        | kw_slice ~ width ~ val ~ "," ~ uint ~ cell_annotation* ~ ";"
+        | kw_extop ~ width ~ val ~ cell_annotation* ~ ";"
+        | kw_bufop ~ width ~ val ~ cell_annotation* ~ ";"
+        | kw_bitop ~ width ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_uxorop ~ val ~ cell_annotation* ~ ";"
+        | kw_muxop ~ width ~ val ~ "," ~ "(" ~ (val ~ ",")* ~ val? ~ ")" ~ cell_annotation* ~ ";"
+        | kw_switchop ~ width ~ val ~ "," ~ (switch_case ~ ",")* ~ val ~ cell_annotation* ~ ";"
+        | kw_cmpop ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_addsub ~ width ~ val ~ "," ~ val ~ "," ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_addop ~ width ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_mul ~ width ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_shiftop ~ (kw_unsigned | kw_signed | kw_fill_x)? ~ width ~ val ~ "," ~ (kw_unsigned | kw_signed)? ~ val ~ (kw_scale ~ int)? ~ (kw_bias ~ int)? ~ cell_annotation* ~ ";"
+        | kw_register ~ width ~ cell_annotation* ~ "{" ~ reg_item* ~ "}"
+        | kw_instance ~ global_id ~ params ~ (val ~ ",")* ~ val? ~ (kw_output ~ (val ~ ",")* ~ val?)? ~ (kw_bus ~ (val ~ ",")* ~ val?)? ~ cell_annotation* ~ ";"
+        | kw_uinstance ~ hier_name ~ cell_annotation* ~ "{" ~ ui_item* ~ "}"
+        | kw_instout ~ width ~ val ~ "," ~ uint ~ cell_annotation* ~ ";"
+        | kw_bus ~ width ~ kw_bus_kind? ~ cell_annotation* ~ ";"
+        | kw_busjoiner ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_busdriver ~ val ~ "," ~ kw_inv? ~ val ~ "," ~ val ~ cell_annotation* ~ ";"
+        | kw_blackbox_buf ~ width ~ val ~ cell_annotation* ~ ";"
+        | kw_wire ~ val ~ (kw_optimized_out ~ bits)? ~ cell_annotation* ~ ";"
+    )
+}
+
+kw_void = @{ "void" ~ end_kw }
+kw_param = @{ "param" ~ end_kw }
+kw_input = @{ "input" ~ end_kw }
+kw_output = @{ "output" ~ end_kw }
+kw_busport = @{ "busport" ~ end_kw }
+kw_const = @{ "const" ~ end_kw }
+kw_swizzle = @{ "swizzle" ~ end_kw }
+kw_busswizzle = @{ "busswizzle" ~ end_kw }
+kw_slice = @{ "slice" ~ end_kw }
+kw_trunc = @{ "trunc" ~ end_kw }
+kw_extop = @{ ("zext" | "sext") ~ end_kw }
+kw_bufop = @{ ("buf" | "inv") ~ end_kw }
+kw_bitop = @{ ("andnot" | "ornot" | "and" | "or" | "nand" | "nor" | "xor" | "xnor") ~ end_kw }
+kw_uxorop = @{ ("uxor" | "uxnor") ~ end_kw }
+kw_muxop = @{ ("mux" | "parmux" | "priomux") ~ end_kw }
+kw_switchop = @{ ("switch" | "parswitch") ~ end_kw }
+kw_cmpop = @{ ("eq" | "ne" | "ult" | "ugt" | "ule" | "uge" | "slt" | "sgt" | "sle" | "sge") ~ end_kw }
+kw_addsub = @ { "addsub" ~ end_kw }
+kw_addop = @{ ("add" | "sub") ~ end_kw }
+kw_mul = @{ "mul" ~ end_kw }
+kw_shiftop = @{ ("shr" | "shl") ~ end_kw }
+kw_register = @{ "register" ~ end_kw }
+kw_instance = @{ "instance" ~ end_kw }
+kw_uinstance = @{ "uinstance" ~ end_kw }
+kw_instout = @{ "instout" ~ end_kw }
+kw_bus = @{ "bus" ~ end_kw }
+kw_busjoiner = @{ "busjoiner" ~ end_kw }
+kw_busdriver = @{ "busdriver" ~ end_kw }
+kw_blackbox_buf = @{ "blackbox_buf" ~ end_kw }
+kw_wire = @{ "wire" ~ end_kw }
+
+kw_unsigned = @{ "unsigned" ~ end_kw }
+kw_signed = @{ "signed" ~ end_kw }
+kw_fill_x = @{ "fill_x" ~ end_kw }
+kw_scale = @{ "scale" ~ end_kw }
+kw_bias = @{ "bias" ~ end_kw }
+kw_optimized_out = @{ "optimized_out" ~ end_kw }
+kw_bus_kind = @{ ("pulldown" | "pullup" | "wireand" | "wireor") ~ end_kw }
+
+ui_item = {
+    kw_param ~ port_binding ~ "," ~ val ~ ";"
+    | kw_input ~ port_binding ~ "," ~ val ~ ";"
+    | kw_output ~ uint ~ "," ~ port_binding ~ "," ~ val ~ ";"
+    | kw_bus ~ port_binding ~ "," ~ val ~ ";"
+}
+port_binding = _{ string | uint | "(" ~ hier_name ~ ")" }
+
+reg_item = {
+    kw_init ~ val ~ ";"
+    | kw_async ~ kw_inv? ~ val ~ "," ~ (val | kw_noop) ~ ";"
+    | kw_sync ~ kw_edge ~ val ~ "{" ~ sync_item* ~ "}"
+}
+sync_item = {
+    kw_default ~ val ~ ";"
+    | kw_cond ~ kw_inv? ~ val ~ "," ~ (val | kw_noop) ~ ";"
+}
+kw_init = @{ "init" ~ end_kw }
+kw_async = @{ "async" ~ end_kw }
+kw_sync = @{ "sync" ~ end_kw }
+kw_default = @{ "default" ~ end_kw }
+kw_cond = @{ "cond" ~ end_kw }
+kw_inv = @{ "inv" ~ end_kw }
+kw_noop = @{ "noop" ~ end_kw }
+kw_edge = @{ ("posedge" | "negedge" | "dualedge") ~ end_kw }
+
+design_annotation = {
+    kw_attr ~ "(" ~ string ~ "=" ~ (string | int | float | bits) ~ ")"
+}
+module_annotation = {
+    kw_keep
+    | kw_no_merge
+    | kw_no_flatten
+    | kw_inline
+    | kw_blackbox
+    | kw_top
+    | kw_name ~ "(" ~ hier_name ~ ")"
+    | kw_attr ~ "(" ~ string ~ "=" ~ (string | int | float | bits) ~ ")"
+}
+cell_annotation = {
+    kw_keep
+    | kw_no_merge
+    | kw_no_flatten
+    | kw_async
+    | kw_lax_x
+    | kw_param
+    | kw_debug
+    | kw_name ~ "(" ~ hier_name ~ ")"
+    | kw_position ~ "(" ~ uint ~ ")"
+    | kw_attr ~ "(" ~ string ~ "=" ~ (string | int | float | bits) ~ ")"
+    | kw_downto ~ "(" ~ int ~ ")"
+    | kw_upto ~ "(" ~ int ~ ")"
+}
+kw_keep = @{ "keep" ~ end_kw }
+kw_no_merge = @{ "no_merge" ~ end_kw }
+kw_no_flatten = @{ "no_flatten" ~ end_kw }
+kw_inline = @{ "inline" ~ end_kw }
+kw_blackbox = @{ "blackbox" ~ end_kw }
+kw_top = @{ "top" ~ end_kw }
+kw_name = @{ "name" ~ end_kw }
+kw_position = @{ "position" ~ end_kw }
+kw_attr = @{ "attr" ~ end_kw }
+kw_lax_x = @{ "lax_x" ~ end_kw }
+kw_debug = @{ "debug" ~ end_kw }
+kw_downto = @{ "downto" ~ end_kw }
+kw_upto = @{ "upto" ~ end_kw }
+
+width = { "[" ~ uint ~ "]" }
+val = { local_id | bits | string | int | float }
+kw_int = @{ "int" ~ end_kw }
+kw_float = @{ "float" ~ end_kw }
+kw_string = @{ "string" ~ end_kw }
+kw_bitvec = @{ "bitvec" ~ end_kw }
+swizzle_chunk = { local_id ~ ("[" ~ uint ~ (".." ~ uint)? ~ "]")? ~ (kw_sext ~ uint)? | bits }
+busswizzle_chunk = { local_id ~ ("[" ~ uint ~ (".." ~ uint)? ~ "]")? }
+switch_case = { bits ~ ":" ~ val }
+kw_sext = @{ "sext" ~ end_kw }
+params = { ("[" ~ (val ~ ",")* ~ val? ~ "]")? }
+hier_name = { (string | "[" ~ int ~ "]")* }
+
+end_kw = { !(ASCII_ALPHANUMERIC | "_") }
+global_id = @{ "@" ~ (ASCII_ALPHANUMERIC | "_")+ ~ end_kw }
+local_id = @{ "%" ~ (ASCII_ALPHANUMERIC | "_")+ ~ end_kw }
+
+uint = @{ ASCII_DIGIT+ ~ !("'" | ("." ~ ASCII_DIGIT) | "e" | "E") }
+int = @{ "-"? ~ uint }
+float = @{
+    ("+" | "-")? ~ ("NaN" | "nan" | "inf") ~ end_kw
+    | ("+" | "-")? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+
+    | ("+" | "-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ ("e" | "E") ~ ("+" | "-")? ~ ASCII_DIGIT*
+    | "f64'h" ~ ASCII_HEX_DIGIT{16} ~ end_kw
+}
+bits = @{
+    ASCII_DIGIT+ ~ "'b" ~ ("0" | "1" | "x" | "X")*
+    | ASCII_DIGIT+ ~ "'h" ~ (ASCII_HEX_DIGIT | "x" | "X")+
+    | ASCII_DIGIT+ ~ "'x"
+}
+
+string = ${ "\"" ~ string_chunk* ~ "\"" }
+string_chunk = @{
+    (!("\"" | "\\") ~ ANY)+
+    | "\\" ~ ("\\" | "\"")
+    | "\\x" ~ ASCII_HEX_DIGIT{2}
+    | "\\u{" ~ ASCII_HEX_DIGIT+ ~ "}"
+}
+
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+line_comment = _{ "//" ~ (!NEWLINE ~ ANY)* }
+block_comment = _{ "/*" ~ (block_comment | !"*/" ~ ANY)* ~ "*/"}
+COMMENT = _{ line_comment | block_comment }

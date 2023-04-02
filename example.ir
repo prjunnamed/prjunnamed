@@ -1,0 +1,26 @@
+version "0.1";
+
+module @ff name("ff") {
+    %d = input 0 [8] name("d");
+    %clk = input 1 [1] name("clk");
+    %rst = input 2 [1] name("rst");
+    %ce = input 3 [1] name("ce");
+    output 0 [8] %q name("q"); 
+    %q = register [8] {
+        init 8'b00000000;
+        async %rst, 8'b00000000;
+        sync posedge %clk {
+            cond inv %ce, noop;
+            default %d;
+        }
+    }
+}
+
+module @blinky name("blinky") top {
+    %clk = input 0 [1] name("clk");
+    output 0 [1] %out name("led");
+    %nval = add [8] %q, 8'b00000001;
+    %ff = instance @ff %nval, %clk, 1'b0, 1'b1;
+    %q = instout [8] %ff, 0;
+    %out = swizzle [1] %q[7];
+}
