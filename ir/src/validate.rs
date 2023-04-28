@@ -1,3 +1,5 @@
+use prjunnamed_entity::EntityBitVec;
+
 #[cfg(doc)]
 use crate::model::cells::{Instance, InstanceOutput};
 
@@ -591,6 +593,44 @@ impl CellValidator<'_> {
     }
 }
 
+struct CellCycleChecker<'a> {
+    module: ModuleRef<'a>,
+    entered: EntityBitVec<CellId>,
+    checked: EntityBitVec<CellId>,
+}
+
+impl CellCycleChecker<'_> {
+    fn check(&mut self, cid: CellId, errs: &mut Vec<Error>) {
+        if self.checked[cid] {
+            return;
+        }
+        let cell = self.module.cell(cid);
+        if !(cell.is_comb() || cell.is_swizzle()) || cell.flags_plane() == CellPlane::Main {
+            self.checked.set(cid, true);
+            return;
+        }
+        if self.entered[cid] {
+            errs.push((
+                Some(self.module.id()),
+                Some(cid),
+                format!(
+                    "cell is part of a {}-plane combinatorial cycle",
+                    if cell.flags_plane() == CellPlane::Debug {
+                        "debug"
+                    } else {
+                        "param"
+                    }
+                ),
+            ));
+            self.checked.set(cid, true);
+            return;
+        }
+        self.entered.set(cid, true);
+        cell.for_each_val(|cid| self.check(cid, errs));
+        self.checked.set(cid, true);
+    }
+}
+
 impl ModuleRef<'_> {
     fn validate(self, res: &mut Vec<Error>) {
         if self.blackbox() {
@@ -695,6 +735,47 @@ impl ModuleRef<'_> {
             }
             .validate();
         }
+        let mut checker = CellCycleChecker {
+            module: self,
+            entered: EntityBitVec::repeat(false, self.cell_ids().len()),
+            checked: EntityBitVec::repeat(false, self.cell_ids().len()),
+        };
+        for cid in self.cell_ids() {
+            checker.check(cid, res);
+        }
+    }
+}
+
+struct ModRecursionChecker<'a> {
+    design: &'a Design,
+    entered: EntityBitVec<ModuleId>,
+    checked: EntityBitVec<ModuleId>,
+}
+
+impl ModRecursionChecker<'_> {
+    fn check(&mut self, mid: ModuleId, errs: &mut Vec<Error>) {
+        if self.checked[mid] {
+            return;
+        }
+        if self.entered[mid] {
+            errs.push((
+                Some(mid),
+                None,
+                "module recursively instantiates itself".into(),
+            ));
+            self.checked.set(mid, true);
+            return;
+        }
+        self.entered.set(mid, true);
+        if let Some(module) = self.design.module(mid) {
+            for cell in module.cells() {
+                let Some(inst) = cell.get_instance() else {
+                    continue;
+                };
+                self.check(inst.module, errs);
+            }
+        }
+        self.checked.set(mid, true);
     }
 }
 
@@ -734,8 +815,14 @@ impl Design {
                 module.validate(&mut res);
             }
         }
-        // TODO: check module instance infinite recursion
-        // TODO: check comb cycles
+        let mut checker = ModRecursionChecker {
+            design: self,
+            entered: EntityBitVec::repeat(false, self.module_ids().len()),
+            checked: EntityBitVec::repeat(false, self.module_ids().len()),
+        };
+        for mid in self.module_ids() {
+            checker.check(mid, &mut res);
+        }
         res
     }
 }
