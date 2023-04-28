@@ -8,12 +8,14 @@ struct Args {
     out_file: Option<PathBuf>,
     #[arg(short, long)]
     raw: bool,
+    #[arg(short, long)]
+    no_validate: bool,
 }
 
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
     let s = std::fs::read_to_string(args.in_file)?;
-    let design = match Design::parse_text(&s) {
+    let design = match Design::parse_text(&s, !args.no_validate) {
         Ok(d) => d,
         Err(e) => {
             eprintln!("{e}");

@@ -1302,12 +1302,12 @@ impl<'s> ModuleParser<'_, 's> {
     }
 }
 
-fn parse_module(
-    span: Span,
-    pairs: Pairs,
-    module_names: &HashMap<&str, ModuleId>,
+fn parse_module<'s>(
+    span: Span<'s>,
+    pairs: Pairs<'s>,
+    module_names: &HashMap<&'s str, ModuleId>,
     mut module: ModuleRefMut,
-) -> Result<(), Box<Error>> {
+) -> Result<EntityVec<CellId, Span<'s>>, Box<Error>> {
     let mut mp = ModuleParser {
         module_names,
         cell_names: HashMap::new(),
@@ -1424,7 +1424,7 @@ fn parse_module(
         Ok(p) => module.set_ports_bus(p),
         Err(idx) => return Err(error(span, format!("bus port {idx} missing"))),
     }
-    Ok(())
+    Ok(mp.cell_spans)
 }
 
 fn parse_design_annotation(design: &mut Design, pair: Pair) -> Result<(), Box<Error>> {
@@ -1443,11 +1443,14 @@ fn parse_design_annotation(design: &mut Design, pair: Pair) -> Result<(), Box<Er
 
 impl Design {
     /// Parses a design in text format.
-    pub fn parse_text(s: &str) -> Result<Design, Box<Error>> {
+    pub fn parse_text(s: &str, validate: bool) -> Result<Design, Box<Error>> {
         let mut design = Design::new();
         let pairs = TextParser::parse(Rule::design, s)?;
         let mut module_contents = vec![];
         let mut module_names = HashMap::new();
+        let mut module_spans = EntityVec::new();
+        let mut cell_spans = EntityPartVec::new();
+        let mut design_span = None;
         for pair in pairs {
             match pair.as_rule() {
                 Rule::EOI => (),
@@ -1458,6 +1461,7 @@ impl Design {
                     if vers != "0.1" {
                         return Err(error(span, "unknown version"));
                     }
+                    design_span = Some(span);
                 }
                 Rule::design_annotation => {
                     parse_design_annotation(&mut design, pair)?;
@@ -1472,16 +1476,35 @@ impl Design {
                         return Err(error(pgid.as_span(), "module redefined"));
                     }
                     module_contents.push((mid, mspan, mpairs));
+                    module_spans.push(mspan);
                 }
                 Rule::kw_void => {
                     let mid = design.add_module().id();
                     design.remove_module(mid);
+                    module_spans.push(pair.as_span());
                 }
                 _ => unreachable!(),
             }
         }
         for (mid, span, pairs) in module_contents {
-            parse_module(span, pairs, &module_names, design.module_mut(mid).unwrap())?;
+            cell_spans.insert(
+                mid,
+                parse_module(span, pairs, &module_names, design.module_mut(mid).unwrap())?,
+            );
+        }
+        if validate {
+            if let Some(&(mid, cid, ref s)) = design.validate_raw().first() {
+                let span = if let Some(mid) = mid {
+                    if let Some(cid) = cid {
+                        cell_spans[mid][cid]
+                    } else {
+                        module_spans[mid]
+                    }
+                } else {
+                    design_span.unwrap()
+                };
+                return Err(error(span, s));
+            }
         }
         Ok(design)
     }
