@@ -110,6 +110,373 @@ impl_from!(BusDriver);
 impl_from!(BlackboxBuf);
 impl_from!(Wire);
 
+impl CellKind {
+    pub fn for_each_val(&self, mut f: impl FnMut(CellId, CellValSlot)) {
+        match self {
+            CellKind::Void => (),
+            CellKind::Param(_) => (),
+            CellKind::PortIn(_) => (),
+            CellKind::PortOut(port) => {
+                if let Some(v) = port.val {
+                    f(v, CellValSlot::PortOut);
+                }
+            }
+            CellKind::PortBus(_) => (),
+            CellKind::ConstBits(_) => (),
+            CellKind::ConstInt(_) => (),
+            CellKind::ConstFloat(_) => (),
+            CellKind::ConstString(_) => (),
+            CellKind::Swizzle(swizzle) => {
+                for (i, chunk) in swizzle.chunks.iter().enumerate() {
+                    match *chunk {
+                        SwizzleChunk::Const(_) => (),
+                        SwizzleChunk::Value { val, .. } => f(val, CellValSlot::SwizzleChunk(i)),
+                    }
+                }
+            }
+            CellKind::BusSwizzle(sw) => {
+                for (i, chunk) in sw.chunks.iter().enumerate() {
+                    f(chunk.val, CellValSlot::BusSwizzleChunk(i));
+                }
+            }
+            CellKind::Slice(s) => f(s.val, CellValSlot::Slice),
+            CellKind::Ext(e) => f(e.val, CellValSlot::Ext),
+            CellKind::Buf(b) => f(b.val, CellValSlot::Buf),
+            CellKind::BitOp(b) => {
+                f(b.val_a, CellValSlot::BitOpA);
+                f(b.val_b, CellValSlot::BitOpB);
+            }
+            CellKind::UnaryXor(v) => {
+                f(v.val, CellValSlot::UnaryXor);
+            }
+            CellKind::Mux(v) => {
+                f(v.val_sel, CellValSlot::MuxSel);
+                for (i, &val) in v.vals.iter().enumerate() {
+                    f(val, CellValSlot::MuxInput(i));
+                }
+            }
+            CellKind::Switch(v) => {
+                f(v.val_sel, CellValSlot::SwitchSel);
+                for (i, case) in v.cases.iter().enumerate() {
+                    f(case.val, CellValSlot::SwitchInput(i));
+                }
+                f(v.default, CellValSlot::SwitchDefault);
+            }
+            CellKind::Cmp(v) => {
+                f(v.val_a, CellValSlot::CmpA);
+                f(v.val_b, CellValSlot::CmpB);
+            }
+            CellKind::AddSub(v) => {
+                f(v.val_a, CellValSlot::AddSubA);
+                f(v.val_b, CellValSlot::AddSubB);
+                f(v.val_inv, CellValSlot::AddSubInv);
+                f(v.val_carry, CellValSlot::AddSubCarry);
+            }
+            CellKind::Mul(v) => {
+                f(v.val_a, CellValSlot::MulA);
+                f(v.val_b, CellValSlot::MulB);
+            }
+            CellKind::Shift(s) => {
+                f(s.val, CellValSlot::ShiftInput);
+                f(s.val_shamt, CellValSlot::ShiftAmount);
+            }
+            CellKind::Register(r) => {
+                f(r.init, CellValSlot::RegisterInit);
+                for (i, rule) in r.async_trigs.iter().enumerate() {
+                    f(rule.cond, CellValSlot::RegisterAsyncCond(i));
+                    f(rule.data, CellValSlot::RegisterAsyncData(i));
+                }
+                if let Some(ref sync) = r.clock_trig {
+                    f(sync.clk, CellValSlot::RegisterClock);
+                    for (i, rule) in sync.rules.iter().enumerate() {
+                        f(rule.cond, CellValSlot::RegisterSyncCond(i));
+                        f(rule.data, CellValSlot::RegisterSyncData(i));
+                    }
+                }
+            }
+            CellKind::Instance(inst) => {
+                for (i, &v) in &inst.params {
+                    f(v, CellValSlot::InstanceParam(i));
+                }
+                for (i, &v) in &inst.ports_in {
+                    f(v, CellValSlot::InstancePortIn(i));
+                }
+                for (i, &v) in &inst.ports_bus {
+                    f(v, CellValSlot::InstancePortBus(i));
+                }
+            }
+            CellKind::UnresolvedInstance(inst) => {
+                for (i, &(_, v)) in inst.params.iter().enumerate() {
+                    f(v, CellValSlot::UnresolvedInstanceParam(i));
+                }
+                for (i, &(_, v)) in inst.ports_in.iter().enumerate() {
+                    f(v, CellValSlot::UnresolvedInstancePortIn(i));
+                }
+                for (i, &(_, v)) in inst.ports_bus.iter().enumerate() {
+                    f(v, CellValSlot::UnresolvedInstancePortBus(i));
+                }
+            }
+            CellKind::InstanceOutput(_) => (),
+            CellKind::Bus(_) => (),
+            CellKind::BusJoiner(b) => {
+                f(b.bus_a, CellValSlot::BusJoinerA);
+                f(b.bus_b, CellValSlot::BusJoinerB);
+            }
+            CellKind::BusDriver(b) => {
+                f(b.bus, CellValSlot::BusDriverBus);
+                f(b.val, CellValSlot::BusDriverData);
+                f(b.cond, CellValSlot::BusDriverCond);
+            }
+            CellKind::BlackboxBuf(b) => f(b.val, CellValSlot::BlackboxBuf),
+            CellKind::Wire(w) => f(w.val, CellValSlot::Wire),
+        }
+    }
+
+    pub fn replace_val(&mut self, slot: CellValSlot, val: CellId) -> CellId {
+        let slot = match slot {
+            CellValSlot::PortOut => {
+                let CellKind::PortOut(port) = self else { panic!("expected port out") };
+                port.val.as_mut().unwrap()
+            }
+            CellValSlot::SwizzleChunk(i) => {
+                let CellKind::Swizzle(swz) = self else { panic!("expected swizzle") };
+                let SwizzleChunk::Value { val, ..} = &mut swz.chunks[i] else { panic!("expected value chunk") };
+                val
+            }
+            CellValSlot::BusSwizzleChunk(i) => {
+                let CellKind::BusSwizzle(swz) = self else { panic!("expected swizzle") };
+                &mut swz.chunks[i].val
+            }
+            CellValSlot::Slice => {
+                let CellKind::Slice(slice) = self else { panic!("expected slice") };
+                &mut slice.val
+            }
+            CellValSlot::Ext => {
+                let CellKind::Ext(ext) = self else { panic!("expected ext") };
+                &mut ext.val
+            }
+            CellValSlot::Buf => {
+                let CellKind::Buf(buf) = self else { panic!("expected buf") };
+                &mut buf.val
+            }
+            CellValSlot::BitOpA => {
+                let CellKind::BitOp(bitop) = self else { panic!("expected bitop") };
+                &mut bitop.val_a
+            }
+            CellValSlot::BitOpB => {
+                let CellKind::BitOp(bitop) = self else { panic!("expected bitop") };
+                &mut bitop.val_b
+            }
+            CellValSlot::UnaryXor => {
+                let CellKind::UnaryXor(uxor) = self else { panic!("expected uxor") };
+                &mut uxor.val
+            }
+            CellValSlot::MuxSel => {
+                let CellKind::Mux(mux) = self else { panic!("expected mux") };
+                &mut mux.val_sel
+            }
+            CellValSlot::MuxInput(i) => {
+                let CellKind::Mux(mux) = self else { panic!("expected mux") };
+                &mut mux.vals[i]
+            }
+            CellValSlot::SwitchSel => {
+                let CellKind::Switch(switch) = self else { panic!("expected switch") };
+                &mut switch.val_sel
+            }
+            CellValSlot::SwitchInput(i) => {
+                let CellKind::Switch(switch) = self else { panic!("expected switch") };
+                &mut switch.cases[i].val
+            }
+            CellValSlot::SwitchDefault => {
+                let CellKind::Switch(switch) = self else { panic!("expected switch") };
+                &mut switch.default
+            }
+            CellValSlot::CmpA => {
+                let CellKind::Cmp(cmp) = self else { panic!("expected cmp") };
+                &mut cmp.val_a
+            }
+            CellValSlot::CmpB => {
+                let CellKind::Cmp(cmp) = self else { panic!("expected cmp") };
+                &mut cmp.val_b
+            }
+            CellValSlot::AddSubA => {
+                let CellKind::AddSub(addsub) = self else { panic!("expected addsub") };
+                &mut addsub.val_a
+            }
+            CellValSlot::AddSubB => {
+                let CellKind::AddSub(addsub) = self else { panic!("expected addsub") };
+                &mut addsub.val_b
+            }
+            CellValSlot::AddSubInv => {
+                let CellKind::AddSub(addsub) = self else { panic!("expected addsub") };
+                &mut addsub.val_inv
+            }
+            CellValSlot::AddSubCarry => {
+                let CellKind::AddSub(addsub) = self else { panic!("expected addsub") };
+                &mut addsub.val_carry
+            }
+            CellValSlot::MulA => {
+                let CellKind::Mul(mul) = self else { panic!("expected mul") };
+                &mut mul.val_a
+            }
+            CellValSlot::MulB => {
+                let CellKind::Mul(mul) = self else { panic!("expected mul") };
+                &mut mul.val_b
+            }
+            CellValSlot::ShiftInput => {
+                let CellKind::Shift(shift) = self else { panic!("expected shift") };
+                &mut shift.val
+            }
+            CellValSlot::ShiftAmount => {
+                let CellKind::Shift(shift) = self else { panic!("expected shift") };
+                &mut shift.val_shamt
+            }
+            CellValSlot::RegisterInit => {
+                let CellKind::Register(reg) = self else { panic!("expected register") };
+                &mut reg.init
+            }
+            CellValSlot::RegisterAsyncCond(i) => {
+                let CellKind::Register(reg) = self else { panic!("expected register") };
+                &mut reg.async_trigs[i].cond
+            }
+            CellValSlot::RegisterAsyncData(i) => {
+                let CellKind::Register(reg) = self else { panic!("expected register") };
+                &mut reg.async_trigs[i].data
+            }
+            CellValSlot::RegisterClock => {
+                let CellKind::Register(reg) = self else { panic!("expected register") };
+                &mut reg.clock_trig.as_mut().unwrap().clk
+            }
+            CellValSlot::RegisterSyncCond(i) => {
+                let CellKind::Register(reg) = self else { panic!("expected register") };
+                &mut reg.clock_trig.as_mut().unwrap().rules[i].cond
+            }
+            CellValSlot::RegisterSyncData(i) => {
+                let CellKind::Register(reg) = self else { panic!("expected register") };
+                &mut reg.clock_trig.as_mut().unwrap().rules[i].data
+            }
+            CellValSlot::InstanceParam(i) => {
+                let CellKind::Instance(inst) = self else { panic!("expected instance") };
+                &mut inst.params[i]
+            }
+            CellValSlot::InstancePortIn(i) => {
+                let CellKind::Instance(inst) = self else { panic!("expected instance") };
+                &mut inst.ports_in[i]
+            }
+            CellValSlot::InstancePortBus(i) => {
+                let CellKind::Instance(inst) = self else { panic!("expected instance") };
+                &mut inst.ports_bus[i]
+            }
+            CellValSlot::UnresolvedInstanceParam(i) => {
+                let CellKind::UnresolvedInstance(inst) = self else { panic!("expected unresolved instance") };
+                &mut inst.params[i].1
+            }
+            CellValSlot::UnresolvedInstancePortIn(i) => {
+                let CellKind::UnresolvedInstance(inst) = self else { panic!("expected unresolved instance") };
+                &mut inst.ports_in[i].1
+            }
+            CellValSlot::UnresolvedInstancePortBus(i) => {
+                let CellKind::UnresolvedInstance(inst) = self else { panic!("expected unresolved instance") };
+                &mut inst.ports_bus[i].1
+            }
+            CellValSlot::BusJoinerA => {
+                let CellKind::BusJoiner(joiner) = self else { panic!("expected bus joiner") };
+                &mut joiner.bus_a
+            }
+            CellValSlot::BusJoinerB => {
+                let CellKind::BusJoiner(joiner) = self else { panic!("expected bus joiner") };
+                &mut joiner.bus_b
+            }
+            CellValSlot::BusDriverBus => {
+                let CellKind::BusDriver(driver) = self else { panic!("expected bus driver") };
+                &mut driver.bus
+            }
+            CellValSlot::BusDriverData => {
+                let CellKind::BusDriver(driver) = self else { panic!("expected bus driver") };
+                &mut driver.val
+            }
+            CellValSlot::BusDriverCond => {
+                let CellKind::BusDriver(driver) = self else { panic!("expected bus driver") };
+                &mut driver.cond
+            }
+            CellValSlot::BlackboxBuf => {
+                let CellKind::BlackboxBuf(buf) = self else { panic!("expected blackbox buf") };
+                &mut buf.val
+            }
+            CellValSlot::Wire => {
+                let CellKind::Wire(wire) = self else { panic!("expected wire") };
+                &mut wire.val
+            }
+        };
+        core::mem::replace(slot, val)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum CellValSlot {
+    PortOut,
+    SwizzleChunk(usize),
+    BusSwizzleChunk(usize),
+    Slice,
+    Ext,
+    Buf,
+    BitOpA,
+    BitOpB,
+    UnaryXor,
+    MuxSel,
+    MuxInput(usize),
+    SwitchSel,
+    SwitchInput(usize),
+    SwitchDefault,
+    CmpA,
+    CmpB,
+    AddSubA,
+    AddSubB,
+    AddSubInv,
+    AddSubCarry,
+    MulA,
+    MulB,
+    ShiftInput,
+    ShiftAmount,
+    RegisterInit,
+    RegisterAsyncCond(usize),
+    RegisterAsyncData(usize),
+    RegisterClock,
+    RegisterSyncCond(usize),
+    RegisterSyncData(usize),
+    InstanceParam(ParamId),
+    InstancePortIn(PortInId),
+    InstancePortBus(PortBusId),
+    UnresolvedInstanceParam(usize),
+    UnresolvedInstancePortIn(usize),
+    UnresolvedInstancePortBus(usize),
+    BusJoinerA,
+    BusJoinerB,
+    BusDriverBus,
+    BusDriverCond,
+    BusDriverData,
+    BlackboxBuf,
+    Wire,
+}
+
+impl CellValSlot {
+    pub fn is_bus(self) -> bool {
+        matches!(
+            self,
+            CellValSlot::BusSwizzleChunk(_)
+                | CellValSlot::BusJoinerA
+                | CellValSlot::BusJoinerB
+                | CellValSlot::BusDriverBus
+                | CellValSlot::InstancePortBus(_)
+                | CellValSlot::UnresolvedInstancePortBus(_)
+        )
+    }
+
+    pub fn is_plain(self) -> bool {
+        !self.is_bus()
+    }
+}
+
 /// A module parameter cell.  All cells of this type are listed in the [`ModuleRef::params`] field.
 ///
 /// The type is determined by the `typ` field.  Always belongs to the constant plane.

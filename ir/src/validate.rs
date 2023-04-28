@@ -628,7 +628,7 @@ impl CellCycleChecker<'_> {
             return;
         }
         self.entered.set(cid, true);
-        cell.for_each_val(|cid| self.check(cid, errs));
+        cell.for_each_val(|cid, _| self.check(cid, errs));
         self.checked.set(cid, true);
     }
 }

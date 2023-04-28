@@ -9,8 +9,8 @@ use crate::model::{
     },
     bits::Bit,
     cells::{
-        BitOpKind, BusKind, CellKind, ClockEdge, CmpKind, ExtKind, MuxKind, ParamType, PortBinding,
-        ShiftKind, SwitchKind, SwizzleChunk,
+        BitOpKind, BusKind, CellKind, CellValSlot, ClockEdge, CmpKind, ExtKind, MuxKind, ParamType,
+        PortBinding, ShiftKind, SwitchKind, SwizzleChunk,
     },
     CellId, CellPlane, CellRef, CellType, Design, ModuleRef,
 };
@@ -207,17 +207,29 @@ impl Design {
                     cell_name_used.set(cid, true);
                 }
             };
-            for cid in module.cell_ids() {
-                let cell = module.cell(cid);
-                cell.for_each_val(|val| {
+            for cell in module.cells() {
+                cell.for_each_val(|val, slot| {
                     use_cell(
                         val,
                         matches!(
-                            cell.contents(),
-                            CellKind::Swizzle(_) | CellKind::BusSwizzle(_)
+                            slot,
+                            CellValSlot::SwizzleChunk(_) | CellValSlot::BusSwizzleChunk(_)
                         ),
                     );
                 });
+                if matches!(cell.contents(), CellKind::InstanceOutput(_)) {
+                    use_cell(cell.id(), true);
+                }
+                if let Some(inst) = cell.get_instance() {
+                    if !inst.ports_out.is_empty() {
+                        use_cell(cell.id(), true);
+                    }
+                }
+                if let Some(inst) = cell.get_uinstance() {
+                    if !inst.ports_out.is_empty() {
+                        use_cell(cell.id(), true);
+                    }
+                }
             }
             let vp = ValPrinter {
                 module,

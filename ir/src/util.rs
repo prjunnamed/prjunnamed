@@ -1,6 +1,6 @@
 use crate::model::{
     bits::Bits,
-    cells::{self, CellKind},
+    cells::{self, CellKind, CellValSlot},
     float::F64BitEq,
     CellId, CellPlane, CellRef, CellRefMut, CellType, ModuleRefMut, StrId,
 };
@@ -208,131 +208,8 @@ impl<'a> CellRef<'a> {
         }
     }
 
-    pub fn for_each_val(self, mut f: impl FnMut(CellId)) {
-        match self.contents() {
-            CellKind::Void => (),
-            CellKind::Param(_) => (),
-            CellKind::PortIn(_) => (),
-            CellKind::PortOut(port) => {
-                if let Some(v) = port.val {
-                    f(v);
-                }
-            }
-            CellKind::PortBus(_) => (),
-            CellKind::ConstBits(_) => (),
-            CellKind::ConstInt(_) => (),
-            CellKind::ConstFloat(_) => (),
-            CellKind::ConstString(_) => (),
-            CellKind::Swizzle(swizzle) => {
-                for chunk in &swizzle.chunks {
-                    match *chunk {
-                        cells::SwizzleChunk::Const(_) => (),
-                        cells::SwizzleChunk::Value { val, .. } => f(val),
-                    }
-                }
-            }
-            CellKind::BusSwizzle(sw) => {
-                for chunk in &sw.chunks {
-                    f(chunk.val);
-                }
-            }
-            CellKind::Slice(s) => f(s.val),
-            CellKind::Ext(e) => f(e.val),
-            CellKind::Buf(b) => f(b.val),
-            CellKind::BitOp(b) => {
-                f(b.val_a);
-                f(b.val_b);
-            }
-            CellKind::UnaryXor(v) => {
-                f(v.val);
-            }
-            CellKind::Mux(v) => {
-                f(v.val_sel);
-                for &val in &v.vals {
-                    f(val);
-                }
-            }
-            CellKind::Switch(v) => {
-                f(v.val_sel);
-                for case in &v.cases {
-                    f(case.val);
-                }
-                f(v.default);
-            }
-            CellKind::Cmp(v) => {
-                f(v.val_a);
-                f(v.val_b);
-            }
-            CellKind::AddSub(v) => {
-                f(v.val_a);
-                f(v.val_b);
-                f(v.val_inv);
-                f(v.val_carry);
-            }
-            CellKind::Mul(v) => {
-                f(v.val_a);
-                f(v.val_b);
-            }
-            CellKind::Shift(s) => {
-                f(s.val);
-                f(s.val_shamt);
-            }
-            CellKind::Register(r) => {
-                f(r.init);
-                for rule in &r.async_trigs {
-                    f(rule.cond);
-                    f(rule.data);
-                }
-                if let Some(ref sync) = r.clock_trig {
-                    f(sync.clk);
-                    for rule in &sync.rules {
-                        f(rule.cond);
-                        f(rule.data);
-                    }
-                }
-            }
-            CellKind::Instance(i) => {
-                for &v in i.params.values() {
-                    f(v);
-                }
-                for &v in i.ports_in.values() {
-                    f(v);
-                }
-                for &v in i.ports_out.values() {
-                    f(v);
-                }
-                for &v in i.ports_bus.values() {
-                    f(v);
-                }
-            }
-            CellKind::UnresolvedInstance(i) => {
-                for &(_, v) in &i.params {
-                    f(v);
-                }
-                for &(_, v) in &i.ports_in {
-                    f(v);
-                }
-                for &(_, v) in i.ports_out.values() {
-                    f(v);
-                }
-                for &(_, v) in &i.ports_bus {
-                    f(v);
-                }
-            }
-            CellKind::InstanceOutput(o) => f(o.inst),
-            CellKind::Bus(_) => (),
-            CellKind::BusJoiner(b) => {
-                f(b.bus_a);
-                f(b.bus_b);
-            }
-            CellKind::BusDriver(b) => {
-                f(b.bus);
-                f(b.val);
-                f(b.cond);
-            }
-            CellKind::BlackboxBuf(b) => f(b.val),
-            CellKind::Wire(w) => f(w.val),
-        }
+    pub fn for_each_val(self, f: impl FnMut(CellId, CellValSlot)) {
+        self.contents().for_each_val(f);
     }
 
     pub fn get_const_bits(self) -> Option<&'a Bits> {
@@ -356,7 +233,7 @@ impl CellRefMut<'_> {
             pub fn get_const_int(&self) -> Option<i32>;
             pub fn get_const_float(&self) -> Option<F64BitEq>;
             pub fn get_const_str(&self) -> Option<StrId>;
-            pub fn for_each_val(self, f: impl FnMut(CellId));
+            pub fn for_each_val(self, f: impl FnMut(CellId, CellValSlot));
         }
     }
 
