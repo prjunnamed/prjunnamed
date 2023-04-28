@@ -20,7 +20,7 @@ module @blinky name("blinky") top {
     %clk = input 0 [1] name("clk");
     output 0 [1] %out name("led");
     %nval = add [8] %q, 8'b00000001;
-    %ff = instance @ff %nval, %clk, 1'b0, 1'b1;
+    %ff = instance @ff %nval, %clk, 1'b0, 1'b1, output %q;
     %q = instout [8] %ff, 0;
     %out = swizzle [1] %q[7];
 }
