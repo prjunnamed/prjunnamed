@@ -605,7 +605,9 @@ impl CellCycleChecker<'_> {
             return;
         }
         let cell = self.module.cell(cid);
-        if !(cell.is_comb() || cell.is_swizzle()) || cell.flags_plane() == CellPlane::Main {
+        if (!(cell.is_comb() || cell.is_swizzle()) || cell.flags_plane() == CellPlane::Main)
+            && cell.get_bus_swizzle().is_none()
+        {
             self.checked.set(cid, true);
             return;
         }
@@ -614,11 +616,11 @@ impl CellCycleChecker<'_> {
                 Some(self.module.id()),
                 Some(cid),
                 format!(
-                    "cell is part of a {}-plane combinatorial cycle",
-                    if cell.flags_plane() == CellPlane::Debug {
-                        "debug"
-                    } else {
-                        "param"
+                    "cell is part of a {} cycle",
+                    match cell.flags_plane() {
+                        CellPlane::Param => "param combinatorial",
+                        CellPlane::Main => "bus swizzle",
+                        CellPlane::Debug => "debug combinatorial",
                     }
                 ),
             ));
@@ -805,6 +807,7 @@ impl Design {
     /// 7. [`InstanceOutput`] cells must be correctly cross-referenced with their instance cell.
     /// 8. There must be no infinite recursion of module instances.
     /// 9. There must be no cycles in combinatorial computations on the parameter and debug planes (but cycles on main plane are allowed).
+    /// 10. There must be no cycles of BusSwizzle cells.
     ///
     /// TODO: Once target-specific stuff lands, there will also be target-specific validation for target-specific cells/annotations/...
     /// TODO: At some point, there will be many optional validity constraints, to be used in later stages of synthesis (eg. fine cells only).
