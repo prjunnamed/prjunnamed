@@ -242,4 +242,22 @@ impl CellRefMut<'_> {
         self.set_annnotations(vec![]);
         self.clear_flags();
     }
+
+    pub fn replace_uses_with_if(&mut self, val: CellId, mut f: impl FnMut(CellValSlot) -> bool) {
+        if val == self.id() {
+            return;
+        }
+        let uses: Vec<_> = self.uses().filter(|&(_, slot)| f(slot)).collect();
+        for (cid, slot) in uses {
+            self.sibling_mut(cid).replace_val(slot, val);
+        }
+    }
+
+    pub fn replace_uses_with(&mut self, val: CellId) {
+        self.replace_uses_with_if(val, |_| true);
+    }
+
+    pub fn replace_plain_uses_with(&mut self, val: CellId) {
+        self.replace_uses_with_if(val, CellValSlot::is_plain);
+    }
 }

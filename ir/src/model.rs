@@ -3,6 +3,8 @@ pub mod bits;
 pub mod cells;
 pub mod float;
 
+use std::collections::BTreeSet;
+
 use annotations::{CellAnnotation, DesignAnnotation, ModuleAnnotation};
 
 use delegate::delegate;
@@ -10,7 +12,7 @@ use enumflags2::{bitflags, BitFlags};
 use prjunnamed_entity::{entity_id, EntityIds, EntitySet, EntityVec};
 use thin_vec::ThinVec;
 
-use self::cells::CellKind;
+use self::cells::{CellKind, CellValSlot};
 
 entity_id! {
     pub id ModuleId u32, reserve 1;
@@ -80,7 +82,15 @@ impl Design {
     }
 
     pub fn remove_module(&mut self, id: ModuleId) {
-        self.modules[id] = None;
+        if let Some(module) = self.modules[id].take() {
+            for (cid, cell) in module.cells {
+                if let CellKind::Instance(ref inst) = cell.contents {
+                    if let Some(ref mut module) = self.modules[inst.module] {
+                        module.uses.remove(&(id, cid));
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -104,6 +114,7 @@ struct Module {
     ports_out: EntityVec<PortOutId, CellId>,
     /// List of bus ports, similar to `params`.  The referenced cells must be [`CellKind::PortBus`].
     ports_bus: EntityVec<PortBusId, CellId>,
+    uses: BTreeSet<(ModuleId, CellId)>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -183,6 +194,10 @@ impl<'a> ModuleRef<'a> {
     pub fn cell(self, id: CellId) -> CellRef<'a> {
         self.module().cells.get(id).unwrap();
         CellRef { module: self, id }
+    }
+
+    pub fn uses(self) -> impl Iterator<Item = (ModuleId, CellId)> + 'a {
+        self.module().uses.iter().copied()
     }
 
     delegate! {
@@ -299,6 +314,7 @@ impl<'a> ModuleRefMut<'a> {
             pub fn cell_ids(&self) -> EntityIds<CellId>;
             pub fn cell(&self, id: CellId) -> CellRef;
             pub fn cells(&self) -> impl Iterator<Item = CellRef>;
+            pub fn uses(&self) -> impl Iterator<Item = (ModuleId, CellId)> + '_;
         }
 
         to self.design {
@@ -338,6 +354,7 @@ struct Cell {
     annotations: ThinVec<CellAnnotation>,
     /// The cell kind and kind-specific fields.
     contents: CellKind,
+    uses: BTreeSet<(CellId, CellValSlot)>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -404,6 +421,10 @@ impl<'a> CellRef<'a> {
 
     pub fn sibling(&self, cell: CellId) -> CellRef<'a> {
         self.module().cell(cell)
+    }
+
+    pub fn uses(self) -> impl Iterator<Item = (CellId, CellValSlot)> + 'a {
+        self.cell().uses.iter().copied()
     }
 
     delegate! {
@@ -515,7 +536,33 @@ impl CellRefMut<'_> {
     }
 
     pub fn set_contents(&mut self, val: impl Into<CellKind>) {
-        self.cell().contents = val.into();
+        let old = core::mem::take(&mut self.cell().contents);
+        let id = self.id;
+        if let CellKind::Instance(ref inst) = old {
+            if let Some(ref mut module) = self.module.design.modules[inst.module] {
+                module.uses.remove(&(self.module.id, id));
+            }
+        }
+        old.for_each_val(|cid, slot| {
+            self.sibling_mut(cid).cell().uses.remove(&(id, slot));
+        });
+        let val = val.into();
+        if let CellKind::Instance(ref inst) = val {
+            if let Some(ref mut module) = self.module.design.modules[inst.module] {
+                module.uses.insert((self.module.id, id));
+            }
+        }
+        val.for_each_val(|cid, slot| {
+            self.sibling_mut(cid).cell().uses.insert((id, slot));
+        });
+        self.cell().contents = val;
+    }
+
+    pub fn replace_val(&mut self, slot: CellValSlot, val: CellId) {
+        let old = self.cell().contents.replace_val(slot, val);
+        let id = self.id;
+        self.sibling_mut(old).cell().uses.remove(&(id, slot));
+        self.sibling_mut(val).cell().uses.insert((id, slot));
     }
 
     delegate! {
@@ -524,6 +571,7 @@ impl CellRefMut<'_> {
             pub fn flags_plane(&self) -> CellPlane;
             pub fn annotations(&self) -> &[CellAnnotation];
             pub fn contents(&self) -> &CellKind;
+            pub fn uses(&self) -> impl Iterator<Item = (CellId, CellValSlot)> + '_;
         }
 
         to self.module.design {
