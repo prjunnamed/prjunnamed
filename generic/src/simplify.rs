@@ -285,29 +285,31 @@ fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
 fn adc_unsext(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     let mut ci = c;
     let mut offset = 0;
-    let mut start_offset = 0;
     let mut result = Value::EMPTY;
     while offset + 2 < a.len() {
         let a_bit = a[offset];
         let b_bit = b[offset];
-        if a[offset + 1] != a_bit || a[offset + 2] != a_bit || b[offset + 1] != b_bit || b[offset + 2] != b_bit {
+        let same_count = a[offset + 1..].iter().zip(&b[offset + 1..])
+            .take_while(|&pair| pair == (&a_bit, &b_bit))
+            .count() + 1;
+
+        if same_count < 3 {
             offset += 1;
             continue;
         }
-        let mut end_offset = offset + 3;
-        while end_offset < a.len() && a[end_offset] == a_bit && b[end_offset] == b_bit {
-            end_offset += 1;
-        }
+
+        let start_offset = result.len();
+        let end_offset = offset + same_count;
         let chunk = design.add_adc(&a[start_offset..offset + 2], &b[start_offset..offset + 2], ci);
-        result.extend(chunk.slice(..chunk.len() - 1).sext(end_offset - start_offset));
+        let chunk_sum = chunk.slice(..chunk.len() - 1); // drop cout
+        result.extend(chunk_sum.sext(end_offset - start_offset));
         ci = chunk.msb();
         offset = end_offset;
-        start_offset = end_offset;
     }
-    if start_offset == 0 {
+    if result.is_empty() {
         return None;
     }
-    result.extend(design.add_adc(&a[start_offset..], &b[start_offset..], ci));
+    result.extend(design.add_adc(&a[result.len()..], &b[result.len()..], ci));
     Some(result)
 }
 
