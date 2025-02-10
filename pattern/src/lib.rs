@@ -64,11 +64,8 @@ macro_rules! netlist_matches {
             }
         }
     };
-    ( @NEW@ [ $pat:ident $( @ $cap:ident )? $( ( $($exparg:tt)+ ) )+ $( [ $($patarg:tt)+ ] )* ] ) => {
-        $pat::new( $( $($exparg)+ ),+ , $( $crate::netlist_matches!( @NEW@ [ $($patarg)+ ] ) ),*)
-    };
-    ( @NEW@ [ $pat:ident $( @ $cap:ident )? $( [ $($patarg:tt)+ ] )* ] ) => {
-        $pat::new( $( $crate::netlist_matches!( @NEW@ [ $($patarg)+ ] ) ),*)
+    ( @NEW@ [ $pat:ident $( @ $cap:ident )? $( ( $($exparg:tt)+ ) )* $( [ $($patarg:tt)+ ] )* ] ) => {
+        $pat::new( $( $($exparg)+, )* $( $crate::netlist_matches!( @NEW@ [ $($patarg)+ ] ) ),*)
     };
     ( @PAT@ [ $pat:ident $( ( $($exparg:tt)+ ) )* $( [ $($patarg:tt)+ ] )* ] ) => {
         (_, $( $crate::netlist_matches!( @PAT@ [ $($patarg)+ ] ) ),*)
