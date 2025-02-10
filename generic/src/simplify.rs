@@ -229,7 +229,7 @@ fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
         // If they are different, one of them must be equal to whatever
         // ci currently is.
         if a_bit == b_bit {
-            result.extend(&design.add_adc(&a[result.len()..offset], &b[result.len()..offset], ci));
+            result.extend(mk_adc(design, &a[result.len()..offset], &b[result.len()..offset], ci));
             ci = a_bit;
         } else if offset == result.len() {
             if a_bit == ci {
@@ -244,7 +244,7 @@ fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     if result.is_empty() {
         return None;
     }
-    result.extend(design.add_adc(&a[result.len()..], &b[result.len()..], ci));
+    result.extend(mk_adc(design, &a[result.len()..], &b[result.len()..], ci));
     Some(result)
 }
 
@@ -303,7 +303,7 @@ fn adc_unsext(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
 
         let start_offset = result.len();
         let end_offset = offset + same_count;
-        let chunk = design.add_adc(&a[start_offset..offset + 2], &b[start_offset..offset + 2], ci);
+        let chunk = mk_adc(design, &a[start_offset..offset + 2], &b[start_offset..offset + 2], ci);
         let chunk_sum = chunk.slice(..chunk.len() - 1); // drop cout
         result.extend(chunk_sum.sext(end_offset - start_offset));
         ci = chunk.msb();
@@ -312,8 +312,21 @@ fn adc_unsext(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     if result.is_empty() {
         return None;
     }
-    result.extend(design.add_adc(&a[result.len()..], &b[result.len()..], ci));
+    result.extend(mk_adc(design, &a[result.len()..], &b[result.len()..], ci));
     Some(result)
+}
+
+/// Create an `adc` cell, unless it's of width 0
+fn mk_adc(design: &Design, a: impl Into<Value>, b: impl Into<Value>, ci: impl Into<Net>) -> Value {
+    let a = a.into();
+    let b = b.into();
+    let ci = ci.into();
+    if a.is_empty() {
+        assert!(b.is_empty());
+        ci.into()
+    } else {
+        design.add_adc(a, b, ci)
+    }
 }
 
 fn fold_controls(design: &Design, cell_ref: CellRef) {
@@ -753,7 +766,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -777,7 +789,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -798,7 +809,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -817,7 +827,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -836,7 +845,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 1);
         let b = gold.add_input("b", 1);
@@ -853,7 +861,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         gold.add_output("y", Value::from(Net::ZERO).concat(a));
@@ -870,7 +877,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let c = gold.add_input("c", 1);
@@ -892,7 +898,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -911,7 +916,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 8);
         let b = gold.add_input("b", 4);
@@ -930,7 +934,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 8);
         let b = gold.add_input("b", 4);
@@ -949,7 +952,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -969,7 +971,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let al = gold.add_input("al", 4);
         let ah = gold.add_input("ah", 4);
@@ -992,7 +993,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -1013,7 +1013,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let a = gold.add_input("a", 4);
         let b = gold.add_input("b", 4);
@@ -1036,7 +1035,6 @@ mod test {
         design.add_output("y", y);
         design.apply();
         simplify(&mut design);
-        simplify(&mut design); // clean up zero length adcs
         let mut gold = Design::new();
         let al = gold.add_input("al", 1);
         let bl = gold.add_input("bl", 1);
