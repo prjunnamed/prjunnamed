@@ -224,6 +224,10 @@ fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     let mut ci = c;
     let mut result = Value::EMPTY;
     for (offset, (a_bit, b_bit)) in a.iter().zip(b.iter()).enumerate() {
+        // Note that the following cases are enough to do constant-folding as
+        // well: either the two bits are the same, or they are different.
+        // If they are different, one of them must be equal to whatever
+        // ci currently is.
         if a_bit == b_bit {
             result.extend(&design.add_adc(&a[result.len()..offset], &b[result.len()..offset], ci));
             ci = a_bit;
