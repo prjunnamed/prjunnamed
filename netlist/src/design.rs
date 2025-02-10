@@ -14,6 +14,7 @@ use crate::{
     Target, TargetCell, TargetCellPurity, TargetPrototype,
 };
 
+/// Sea of [`Cell`]s.
 #[derive(Debug, Clone)]
 pub struct Design {
     ios: BTreeMap<String, Range<u32>>,

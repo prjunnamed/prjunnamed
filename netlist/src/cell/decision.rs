@@ -6,6 +6,11 @@ use crate::{Const, Net, Value};
 pub struct MatchCell {
     pub value: Value,
     pub enable: Net,
+    /// Each pattern is a list of alternatives.
+    ///
+    /// Notice that `X` in a match pattern has different semantics than usual —
+    /// it signifies "match any bit", and not "replace with whatever is easier
+    /// to synthesize". This is fine, since the patterns are constants.
     pub patterns: Vec<Vec<Const>>,
 }
 
@@ -34,6 +39,7 @@ impl MatchCell {
         self.enable.visit_mut(&mut f);
     }
 }
+
 impl AssignCell {
     pub fn output_len(&self) -> usize {
         self.value.len()

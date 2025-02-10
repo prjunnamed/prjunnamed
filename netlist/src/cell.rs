@@ -16,9 +16,22 @@ pub use io_buffer::IoBuffer;
 pub use target::TargetCell;
 pub use instance::Instance;
 
+/// Compact, 16-byte representation for cells common in fine netlists.
+///
+/// This type is used internally within [`Design`]. Cells that can be
+/// represented with [`CellRepr`] get stored without a separate heap
+/// allocation. All others get represented as [`CellRepr::Coarse`].
 #[derive(Debug, Clone)]
 pub(crate) enum CellRepr {
+    /// Reserved index. Can be created with [`Design::add_void`] for later
+    /// replacement with [`Design::replace_value`], or left over
+    /// after [`CellRef::unalive`].
+    ///
+    /// [`CellRef::unalive`]: crate::CellRef::unalive
     Void,
+
+    /// Represents an index taken by a cell with more than one bit of
+    /// output. Stores the base index of the cell in question.
     Skip(u32),
 
     Buf(Net),
@@ -32,23 +45,54 @@ pub(crate) enum CellRepr {
     Coarse(Box<Cell>),
 }
 
+/// A unit of logic.
+///
+/// Within a [`Design`], each cell is identified by a range of indices,
+/// with each index corresponding to one of the output bits of the cell.
+/// As such, the cell itself only contains information about its inputs,
+/// with the outputs being implicit.
+///
+/// (do note that cells without any outputs, such as [`output`][Cell::Output]
+/// or [`name`][Cell::Name], still get assigned an index)
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Cell {
     Buf(Value),
     Not(Value),
+    /// `a & b`.
+    ///
+    /// Has short-circuiting behavior for inputs containing `X` — if the other
+    /// bit is `0`, the output is `0` and the `X` doesn't propagate.
     And(Value, Value),
+    /// `a | b`.
+    ///
+    /// Has short-circuiting behavior for inputs containing `X` — if the other
+    /// bit is `1`, the output is `1` and the `X` doesn't propagate.
     Or(Value, Value),
     Xor(Value, Value),
-    Mux(Net, Value, Value), // a ? b : c
+    /// `a ? b : c`.
+    ///
+    /// Muxes are glitch free — if `a` is `X`, the bit positions that match
+    /// between `b` and `c` still have a defined value. The `X` propagates
+    /// only at the positions where `b` and `c` differ.
+    Mux(Net, Value, Value),
+    /// `a + b + ci` — add with carry.
+    ///
+    /// `X`s in the input propagate only to the more significant bits, and
+    /// do not affect the less significant bits.
     Adc(Value, Value, Net), // a + b + ci
 
     Eq(Value, Value),
     ULt(Value, Value),
     SLt(Value, Value),
 
+    /// `a << (b * c)`. The bottom bits are filled with zeros.
     Shl(Value, Value, u32),
+    /// `a >> (b * c)`. The top bits are filled with zeros.
     UShr(Value, Value, u32),
+    /// `a >> (b * c)`. The top bits are filled with copies of the top bit
+    /// of the input.
     SShr(Value, Value, u32),
+    /// `a >> (b * c)`. The top bits are filled with `X`.
     XShr(Value, Value, u32),
 
     // future possibilities: popcnt, count leading/trailing zeros, powers
@@ -69,8 +113,20 @@ pub enum Cell {
     Target(TargetCell),
     Other(Instance),
 
+    /// Design input of a given width.
+    ///
+    /// If synthesizing for a specified target, an input will be replaced
+    /// with an [`IoBuffer`] and attached to a pin on the target device.
     Input(String, usize),
+    /// Design output. Attaches a name to a given value.
+    ///
+    /// If synthesizing for a specified target, an output will be replaced
+    /// with an [`IoBuffer`] and attached to a pin on the target device.
     Output(String, Value),
+    /// Attaches a name to a given value for debugging.
+    ///
+    /// `Name` keeps a given value alive and makes it easily available
+    /// to be poked at during simulation.
     Name(String, Value),
     Debug(String, Value),
 }
@@ -179,6 +235,8 @@ impl Cell {
         }
     }
 
+    /// If possible, return a cell that computes only a slice of the outputs
+    /// of this cell.
     pub fn slice(&self, range: impl std::ops::RangeBounds<usize> + Clone) -> Option<Cell> {
         match self {
             Cell::Buf(arg) => Some(Cell::Buf(arg.slice(range))),

@@ -8,6 +8,8 @@ use std::{
 
 use crate::Net;
 
+/// Zero, one, or undef (`X`). Undef may be replaced by any other value
+/// during optimization.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Trit {
     Undef = -1,
@@ -153,6 +155,7 @@ impl std::ops::BitXor<Trit> for Trit {
     }
 }
 
+/// A constant with some bits potentially set to `X`.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Const {
     trits: Vec<Trit>,

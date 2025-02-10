@@ -7,6 +7,10 @@ use std::{
 
 use crate::{Const, Design, Trit};
 
+/// A one-bit wide wire, identified by either the [`Cell`] that drives it,
+/// or the constant [`Trit`] it is set to.
+///
+/// [`Cell`]: crate::Cell
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Net {
     pub(crate) index: u32,
@@ -118,6 +122,10 @@ impl Display for Net {
     }
 }
 
+/// A wide bundle of [`Net`]s, possibly driven by a variety of [`Cell`]s.
+/// This is where swizzles happen.
+///
+/// [`Cell`]: crate::Cell
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Value {
     nets: Vec<Net>,
@@ -139,6 +147,7 @@ fn shift_count(val: &Const, stride: u32) -> usize {
 }
 
 impl Value {
+    /// A value of width zero.
     pub const EMPTY: Value = Value { nets: vec![] };
 
     pub fn zero(width: usize) -> Self {
@@ -153,6 +162,8 @@ impl Value {
         Self::from_iter(std::iter::repeat_n(Net::UNDEF, width))
     }
 
+    /// Creates a `Value` representing the `count`-wide output
+    /// of cell `cell_index`.
     pub(crate) fn cell(cell_index: usize, count: usize) -> Value {
         let mut nets = vec![];
         for net_index in 0..count {

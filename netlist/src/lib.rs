@@ -1,3 +1,12 @@
+//! This crate defines the IR of Project Unnamed.
+//!
+//! A [`Design`] is represented as a sea of [`Cell`]s. Each cell is identified
+//! only by a range of indices; neither cells nor the nets connecting them have
+//! names.
+//!
+//! No distinction is made between coarse and fine netlists — a single IR is
+//! used for both.
+
 mod logic;
 mod value;
 mod param;
