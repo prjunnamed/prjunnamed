@@ -1392,7 +1392,7 @@ mod test {
         let design = Design::new();
         let q = design.add_void(1);
         let d = design.add_mux(design.add_input1("e"), design.add_input("d", 1), q.clone());
-        design.replace_value(q.clone(), design.add_dff(FlipFlop::new(d, design.add_input1("c"))));
+        design.replace_value(&q, design.add_dff(FlipFlop::new(d, design.add_input1("c"))));
         design.add_output("q", q);
         let gold = Design::new();
         let ff = FlipFlop::new(gold.add_input("d", 1), gold.add_input1("c"))
@@ -1406,7 +1406,7 @@ mod test {
         let design = Design::new();
         let q = design.add_void(1);
         let d = design.add_mux(design.add_input1("e"), q.clone(), design.add_input("d", 1));
-        design.replace_value(q.clone(), design.add_dff(FlipFlop::new(d, design.add_input1("c"))));
+        design.replace_value(&q, design.add_dff(FlipFlop::new(d, design.add_input1("c"))));
         design.add_output("q", q);
         let gold = Design::new();
         let ff = FlipFlop::new(gold.add_input("d", 1), gold.add_input1("c"))
