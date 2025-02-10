@@ -158,68 +158,68 @@ pub fn simplify(design: &mut Design) -> bool {
     design.compact()
 }
 
-// Finds positions within an `adc` cell where the carry chain up to the position
-// doesn't affect output bits past the position, then splits the cell into smaller
-// `adc` cells at these positions.
-//
-// This function recognizes the following cases:
-//
-// 1. `a` and `b` have the same net at position `i`:
-//
-//    ```
-//       { a7 a6 a5 ab4 a3 a2 a1 a0 } +
-//       { b7 b6 b5 ab4 b3 b2 b1 b0 } + ci =
-//    { y8 y7 y6 y5  y4 y3 y2 y1 y0 }
-//    ```
-//
-//    In this case, the carry out of position `i` will always be equal to the value
-//    of the common net.  The sum at that position will be equal to carry out of position
-//    `i - 1` (or to carry input, for position 0).  The above example gets split into two
-//    `adc` cells:
-//
-//    ```
-//    { y8 y7 y6 y5 } =
-//       { a7 a6 a5 } +
-//       { b7 b6 b5 } + ab4
-//
-//    { y4 y3 y2 y1 y0 } =
-//       { a3 a2 a1 a0 } +
-//       { b3 b2 b1 b0 } + ci
-//    ```
-//
-// 2. The low bit of `a` (or `b`) is the same net as the carry input:
-//
-//    ```
-//    { y4 y3 y2 y1 y0 } =
-//       { a3 a2 a1 a0 } +
-//       { b3 b2 b1 b0 } + a0
-//    ```
-//
-//    In this case, The carry out of position `0` will always be equal to `a0`, and the sum
-//    at this position will be equal to `b0`.  The above example gets split up as follows:
-//
-//    ```
-//    { y4 y3 y2 y1 } =
-//       { a3 a2 a1 } +
-//       { b3 b2 b1 } + a0
-//
-//    y0 = b0
-//    ```
-//
-// This optimization is comically general.  We are mostly interested in it for its useful special
-// cases:
-//
-// - `a + a` will get optimized into `{ a 0 }`
-// - `a + a + ci` will get optimized into `{ a ci }`
-// - when both operands have const LSBs, the low part is const-folded
-// - when one operand has const-0 LSBs, and the CI is 0, the low bits of output are replaced with
-//   bits of the other operand
-// - when one operand has const-1 LSBs, and the CI is 1, the low bits of output are replaced with
-//   bits of the other operand
-// - when the two operands have disjoint sets of non-zero positions (eg. `{ a0 a1 0 0 } + { 0 0 b2 b3 }`,
-//   the whole cell is replaced by a buffer
-// - when there's a stretch of zeros in both operands at the same positions, the cell gets split into two `adc`
-// - when both operands have redundant 0 bits at MSBs, the high bits of output are replaced with 0
+/// Finds positions within an `adc` cell where the carry chain up to the position
+/// doesn't affect output bits past the position, then splits the cell into smaller
+/// `adc` cells at these positions.
+///
+/// This function recognizes the following cases:
+///
+/// 1. `a` and `b` have the same net at position `i`:
+///
+///    ```
+///       { a7 a6 a5 ab4 a3 a2 a1 a0 } +
+///       { b7 b6 b5 ab4 b3 b2 b1 b0 } + ci =
+///    { y8 y7 y6 y5  y4 y3 y2 y1 y0 }
+///    ```
+///
+///    In this case, the carry out of position `i` will always be equal to the value
+///    of the common net.  The sum at that position will be equal to carry out of position
+///    `i - 1` (or to carry input, for position 0).  The above example gets split into two
+///    `adc` cells:
+///
+///    ```
+///    { y8 y7 y6 y5 } =
+///       { a7 a6 a5 } +
+///       { b7 b6 b5 } + ab4
+///
+///    { y4 y3 y2 y1 y0 } =
+///       { a3 a2 a1 a0 } +
+///       { b3 b2 b1 b0 } + ci
+///    ```
+///
+/// 2. The low bit of `a` (or `b`) is the same net as the carry input:
+///
+///    ```
+///    { y4 y3 y2 y1 y0 } =
+///       { a3 a2 a1 a0 } +
+///       { b3 b2 b1 b0 } + a0
+///    ```
+///
+///    In this case, The carry out of position `0` will always be equal to `a0`, and the sum
+///    at this position will be equal to `b0`.  The above example gets split up as follows:
+///
+///    ```
+///    { y4 y3 y2 y1 } =
+///       { a3 a2 a1 } +
+///       { b3 b2 b1 } + a0
+///
+///    y0 = b0
+///    ```
+///
+/// This optimization is comically general.  We are mostly interested in it for its useful special
+/// cases:
+///
+/// - `a + a` will get optimized into `{ a 0 }`
+/// - `a + a + ci` will get optimized into `{ a ci }`
+/// - when both operands have const LSBs, the low part is const-folded
+/// - when one operand has const-0 LSBs, and the CI is 0, the low bits of output are replaced with
+///   bits of the other operand
+/// - when one operand has const-1 LSBs, and the CI is 1, the low bits of output are replaced with
+///   bits of the other operand
+/// - when the two operands have disjoint sets of non-zero positions (eg. `{ a0 a1 0 0 } + { 0 0 b2 b3 }`,
+///   the whole cell is replaced by a buffer
+/// - when there's a stretch of zeros in both operands at the same positions, the cell gets split into two `adc`
+/// - when both operands have redundant 0 bits at MSBs, the high bits of output are replaced with 0
 fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     let mut ci = c;
     let mut result = Value::EMPTY;
@@ -248,44 +248,44 @@ fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     Some(result)
 }
 
-// Finds runs of three or more repeating pairs of bits in the inputs of an `adc` cell, shortens
-// them to just two pairs.  Mostly useful for shortening over-long `adc` cells with sign-extended
-// inputs.
-//
-// Observation: given
-//
-// ```
-// { a a } +
-// { b b } + c
-// ```
-//
-// the carry out of position 1 will always be the same as carry out of position 0:
-//
-// - if `a` and `b` are both `0`, the carry-out is `0` on both positions
-// - if `a` and `b` are both `1`, the carry-out is `1` on both positions
-// - if `a` and `b` are `0` and `1` (or the other way around), the carry-in of `c` is propagated
-//
-// Thus, if we have
-//
-// ```
-// { y3 y2 y1 y0 } =
-//     { a  a  a } +
-//     { b  b  b } + c
-// ```
-//
-// it follows that carry-in to positions 1 and 2 is the same, and so y1 = y2.  Further,
-// carry out of position 2 is also the same, allowing us to completely remove position 2
-// from the `adc` as redundant:
-//
-// ```
-// { y3 y1 y0 } =
-//     { a  a } +
-//     { b  b } + c
-// y2 = y1
-// ```
-//
-// This applies to any repetition of length ≥ 3.  While mostly applicable to trimming MSBs,
-// we recognize such repetitions anywhere within the inputs and split the `adc` cell there.
+/// Finds runs of three or more repeating pairs of bits in the inputs of an `adc` cell, shortens
+/// them to just two pairs.  Mostly useful for shortening over-long `adc` cells with sign-extended
+/// inputs.
+///
+/// Observation: given
+///
+/// ```
+/// { a a } +
+/// { b b } + c
+/// ```
+///
+/// the carry out of position 1 will always be the same as carry out of position 0:
+///
+/// - if `a` and `b` are both `0`, the carry-out is `0` on both positions
+/// - if `a` and `b` are both `1`, the carry-out is `1` on both positions
+/// - if `a` and `b` are `0` and `1` (or the other way around), the carry-in of `c` is propagated
+///
+/// Thus, if we have
+///
+/// ```
+/// { y3 y2 y1 y0 } =
+///     { a  a  a } +
+///     { b  b  b } + c
+/// ```
+///
+/// it follows that carry-in to positions 1 and 2 is the same, and so y1 = y2.  Further,
+/// carry out of position 2 is also the same, allowing us to completely remove position 2
+/// from the `adc` as redundant:
+///
+/// ```
+/// { y3 y1 y0 } =
+///     { a  a } +
+///     { b  b } + c
+/// y2 = y1
+/// ```
+///
+/// This applies to any repetition of length ≥ 3.  While mostly applicable to trimming MSBs,
+/// we recognize such repetitions anywhere within the inputs and split the `adc` cell there.
 fn adc_unsext(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     let mut ci = c;
     let mut offset = 0;
