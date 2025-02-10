@@ -25,7 +25,7 @@ impl NetOrValue for Net {
     }
 
     fn iter(&self) -> impl Iterator<Item = Net> {
-        std::iter::repeat_n(*self, 1)
+        std::iter::once(*self)
     }
 
     fn try_from(other: impl NetOrValue) -> Option<Self> {
