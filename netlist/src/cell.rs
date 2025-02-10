@@ -186,15 +186,6 @@ impl Cell {
             Cell::Or(arg1, arg2) => Some(Cell::Or(arg1.slice(range.clone()), arg2.slice(range))),
             Cell::Xor(arg1, arg2) => Some(Cell::Xor(arg1.slice(range.clone()), arg2.slice(range))),
             Cell::Mux(arg1, arg2, arg3) => Some(Cell::Mux(*arg1, arg2.slice(range.clone()), arg3.slice(range))),
-            Cell::Match(match_cell) => {
-                Some(Cell::Match(MatchCell {
-                    value: match_cell.value.slice(range.clone()),
-                    enable: match_cell.enable,
-                    patterns: Vec::from_iter(match_cell.patterns.iter().map(|alternates| {
-                        Vec::from_iter(alternates.iter().map(|pattern| pattern.slice(range.clone())))
-                    })),
-                }))
-            }
             Cell::Dff(flip_flop) => Some(Cell::Dff(flip_flop.slice(range))),
             Cell::IoBuf(io_buffer) => Some(Cell::IoBuf(io_buffer.slice(range))),
             _ => None,
