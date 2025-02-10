@@ -294,7 +294,7 @@ fn adc_unsext(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
             .count() + 1;
 
         if same_count < 3 {
-            offset += 1;
+            offset += same_count;
             continue;
         }
 
