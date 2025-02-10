@@ -222,29 +222,25 @@ pub fn simplify(design: &mut Design) -> bool {
 // - when both operands have redundant 0 bits at MSBs, the high bits of output are replaced with 0
 fn adc_split(design: &Design, a: Value, b: Value, c: Net) -> Option<Value> {
     let mut ci = c;
-    let mut start_offset = 0;
     let mut result = Value::EMPTY;
     for (offset, (a_bit, b_bit)) in a.iter().zip(b.iter()).enumerate() {
         if a_bit == b_bit {
-            result.extend(&design.add_adc(&a[start_offset..offset], &b[start_offset..offset], ci));
-            start_offset = offset + 1;
+            result.extend(&design.add_adc(&a[result.len()..offset], &b[result.len()..offset], ci));
             ci = a_bit;
-        } else if offset == start_offset {
+        } else if offset == result.len() {
             if a_bit == ci {
                 result.extend([b_bit]);
-                start_offset += 1;
                 // ci unchanged
             } else if b_bit == ci {
                 result.extend([a_bit]);
-                start_offset += 1;
                 // ci unchanged
             }
         }
     }
-    if start_offset == 0 {
+    if result.is_empty() {
         return None;
     }
-    result.extend(design.add_adc(&a[start_offset..], &b[start_offset..], ci));
+    result.extend(design.add_adc(&a[result.len()..], &b[result.len()..], ci));
     Some(result)
 }
 
