@@ -77,6 +77,9 @@ pub enum Cell {
     Mux(Net, Value, Value),
     /// `a + b + ci` — add with carry.
     ///
+    /// Output is one bit wider than `a` and `b` — the most significant bit
+    /// is the carry-out.
+    ///
     /// `X`s in the input propagate only to the more significant bits, and
     /// do not affect the less significant bits.
     Adc(Value, Value, Net), // a + b + ci
