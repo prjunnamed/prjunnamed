@@ -437,6 +437,14 @@ mod test {
         };
     }
 
+    macro_rules! assert_no_simplify {
+        ( $design:ident ) => {
+            let mut design = $design;
+            design.apply();
+            assert!(!simplify(&mut design));
+        };
+    }
+
     fn iter_interesting_consts() -> impl Iterator<Item = Const> {
         ["0", "1", "X", "00", "11", "XX", "01", "10"].into_iter().map(Const::lit)
     }
@@ -1039,6 +1047,43 @@ mod test {
         gold.add_output("y", y0.slice(..2).sext(4).concat(y1.slice(..2).sext(4)).concat(y1.msb()));
         gold.apply();
         assert_isomorphic!(design, gold);
+    }
+
+    #[test]
+    fn test_adc_unsext_only2() {
+        for size in [1, 2] {
+            let design = Design::new();
+            let a = design.add_input("a", size);
+            let b = design.add_input("b", size);
+            let c = design.add_input("c", 1);
+            let y = design.add_adc(a.sext(size + 1), b.sext(size + 1), c.unwrap_net());
+            design.add_output("y", y);
+            assert_no_simplify!(design);
+        }
+    }
+
+    #[test]
+    fn test_adc_unsext_only3() {
+        for size in [1, 2] {
+            let mut design = Design::new();
+            let a = design.add_input("a", size);
+            let b = design.add_input("b", size);
+            let c = design.add_input("c", 1);
+            let y = design.add_adc(a.sext(size + 2), b.sext(size + 2), c.unwrap_net());
+            design.add_output("y", y);
+            design.apply();
+            simplify(&mut design);
+            simplify(&mut design); // clean up zero length adcs
+
+            let mut gold = Design::new();
+            let a = gold.add_input("a", size);
+            let b = gold.add_input("b", size);
+            let c = gold.add_input("c", 1);
+            let y = gold.add_adc(a.sext(size + 1), b.sext(size + 1), c.unwrap_net());
+            gold.add_output("y", y.slice(..size + 1).sext(size + 2).concat(y.msb()));
+            gold.apply();
+            assert_isomorphic!(design, gold);
+        }
     }
 
     #[test]
