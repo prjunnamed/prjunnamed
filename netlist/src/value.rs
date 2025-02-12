@@ -7,8 +7,8 @@ use std::{
 
 use crate::{Const, Design, Trit};
 
-/// A one-bit wide wire, identified by either the [`Cell`] that drives it,
-/// or the constant [`Trit`] it is set to.
+/// A one-bit wide wire, identified by either the [`Cell`] that drives it
+/// and the bit position in its output, or the constant [`Trit`] it is set to.
 ///
 /// [`Cell`]: crate::Cell
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
