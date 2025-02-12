@@ -138,19 +138,39 @@ pub enum Cell {
 
     /// Design input of a given width.
     ///
-    /// If synthesizing for a specified target, an input will be replaced
-    /// with an [`IoBuffer`] and attached to a pin on the target device.
+    /// If synthesizing for a specified target, and not in out-of-context mode,
+    /// an input will be replaced with an [`IoBuffer`] and attached to a pin on
+    /// the target device.
     Input(String, usize),
     /// Design output. Attaches a name to a given value.
     ///
-    /// If synthesizing for a specified target, an output will be replaced
-    /// with an [`IoBuffer`] and attached to a pin on the target device.
+    /// If synthesizing for a specified target, and not in out-of-context mode,
+    /// an output will be replaced with an [`IoBuffer`] and attached to a pin on
+    /// the target device.
     Output(String, Value),
     /// Attaches a name to a given value for debugging.
     ///
-    /// `Name` keeps a given value alive and makes it easily available
-    /// to be poked at during simulation.
+    /// `Name` keeps a given value alive during optimization and makes it easily
+    /// available to be poked at during simulation.
+    ///
+    /// Do note that the [`unname` pass][unname], which runs during
+    /// target-dependent synthesis, replaces all `Name` cells with [`Debug`]
+    /// cells.
+    ///
+    /// [unname]: ../prjunnamed_generic/fn.unname.html
+    /// [`Debug`]: Cell::Debug
     Name(String, Value),
+    /// Tentatively attaches a name to a given value.
+    ///
+    /// `Debug` gives a name to a particular value, without insisting on keeping
+    /// it alive during optimization. This helps correlate the output of
+    /// synthesis with the corresponding input logic.
+    ///
+    /// If at any point a value is being kept alive only by a `Debug` cell,
+    /// it will be optimized out and the input to the `Debug` cell will
+    /// be replaced with `X`.
+    ///
+    /// See also: [`Name`][Cell::Name].
     Debug(String, Value),
 }
 
