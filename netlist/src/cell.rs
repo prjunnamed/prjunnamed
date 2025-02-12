@@ -89,13 +89,33 @@ pub enum Cell {
     SLt(Value, Value),
 
     /// `a << (b * c)`. The bottom bits are filled with zeros.
+    ///
+    /// General notes for all shift cells:
+    /// - output is the same width as `a`. If you need wider output,
+    ///   zero-extend or sign-extend your input first, as appropriate.
+    /// - the shift count does not wrap. If you shift by more than
+    ///   `a.len() - 1`, you get the same result as if you made an equivalent
+    ///   sequence of 1-bit shifts (i.e. all zeros, all sign bits, or all `X`,
+    ///   as appropriate).
+    /// - shift cells are one of the few cells which *do not* expect their
+    ///   inputs to be of the same width. In fact, that is the expected case.
     Shl(Value, Value, u32),
     /// `a >> (b * c)`. The top bits are filled with zeros.
+    ///
+    /// See also [general notes above][Cell::Shl].
     UShr(Value, Value, u32),
     /// `a >> (b * c)`. The top bits are filled with copies of the top bit
     /// of the input.
+    ///
+    /// `a` must be at least one bit wide (as otherwise there would be no sign
+    /// bit to propagate, and while there wouldn't be anywhere to propagate it
+    /// *to*, it's an edge-case it doesn't make sense to bother handling).
+    ///
+    /// See also [general notes above][Cell::Shl].
     SShr(Value, Value, u32),
     /// `a >> (b * c)`. The top bits are filled with `X`.
+    ///
+    /// See also [general notes above][Cell::Shl].
     XShr(Value, Value, u32),
 
     // future possibilities: popcnt, count leading/trailing zeros, powers
