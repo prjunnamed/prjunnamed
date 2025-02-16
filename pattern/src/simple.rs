@@ -39,7 +39,8 @@ impl<T: Clone, P: Pattern<T>> Pattern<T> for PBind<P> {
     }
 }
 
-/// Matches `Net`s and `Value`s that are constants.
+/// Matches `Net`s and `Value`s that do not refer to cells (consist entirely of
+/// zero, one, and undef nets).
 pub struct PConst;
 
 impl PConst {
