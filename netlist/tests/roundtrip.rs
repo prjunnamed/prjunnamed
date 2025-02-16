@@ -48,6 +48,12 @@ fn test_concat() {
     roundtrip("%0:0 = buf []\n");
     onewaytrip("%0:1 = buf [ 0 ]\n", "%0:1 = buf 0\n");
     onewaytrip("%0:2 = buf [ 1 0 ]\n", "%0:2 = buf 10\n");
+    onewaytrip("%0:1 = buf X\n%1:3 = buf [ 1 0 %0+0 ]\n", "%0:1 = buf X\n%1:3 = buf [ 10 %0 ]\n");
+    onewaytrip(
+        "%0:4 = buf XXXX\n%4:4 = buf [ %0+3 %0+2 %0+3 %0+2 ]\n",
+        "%0:4 = buf XXXX\n%4:4 = buf %0+2:2*2\n",
+    );
+    onewaytrip("%0:3 = buf 000\n%3:6 = buf [ %0:3 %0+1:2 %0+0 ]\n", "%0:3 = buf 000\n%3:6 = buf %0:3*2\n");
 }
 
 #[test]
@@ -57,6 +63,9 @@ fn test_reference() {
     roundtrip("%0:2 = buf 00\n%2:1 = buf %0+1\n");
     roundtrip("%0:2 = buf 00\n%2:2 = buf %0:2\n");
     roundtrip("%0:2 = buf 00\n%2:2 = buf [ %0+0 %0+1 ]\n");
+    roundtrip("%0:4 = buf 0000\n%4:4 = buf %0+0:2*2\n");
+    roundtrip("%0:3 = buf 000\n%3:6 = buf [ %0:3 %0+1 %0+1:2 ]\n");
+    roundtrip("%0:2 = buf 00\n%2:8 = buf %0:2*4\n");
 }
 
 #[test]
@@ -96,8 +105,8 @@ fn test_cells() {
     roundtrip("%0:2 = buf 00\n%2:3 = match %0:2 { (00 01) 10 11 }\n");
     roundtrip("%0:2 = buf 00\n%2:2 = match en=%0+1 %0+0 { 0 1 }\n");
     roundtrip("%0:16 = buf 0000000000000000\n%16:8 = match en=%0+1 %0:16 {\n  0000000000000001\n  0000000000000010\n  0000000000000100\n  0000000000001000\n  0000000000010000\n  0000000000100000\n  0000000001000000\n  0000000010000000\n}\n");
-    roundtrip("%0:4 = buf 0000\n%4:2 = assign [ %0:2 ] [ %0+2 %0+3 ]\n");
-    roundtrip("%0:4 = buf 0000\n%4:2 = assign en=%0+2 [ %0:2 ] %0+3 at=#1\n");
+    roundtrip("%0:4 = buf 0000\n%4:2 = assign %0+0:2 %0+2:2\n");
+    roundtrip("%0:4 = buf 0000\n%4:2 = assign en=%0+2 %0+0:2 %0+3 at=#1\n");
     roundtrip("%0:2 = buf 00\n%2:1 = dff %0+0 clk=%0+1\n");
     roundtrip("%0:0 = memory depth=#256 width=#16 {\n}\n");
     roundtrip("&\"purr\":1\n%0:2 = buf 00\n%2:1 = iobuf &\"purr\" o=%0+0 en=%0+1\n");

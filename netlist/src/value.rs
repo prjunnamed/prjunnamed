@@ -245,6 +245,10 @@ impl Value {
         Self::from_iter(self.iter().chain(other.into().iter()))
     }
 
+    pub fn repeat(&self, n: usize) -> Self {
+        Self::from_iter((0..n).flat_map(|_| self))
+    }
+
     pub fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Value {
         Value::from(&self[(range.start_bound().cloned(), range.end_bound().cloned())])
     }

@@ -254,26 +254,36 @@ fn parse_cell_index_width(t: &mut WithContext<impl Tokens<Item = char>, Context>
     Some((cell_index, width))
 }
 
-fn parse_cell_index_offset(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<(usize, usize)> {
+fn parse_cell_index_offset_width(
+    t: &mut WithContext<impl Tokens<Item = char>, Context>,
+) -> Option<(usize, usize, usize)> {
     let cell_index = parse_cell_index(t)?;
-    parse_symbol(t, '+')?;
-    let offset = parse_decimal(t)?;
-    Some((cell_index, offset))
+    let offset = if parse_symbol(t, '+').is_some() {
+        parse_decimal(t)?
+    } else {
+        0
+    };
+    let width = if parse_symbol(t, ':').is_some() {
+        parse_decimal(t)?
+    } else {
+        1
+    };
+    Some((cell_index, offset, width))
 }
 
 fn parse_value_part(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Value> {
-    one_of!(t;
+    let value = one_of!(t;
         parse_const(t).map(Value::from),
-        parse_cell_index_offset(t).and_then(|(cell_index, offset)| {
-            Some(t.context_mut().get_use(cell_index, offset..offset+1))
+        parse_cell_index_offset_width(t).and_then(|(cell_index, offset, width)| {
+            Some(t.context_mut().get_use(cell_index, offset..offset+width))
         }),
-        parse_cell_index_width(t).and_then(|(cell_index, width)| {
-            Some(t.context_mut().get_use(cell_index, 0..width))
-        }),
-        parse_cell_index(t).and_then(|cell_index| {
-            Some(t.context_mut().get_use(cell_index, 0..1))
-        }),
-    )
+    )?;
+    if parse_symbol(t, '*').is_some() {
+        let repeat = parse_decimal(t)?;
+        Some(value.repeat(repeat))
+    } else {
+        Some(value)
+    }
 }
 
 fn parse_value_concat(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Value> {

@@ -125,82 +125,103 @@ impl Design {
     }
 
     pub(crate) fn write_value(&self, f: &mut std::fmt::Formatter, value: &Value) -> std::fmt::Result {
-        if value.is_empty() {
-            return write!(f, "[]");
-        } else if value.len() == 1 {
-            return self.write_net(f, value[0]);
-        } else if let Some(value) = value.as_const() {
-            return write!(f, "{}", value);
-        } else if value
-            .iter()
-            .any(|net| net.as_cell_index().map(|index| !self.is_valid_cell_index(index)).unwrap_or(false))
-        {
-            // Value contains newly added cells that we can't look up. Don't try to make
-            // the display nicer, just make sure it doesn't panic.
-            write!(f, "[")?;
-            for net in value.iter().rev() {
-                write!(f, " ")?;
-                self.write_net(f, net)?;
-            }
-            write!(f, " ]")?;
-            return Ok(());
-        } else if let Ok((output, index, _offset)) = self.find_cell_output(value[0]) {
-            if *value == output {
-                if value.len() == 1 {
-                    return write!(f, "%{index}");
-                } else {
-                    return write!(f, "%{index}:{}", value.len());
-                }
-            }
-        }
-
         enum Chunk {
-            Slice { cell_index: usize, output_len: usize, count: usize },
-            Net(Net),
+            Slice { cell_index: usize, offset: usize, width: usize, repeat: usize },
+            WholeGrainCell { cell_index: usize, width: usize, repeat: usize },
+            NewNet { net: Net, repeat: usize },
+            Const(Const),
         }
-        write!(f, "[")?;
         let mut index = 0;
         let mut chunks = vec![];
         while index < value.len() {
-            if let Ok((output_a, index_a, 0)) = self.find_cell_output(value[index]) {
+            if value[index].as_cell_index().map(|index| !self.is_valid_cell_index(index)).unwrap_or(false) {
+                // Value contains newly added cells that we can't look up. Don't try to make
+                // the display nicer, just make sure it doesn't panic.
+                let mut repeat = 1;
+                while index + repeat < value.len() && value[index] == value[index + repeat] {
+                    repeat += 1;
+                }
+                chunks.push(Chunk::NewNet { net: value[index], repeat });
+                index += repeat;
+            } else if let Ok((output, index_a, offset_a)) = self.find_cell_output(value[index]) {
                 let count = value[index..]
                     .iter()
                     .enumerate()
                     .take_while(|(addend, net)| {
-                        if let Ok((output_b, _, offset_b)) = self.find_cell_output(**net) {
-                            output_a == output_b && *addend == offset_b
+                        if let Ok((_, index_b, offset_b)) = self.find_cell_output(**net) {
+                            index_a == index_b && offset_a + *addend == offset_b
                         } else {
                             false
                         }
                     })
                     .count();
-                if count > 0 {
-                    chunks.push(Chunk::Slice { cell_index: index_a, output_len: output_a.len(), count });
-                    index += count;
-                    continue;
+                assert!(count != 0);
+                let mut repeat = 1;
+                while index + (repeat + 1) * count <= value.len()
+                    && value[index..index + count] == value[index + repeat * count..index + (repeat + 1) * count]
+                {
+                    repeat += 1;
                 }
+                if offset_a == 0 && output.len() == count {
+                    chunks.push(Chunk::WholeGrainCell { cell_index: index_a, width: count, repeat });
+                } else {
+                    chunks.push(Chunk::Slice { cell_index: index_a, offset: offset_a, width: count, repeat });
+                }
+                index += count * repeat;
+            } else {
+                let const_value = Const::from_iter(
+                    value[index..].iter().take_while(|net| net.as_const().is_some()).map(|net| net.as_const().unwrap()),
+                );
+                assert!(!const_value.is_empty());
+                index += const_value.len();
+                chunks.push(Chunk::Const(const_value));
             }
-            chunks.push(Chunk::Net(value[index]));
-            index += 1;
+        }
+        if chunks.is_empty() {
+            return write!(f, "[]");
+        }
+        let single_chunk = chunks.len() == 1;
+        if !single_chunk {
+            write!(f, "[")?;
         }
         for chunk in chunks.into_iter().rev() {
-            write!(f, " ")?;
+            if !single_chunk {
+                write!(f, " ")?;
+            }
             match chunk {
-                Chunk::Slice { cell_index, output_len, count } => {
-                    if output_len == 1 && count == 1 {
-                        write!(f, "%{cell_index}")?;
-                    } else if count == 1 {
-                        write!(f, "%{cell_index}+0")?;
-                    } else {
-                        write!(f, "%{cell_index}:{count}")?;
+                Chunk::Slice { cell_index, offset, width, repeat } => {
+                    write!(f, "%{cell_index}+{offset}")?;
+                    if width != 1 {
+                        write!(f, ":{width}")?;
+                    }
+                    if repeat != 1 {
+                        write!(f, "*{repeat}")?;
                     }
                 }
-                Chunk::Net(net) => {
+                Chunk::WholeGrainCell { cell_index, width, repeat } => {
+                    write!(f, "%{cell_index}")?;
+                    if width != 1 {
+                        write!(f, ":{width}")?;
+                    }
+                    if repeat != 1 {
+                        write!(f, "*{repeat}")?;
+                    }
+                }
+                Chunk::Const(const_value) => {
+                    write!(f, "{const_value}")?;
+                }
+                Chunk::NewNet { net, repeat } => {
                     self.write_net(f, net)?;
+                    if repeat != 1 {
+                        write!(f, "*{repeat}")?;
+                    }
                 }
             }
         }
-        write!(f, " ]")
+        if !single_chunk {
+            write!(f, " ]")?;
+        }
+        Ok(())
     }
 
     pub(crate) fn write_cell(
