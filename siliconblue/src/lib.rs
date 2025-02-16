@@ -11,6 +11,8 @@ use prjunnamed_netlist::{
 
 use prjunnamed_lut::Lut;
 
+mod memory;
+
 pub fn register() {
     prjunnamed_netlist::register_target("siliconblue", |options| Ok(SiliconBlueTarget::new(options)));
 }
@@ -278,6 +280,11 @@ impl SiliconBlueTarget {
         // TODO: SB_LEDDA_IP, SB_IR_IP
 
         Arc::new(SiliconBlueTarget { prototypes })
+    }
+
+    pub fn is_ice40(&self) -> bool {
+        // TODO: actually parse options and determine if we're ice40 or ice65
+        true
     }
 }
 
@@ -668,7 +675,8 @@ impl Target for SiliconBlueTarget {
     fn synthesize(&self, design: &mut Design) -> Result<(), ()> {
         prjunnamed_generic::decision(design);
         prjunnamed_generic::canonicalize(design);
-        prjunnamed_memory::lower_memory(design);
+        self.lower_memories(design);
+        prjunnamed_generic::canonicalize(design);
         prjunnamed_generic::lower_arith(design);
         prjunnamed_generic::canonicalize(design);
         self.lower_ffs(design);

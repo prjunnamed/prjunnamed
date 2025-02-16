@@ -59,7 +59,7 @@ pub struct MemoryWritePort {
 /// A memory read port, either synchronous or asynchronous.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MemoryReadPort {
-    /// The read address, selecting which row(s) to read.  Follows the same rules as 
+    /// The read address, selecting which row(s) to read.  Follows the same rules as
     /// [`MemoryWritePort`] address.
     ///
     /// Reading an out-of-bounds address results in an undefined value.
@@ -80,7 +80,7 @@ pub struct MemoryReadPort {
 /// row.  This behavior is selected by the `relations` field.
 ///
 /// The fields other than `relations` have the same meaning as the corresponding fields in
-/// the [`FlipFlop`] structure.  The width of the reset, clear, and init values must be equal to 
+/// the [`FlipFlop`] structure.  The width of the reset, clear, and init values must be equal to
 /// the `data_len` of the port.
 ///
 /// [`FlipFlop`]: crate::FlipFlop
@@ -105,7 +105,7 @@ pub struct MemoryReadFlipFlop {
     /// `MemoryPortRelation::Undefined` for every write port where `write_port.clock != read_port.clock`.
     ///
     /// If a given memory bit is simultanously written by more than one write port while being
-    /// read, the read data is undefined (as is the value written to memory), regardless of 
+    /// read, the read data is undefined (as is the value written to memory), regardless of
     /// the relations between the ports.
     pub relations: Vec<MemoryPortRelation>,
 }
@@ -113,13 +113,13 @@ pub struct MemoryReadFlipFlop {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum MemoryPortRelation {
     #[default]
-    /// When the same memory bit is written by the given write port while being read, 
+    /// When the same memory bit is written by the given write port while being read,
     /// the read value is undefined.
     Undefined,
-    /// When the same memory bit is written by the given write port while being read, 
+    /// When the same memory bit is written by the given write port while being read,
     /// the read value is the value of the memory bit before the write.
     ReadBeforeWrite,
-    /// When the same memory bit is written by the given write port while being read, 
+    /// When the same memory bit is written by the given write port while being read,
     /// the read value is the newly written value.
     Transparent,
 }

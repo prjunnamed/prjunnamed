@@ -49,10 +49,7 @@ fn test_concat() {
     onewaytrip("%0:1 = buf [ 0 ]\n", "%0:1 = buf 0\n");
     onewaytrip("%0:2 = buf [ 1 0 ]\n", "%0:2 = buf 10\n");
     onewaytrip("%0:1 = buf X\n%1:3 = buf [ 1 0 %0+0 ]\n", "%0:1 = buf X\n%1:3 = buf [ 10 %0 ]\n");
-    onewaytrip(
-        "%0:4 = buf XXXX\n%4:4 = buf [ %0+3 %0+2 %0+3 %0+2 ]\n",
-        "%0:4 = buf XXXX\n%4:4 = buf %0+2:2*2\n",
-    );
+    onewaytrip("%0:4 = buf XXXX\n%4:4 = buf [ %0+3 %0+2 %0+3 %0+2 ]\n", "%0:4 = buf XXXX\n%4:4 = buf %0+2:2*2\n");
     onewaytrip("%0:3 = buf 000\n%3:6 = buf [ %0:3 %0+1:2 %0+0 ]\n", "%0:3 = buf 000\n%3:6 = buf %0:3*2\n");
 }
 

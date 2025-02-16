@@ -258,16 +258,8 @@ fn parse_cell_index_offset_width(
     t: &mut WithContext<impl Tokens<Item = char>, Context>,
 ) -> Option<(usize, usize, usize)> {
     let cell_index = parse_cell_index(t)?;
-    let offset = if parse_symbol(t, '+').is_some() {
-        parse_decimal(t)?
-    } else {
-        0
-    };
-    let width = if parse_symbol(t, ':').is_some() {
-        parse_decimal(t)?
-    } else {
-        1
-    };
+    let offset = if parse_symbol(t, '+').is_some() { parse_decimal(t)? } else { 0 };
+    let width = if parse_symbol(t, ':').is_some() { parse_decimal(t)? } else { 1 };
     Some((cell_index, offset, width))
 }
 

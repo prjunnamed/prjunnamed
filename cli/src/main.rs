@@ -65,7 +65,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     if version {
         println!("prjunnamed git-{}", env!("GIT_HASH"));
-        return Ok(())
+        return Ok(());
     }
 
     let target = match target {
