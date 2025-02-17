@@ -21,7 +21,7 @@ pub use instance::Instance;
 /// This type is used internally within [`Design`]. Cells that can be
 /// represented with [`CellRepr`] get stored without a separate heap
 /// allocation. All others get represented as [`CellRepr::Coarse`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) enum CellRepr {
     /// Reserved index. Can be created with [`Design::add_void`] for later
     /// replacement with [`Design::replace_value`], or left over

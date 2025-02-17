@@ -12,6 +12,7 @@ mod value;
 mod param;
 mod io;
 mod cell;
+mod metadata;
 mod design;
 mod print;
 mod parse;
@@ -28,6 +29,7 @@ pub use cell::{
     Cell, MatchCell, AssignCell, FlipFlop, IoBuffer, Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop,
     MemoryPortRelation, TargetCell, Instance,
 };
+pub use metadata::{MetaStringRef, MetaItem, MetaItemRef};
 pub use design::{Design, CellRef};
 pub use parse::{parse, ParseError};
 pub use target::{

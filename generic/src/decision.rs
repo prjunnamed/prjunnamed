@@ -329,9 +329,10 @@ impl<'a> MatchTrees<'a> {
 
     // Convert a tree of `match` cells into a matrix.
     // The output of the cell is replaced with a newly conjured void.
-    fn cell_into_matrix(&self, cell_ref: CellRef) -> MatchMatrix {
+    fn cell_into_matrix(&self, cell_ref: CellRef<'a>, all_cell_refs: &mut Vec<CellRef<'a>>) -> MatchMatrix {
         let Cell::Match(match_cell) = &*cell_ref.get() else { unreachable!() };
         let output = cell_ref.output();
+        all_cell_refs.push(cell_ref);
 
         // Create matrix for this cell.
         let mut matrix = MatchMatrix::new(&match_cell.value);
@@ -348,19 +349,20 @@ impl<'a> MatchTrees<'a> {
         // Create matrices for subtrees and merge them into the matrix for this cell.
         for (offset, output_net) in output.iter().enumerate() {
             if let Some(&sub_cell_ref) = self.subtrees.get(&(cell_ref, offset)) {
-                matrix = matrix.merge(output_net, &self.cell_into_matrix(sub_cell_ref));
+                matrix = matrix.merge(output_net, &self.cell_into_matrix(sub_cell_ref, all_cell_refs));
             }
         }
 
         matrix
     }
 
-    fn iter_matrices<'b>(&'b self) -> impl Iterator<Item = MatchMatrix> + 'b {
+    fn iter_matrices<'b>(&'b self) -> impl Iterator<Item = (MatchMatrix, Vec<CellRef<'b>>)> + 'b {
         self.roots.iter().map(|&cell_ref| {
             let Cell::Match(MatchCell { enable, .. }) = &*cell_ref.get() else { unreachable!() };
-            let mut matrix = self.cell_into_matrix(cell_ref);
+            let mut all_cell_refs = Vec::new();
+            let mut matrix = self.cell_into_matrix(cell_ref, &mut all_cell_refs);
             matrix.add_enable(*enable);
-            matrix
+            (matrix, all_cell_refs)
         })
     }
 }
@@ -448,7 +450,7 @@ pub fn decision(design: &mut Design) {
     // Then build a decision tree for it and use it to drive the output.
     let mut decisions: BTreeMap<Net, Rc<Decision>> = BTreeMap::new();
     let mut disjoint_sets: DisjointSets<Net> = DisjointSets::new();
-    for matrix in match_trees.iter_matrices() {
+    for (matrix, matches) in match_trees.iter_matrices() {
         let all_rules = BTreeSet::from_iter(matrix.iter_rules());
         if cfg!(feature = "trace") {
             eprint!(">matrix:\n{matrix}");
@@ -464,6 +466,7 @@ pub fn decision(design: &mut Design) {
             decisions.insert(rule, decision.clone());
         }
 
+        let _guard = design.with_metadata_from(&matches[..]);
         let nets = Value::from_iter(all_rules);
         design.replace_value(&nets, decision.emit_one_hot_mux(design, &nets));
     }
@@ -487,6 +490,7 @@ pub fn decision(design: &mut Design) {
             values.insert(*enable, update.clone());
         }
 
+        let _guard = design.with_metadata_from(&chain[..]);
         design.replace_value(last_assign.output(), decision.emit_disjoint_mux(design, &values, default));
         used_assigns.insert(*last_assign);
     }
@@ -494,6 +498,7 @@ pub fn decision(design: &mut Design) {
     // Lower other `assign` cells.
     for cell_ref in design.iter_cells().filter(|cell_ref| !used_assigns.contains(cell_ref)) {
         let Cell::Assign(assign_cell) = &*cell_ref.get() else { continue };
+        let _guard = design.with_metadata_from(&[cell_ref]);
         let mut nets = Vec::from_iter(assign_cell.value.iter());
         let slice = assign_cell.offset..(assign_cell.offset + assign_cell.update.len());
         nets[slice.clone()].copy_from_slice(
@@ -1100,7 +1105,10 @@ mod test {
         design.apply();
 
         let y_cell = design.find_cell(y[0]).unwrap().0;
-        let m = MatchTrees::build(&design).cell_into_matrix(y_cell);
+        let mut match_cells = Vec::new();
+        let m = MatchTrees::build(&design).cell_into_matrix(y_cell, &mut match_cells);
+        assert_eq!(match_cells.len(), 1);
+        assert_eq!(match_cells[0].output(), y);
         design.apply();
 
         let yy_cell = design.find_cell(yy[0]).unwrap().0;
@@ -1136,11 +1144,18 @@ mod test {
         design.apply();
 
         let ya_cell = design.find_cell(ya[0]).unwrap().0;
-        let ml = MatchTrees::build(&design).cell_into_matrix(ya_cell);
+        let mut match_cells = Vec::new();
+        let ml = MatchTrees::build(&design).cell_into_matrix(ya_cell, &mut match_cells);
+        assert_eq!(match_cells.len(), 2);
+        assert_eq!(match_cells[0].output(), ya);
+        assert_eq!(match_cells[1].output(), yb);
         design.apply();
 
-        let Cell::Buf(ya) = &*design.find_cell(yya[0]).unwrap().0.get() else { unreachable!() };
-        let Cell::Buf(yb) = &*design.find_cell(yyb[0]).unwrap().0.get() else { unreachable!() };
+        let ya_cell = design.find_cell(yya[0]).unwrap().0;
+        let yb_cell = design.find_cell(yyb[0]).unwrap().0;
+
+        let Cell::Buf(ya) = &*ya_cell.get() else { unreachable!() };
+        let Cell::Buf(yb) = &*yb_cell.get() else { unreachable!() };
         let mut mr = MatchMatrix::new(a.concat(b));
         mr.add(MatchRow::new(Const::lit("XX000"), [ya[0]]));
         mr.add(MatchRow::new(Const::lit("XX111"), [ya[0]]));

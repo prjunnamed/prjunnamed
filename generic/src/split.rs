@@ -87,6 +87,7 @@ pub fn split(design: &mut Design) -> bool {
 
     // Split partially live cells.
     for cell_ref in design.iter_cells() {
+        let _guard = design.with_metadata_from(&[cell_ref]);
         let cell = cell_ref.get();
         let cell_output = cell_ref.output();
         let count_live = cell_output.iter().filter(|net| live_nets.contains(&net)).count();

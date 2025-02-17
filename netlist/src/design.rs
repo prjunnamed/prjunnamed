@@ -1,35 +1,39 @@
 use std::fmt::Display;
-use std::ops::Range;
-use std::cell::RefCell;
+use std::ops::{Deref, Range};
+use std::cell::{Ref, RefCell};
 use std::borrow::Cow;
 use std::hash::Hash;
 use std::collections::{btree_map, BTreeMap, BTreeSet, HashMap};
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::cell::CellRepr;
-use crate::smt::{SmtEngine, SmtBuilder};
+use crate::{MetaItem, MetaStringRef, MetaItemRef};
 use crate::{
-    Trit, Net, Value, ControlNet, IoNet, IoValue, Cell, AssignCell, MatchCell, FlipFlop, Instance, IoBuffer, Memory,
-    Target, TargetCell, TargetCellPurity, TargetPrototype,
+    cell::CellRepr, AssignCell, Cell, ControlNet, FlipFlop, Instance, IoBuffer, IoNet, IoValue, MatchCell, Memory, Net,
+    Target, TargetCell, TargetCellPurity, TargetPrototype, Trit, Value,
 };
+use crate::metadata::{MetadataStore, MetaStringIndex, MetaItemIndex};
+use crate::smt::{SmtEngine, SmtBuilder};
 
 /// Sea of [`Cell`]s.
 #[derive(Debug, Clone)]
 pub struct Design {
     ios: BTreeMap<String, Range<u32>>,
-    cells: Vec<CellRepr>,
+    cells: Vec<AnnotatedCell>,
     changes: RefCell<ChangeQueue>,
+    metadata: RefCell<MetadataStore>,
     target: Option<Arc<dyn Target>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 struct ChangeQueue {
     next_io: u32,
     added_ios: BTreeMap<String, Range<u32>>,
-    added_cells: Vec<CellRepr>,
-    cell_cache: HashMap<Cell, Value>,
-    replaced_cells: BTreeMap<usize, Cell>,
+    added_cells: Vec<AnnotatedCell>,
+    cell_cache: HashMap<AnnotatedCell, Value>,
+    cell_metadata: MetaItemIndex,
+    appended_metadata: BTreeMap<usize, Vec<MetaItemIndex>>,
+    replaced_cells: BTreeMap<usize, AnnotatedCell>,
     unalived_cells: BTreeSet<usize>,
     replaced_nets: BTreeMap<Net, Net>,
 }
@@ -43,15 +47,8 @@ impl Design {
         Design {
             ios: BTreeMap::new(),
             cells: vec![],
-            changes: RefCell::new(ChangeQueue {
-                next_io: 0,
-                added_ios: BTreeMap::new(),
-                added_cells: vec![],
-                cell_cache: HashMap::new(),
-                replaced_cells: BTreeMap::new(),
-                unalived_cells: BTreeSet::new(),
-                replaced_nets: BTreeMap::new(),
-            }),
+            changes: RefCell::new(ChangeQueue::default()),
+            metadata: RefCell::new(MetadataStore::new()),
             target,
         }
     }
@@ -93,30 +90,71 @@ impl Design {
         self.ios.iter().map(|(name, range)| (name.as_str(), IoValue::from_range(range.clone())))
     }
 
-    pub fn add_cell(&self, cell: Cell) -> Value {
-        let mut changes = self.changes.borrow_mut();
-        if let Some(value) = changes.cell_cache.get(&cell) {
-            return value.clone();
-        }
+    pub(crate) fn add_cell_with_metadata_index(&self, cell: Cell, metadata: MetaItemIndex) -> Value {
         cell.validate(self);
-        let index = self.cells.len() + changes.added_cells.len();
-        let output_len = cell.output_len();
-        changes.added_cells.push(cell.clone().into());
-        for _ in 0..output_len.checked_sub(1).unwrap_or(0) {
-            changes.added_cells.push(CellRepr::Skip(index.try_into().expect("cell index too large")))
+        let cell_with_meta = AnnotatedCell { repr: cell.clone().into(), meta: metadata };
+        let mut changes = self.changes.borrow_mut();
+        if let Some(value) = changes.cell_cache.get(&cell_with_meta) {
+            value.clone()
+        } else {
+            let index = self.cells.len() + changes.added_cells.len();
+            let output_len = cell.output_len();
+            let output = Value::from_cell_range(index, output_len);
+            if !cell.has_effects(self) {
+                changes.cell_cache.insert(cell_with_meta.clone(), output.clone());
+            }
+            changes.added_cells.push(cell_with_meta);
+            for _ in 0..output_len.checked_sub(1).unwrap_or(0) {
+                changes.added_cells.push(CellRepr::Skip(index.try_into().expect("cell index too large")).into())
+            }
+            output
         }
-        let output = Value::from_cell_range(index, output_len);
-        if !cell.has_effects(self) {
-            changes.cell_cache.insert(cell, output.clone());
+    }
+
+    pub fn add_cell_with_metadata(&self, cell: Cell, metadata: &MetaItem) -> Value {
+        metadata.validate();
+        let metadata = self.metadata.borrow_mut().add_item(metadata);
+        self.add_cell_with_metadata_index(cell, metadata)
+    }
+
+    pub fn with_metadata_from(&self, cell_refs: &[CellRef]) -> WithMetadataGuard {
+        let mut items = BTreeSet::new();
+        for cell_ref in cell_refs {
+            for item in cell_ref.metadata().iter() {
+                match item.get() {
+                    MetaItem::Source { .. }
+                    | MetaItem::NamedScope { .. }
+                    | MetaItem::IndexedScope { .. }
+                    | MetaItem::Ident { .. } => {
+                        items.insert(item);
+                    }
+                    _ => (),
+                }
+            }
         }
-        output
+        let new_cell_metadata = if items.len() == 0 {
+            MetaItemIndex::NONE
+        } else if items.len() == 1 {
+            items.first().unwrap().index()
+        } else {
+            self.add_metadata_item(&MetaItem::Set(items.into_iter().collect()))
+        };
+        let mut changes = self.changes.borrow_mut();
+        let guard = WithMetadataGuard { design: self, restore: changes.cell_metadata };
+        changes.cell_metadata = new_cell_metadata;
+        guard
+    }
+
+    pub fn add_cell(&self, cell: Cell) -> Value {
+        let metadata = self.changes.borrow().cell_metadata;
+        self.add_cell_with_metadata_index(cell, metadata)
     }
 
     pub fn add_void(&self, width: usize) -> Value {
         let mut changes = self.changes.borrow_mut();
         let index = self.cells.len() + changes.added_cells.len();
         for _ in 0..width {
-            changes.added_cells.push(CellRepr::Void);
+            changes.added_cells.push(CellRepr::Void.into());
         }
         Value::from_cell_range(index, width)
     }
@@ -126,7 +164,7 @@ impl Design {
             return Err(trit);
         }
         let index = net.as_cell_index().unwrap();
-        let (cell_index, bit_index) = match self.cells[index] {
+        let (cell_index, bit_index) = match self.cells[index].repr {
             CellRepr::Void => panic!("located a void cell %{index} in design"),
             CellRepr::Skip(start) => (start as usize, index - start as usize),
             _ => (index, 0),
@@ -144,6 +182,27 @@ impl Design {
 
     pub(crate) fn is_valid_cell_index(&self, index: usize) -> bool {
         index < self.cells.len()
+    }
+
+    pub(crate) fn metadata(&self) -> Ref<MetadataStore> {
+        self.metadata.borrow()
+    }
+
+    pub(crate) fn add_metadata_string(&self, string: &str) -> MetaStringIndex {
+        self.metadata.borrow_mut().add_string(string)
+    }
+
+    pub(crate) fn ref_metadata_string(&self, index: MetaStringIndex) -> MetaStringRef {
+        self.metadata.borrow().ref_string(self, index)
+    }
+
+    pub(crate) fn add_metadata_item(&self, item: &MetaItem) -> MetaItemIndex {
+        item.validate();
+        self.metadata.borrow_mut().add_item(item)
+    }
+
+    pub(crate) fn ref_metadata_item(&self, index: MetaItemIndex) -> MetaItemRef {
+        self.metadata.borrow().ref_item(self, index)
     }
 
     pub fn replace_net(&self, from_net: impl Into<Net>, to_net: impl Into<Net>) {
@@ -200,9 +259,9 @@ impl Design {
         let locate_cell = |net: Net| {
             net.as_cell_index().map(|index| {
                 if index < self.cells.len() {
-                    &self.cells[index]
+                    &self.cells[index].repr
                 } else {
-                    &changes.added_cells[index - self.cells.len()]
+                    &changes.added_cells[index - self.cells.len()].repr
                 }
             })
         };
@@ -213,10 +272,10 @@ impl Design {
 
         let mut smt = SmtBuilder::new(self, engine);
         for (index, cell) in self.cells.iter().chain(changes.added_cells.iter()).enumerate() {
-            if matches!(cell, CellRepr::Skip(_) | CellRepr::Void) {
+            if matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
             } else if cell.output_len() == 0 {
             } else if let Some(new_cell) = changes.replaced_cells.get(&index) {
-                smt.replace_cell(&Value::from_cell_range(index, cell.output_len()), &*cell.get(), new_cell)?;
+                smt.replace_cell(&Value::from_cell_range(index, cell.output_len()), &*cell.get(), &*new_cell.get())?;
             } else {
                 smt.add_cell(&Value::from_cell_range(index, cell.output_len()), &*cell.get())?;
             }
@@ -241,7 +300,7 @@ impl Design {
             message.push_str(&format!("\ndesign:\n{self:#}"));
             message.push_str("\ncounterexample:\n");
             for (index, cell) in self.cells.iter().chain(changes.added_cells.iter()).enumerate() {
-                if matches!(cell, CellRepr::Skip(_) | CellRepr::Void) {
+                if matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
                 } else if cell.output_len() == 0 {
                 } else {
                     let output = Value::from_cell_range(index, cell.output_len());
@@ -272,27 +331,42 @@ impl Design {
         #[cfg(feature = "verify")]
         self.verify(crate::EasySmtEngine::z3().unwrap()).unwrap();
 
-        let changes = self.changes.get_mut();
+        let mut changes = std::mem::take(self.changes.get_mut());
         let mut did_change = !changes.added_ios.is_empty() || !changes.added_cells.is_empty();
-        for cell_index in std::mem::take(&mut changes.unalived_cells) {
+        for (cell_index, new_items) in changes.appended_metadata {
+            let mut all_items = BTreeSet::new();
+            all_items.extend(self.ref_metadata_item(self.cells[cell_index].meta).iter());
+            for new_item in new_items {
+                all_items.extend(self.ref_metadata_item(new_item).iter());
+            }
+            let new_cell_metadata = if all_items.len() == 0 {
+                MetaItemIndex::NONE
+            } else if all_items.len() == 1 {
+                all_items.first().unwrap().index()
+            } else {
+                self.add_metadata_item(&MetaItem::Set(all_items.into_iter().collect()))
+            };
+            self.cells[cell_index].meta = new_cell_metadata
+        }
+        for cell_index in changes.unalived_cells {
             let output_len = self.cells[cell_index].output_len().max(1);
             for index in cell_index..cell_index + output_len {
-                self.cells[index] = CellRepr::Void;
+                self.cells[index] = CellRepr::Void.into();
             }
             did_change = true;
         }
-        for (index, new_cell) in std::mem::take(&mut changes.replaced_cells) {
+        for (index, new_cell) in changes.replaced_cells {
             assert_eq!(self.cells[index].output_len(), new_cell.output_len());
+            self.cells[index] = new_cell;
             // CellRef::replace() ensures the new cell is different.
-            self.cells[index] = new_cell.into();
             did_change = true;
         }
-        self.ios.extend(std::mem::take(&mut changes.added_ios));
-        self.cells.extend(std::mem::take(&mut changes.added_cells));
+        self.ios.extend(changes.added_ios);
+        self.cells.extend(changes.added_cells);
         changes.cell_cache.clear();
         if !changes.replaced_nets.is_empty() {
-            for cell in self.cells.iter_mut().filter(|cell| !matches!(cell, CellRepr::Skip(_) | CellRepr::Void)) {
-                cell.visit_mut(|net| {
+            for cell in self.cells.iter_mut().filter(|cell| !matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void)) {
+                cell.repr.visit_mut(|net| {
                     while let Some(new_net) = changes.replaced_nets.get(net) {
                         if *net != *new_net {
                             *net = *new_net;
@@ -316,6 +390,43 @@ impl Design {
             .expect("design has no target")
             .prototype(&target_cell.kind)
             .expect("target prototype not defined")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct AnnotatedCell {
+    repr: CellRepr,
+    meta: MetaItemIndex,
+}
+
+impl Deref for AnnotatedCell {
+    type Target = CellRepr;
+
+    fn deref(&self) -> &Self::Target {
+        &self.repr
+    }
+}
+
+impl Into<AnnotatedCell> for CellRepr {
+    fn into(self) -> AnnotatedCell {
+        AnnotatedCell { repr: self, meta: MetaItemIndex::NONE }
+    }
+}
+
+impl Into<AnnotatedCell> for Cell {
+    fn into(self) -> AnnotatedCell {
+        AnnotatedCell { repr: self.into(), meta: MetaItemIndex::NONE }
+    }
+}
+
+pub struct WithMetadataGuard<'a> {
+    design: &'a Design,
+    restore: MetaItemIndex,
+}
+
+impl Drop for WithMetadataGuard<'_> {
+    fn drop(&mut self) {
+        self.design.changes.borrow_mut().cell_metadata = self.restore;
     }
 }
 
@@ -355,8 +466,12 @@ impl Hash for CellRef<'_> {
 }
 
 impl<'a> CellRef<'a> {
-    pub fn get(&self) -> Cow<'a, Cell> {
+    pub fn get(&self) -> Cow<Cell> {
         self.design.cells[self.index].get()
+    }
+
+    pub fn metadata(&self) -> MetaItemRef<'a> {
+        self.design.metadata.borrow().ref_item(self.design, self.design.cells[self.index].meta)
     }
 
     pub fn output_len(&self) -> usize {
@@ -374,9 +489,15 @@ impl<'a> CellRef<'a> {
     pub fn replace(&self, to_cell: Cell) {
         if *self.design.cells[self.index].get() != to_cell {
             to_cell.validate(self.design);
+            let to_cell = AnnotatedCell { repr: to_cell.into(), meta: self.design.cells[self.index].meta };
             let mut changes = self.design.changes.borrow_mut();
             assert!(changes.replaced_cells.insert(self.index, to_cell).is_none());
         }
+    }
+
+    pub fn append_metadata(&self, metadata: MetaItemRef<'a>) {
+        let mut changes = self.design.changes.borrow_mut();
+        changes.appended_metadata.entry(self.index).or_default().push(metadata.index())
     }
 
     pub fn unalive(&self) {
@@ -384,9 +505,14 @@ impl<'a> CellRef<'a> {
         changes.unalived_cells.insert(self.index);
     }
 
-    // Returns the same index as the one used by `Display` implementation.`
+    // Returns the same index as the one used by `Display` implementation. There is intentionally no way to retrieve
+    // a cell by its index.
     pub fn debug_index(&self) -> usize {
         self.index
+    }
+
+    pub(crate) fn metadata_index(&self) -> MetaItemIndex {
+        self.design.cells[self.index].meta
     }
 }
 
@@ -399,7 +525,7 @@ impl<'a> Iterator for CellIter<'a> {
     type Item = CellRef<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while matches!(self.design.cells.get(self.index), Some(CellRepr::Void)) {
+        while matches!(self.design.cells.get(self.index), Some(AnnotatedCell { repr: CellRepr::Void, .. })) {
             self.index += 1;
         }
         if self.index < self.design.cells.len() {
@@ -609,11 +735,11 @@ impl Design {
 
         let mut queue = BTreeSet::new();
         let mut debug = BTreeMap::new();
-        for (index, cell_repr) in self.cells.iter().enumerate() {
-            if matches!(cell_repr, CellRepr::Skip(_) | CellRepr::Void) {
+        for (index, cell) in self.cells.iter().enumerate() {
+            if matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
                 continue;
             }
-            let cell = &*cell_repr.get();
+            let cell = &*cell.get();
             if cell.has_effects(self) {
                 queue.insert(index);
             } else if let Cell::Debug(name, value) = cell {
@@ -643,13 +769,13 @@ impl Design {
                 let skip_count = cell.output_len().checked_sub(1).unwrap_or(0);
                 self.cells.push(cell);
                 for _ in 0..skip_count {
-                    self.cells.push(CellRepr::Skip(new_index as u32));
+                    self.cells.push(CellRepr::Skip(new_index as u32).into());
                 }
             }
         }
 
-        for cell in self.cells.iter_mut().filter(|cell| !matches!(cell, CellRepr::Skip(_))) {
-            cell.visit_mut(|net| {
+        for cell in self.cells.iter_mut().filter(|cell| !matches!(cell.repr, CellRepr::Skip(_))) {
+            cell.repr.visit_mut(|net| {
                 if net.is_cell() {
                     *net = net_map[net];
                 }
@@ -666,7 +792,7 @@ impl Design {
                     }
                 }
             });
-            self.cells.push(CellRepr::Coarse(Box::new(Cell::Debug(name, value))));
+            self.cells.push(CellRepr::Coarse(Box::new(Cell::Debug(name, value))).into());
         }
 
         did_change
@@ -731,6 +857,7 @@ impl Display for Design {
         let added = "+";
         let removed = "-";
         let unchanged = " ";
+        let comment = if !diff { "; " } else { " ; " };
 
         let mut net_names = BTreeMap::new();
         for cell_ref in self.iter_cells() {
@@ -759,6 +886,57 @@ impl Display for Design {
             writeln!(f)?;
         }
 
+        for metadata_ref in self.metadata.borrow().iter_items(self) {
+            if metadata_ref.index() == MetaItemIndex::NONE {
+                continue;
+            }
+            write!(f, "{}", if !diff { "" } else { unchanged })?;
+            write!(f, "{} = ", metadata_ref.index())?;
+            let item = metadata_ref.get();
+            match item {
+                MetaItem::None => unreachable!(),
+                MetaItem::Set(items) => {
+                    write!(f, "{{")?;
+                    for item in items {
+                        write!(f, " {}", item.index())?;
+                    }
+                    write!(f, " }}")?;
+                }
+                MetaItem::Source { file, start, end } => {
+                    write!(f, "source ")?;
+                    self.write_string(f, &file.get())?;
+                    write!(f, " (#{} #{}) (#{} #{})", start.line, start.column, end.line, end.column)?;
+                }
+                MetaItem::NamedScope { name: _, source, parent }
+                | MetaItem::IndexedScope { index: _, source, parent } => {
+                    write!(f, "scope ")?;
+                    match item {
+                        MetaItem::NamedScope { name, .. } => self.write_string(f, &name.get())?,
+                        MetaItem::IndexedScope { index, .. } => write!(f, "#{index}")?,
+                        _ => unreachable!(),
+                    }
+                    if !parent.is_none() {
+                        write!(f, " in={}", parent.index())?;
+                    }
+                    if !source.is_none() {
+                        write!(f, " src={}", source.index())?;
+                    }
+                }
+                MetaItem::Ident { name, scope } => {
+                    write!(f, "ident ")?;
+                    self.write_string(f, &name.get())?;
+                    write!(f, " in={}", scope.index())?;
+                }
+                MetaItem::Attr { name, value } => {
+                    write!(f, "attr ")?;
+                    self.write_string(f, &name.get())?;
+                    write!(f, " ")?;
+                    self.write_param_value(f, &value)?;
+                }
+            }
+            writeln!(f)?;
+        }
+
         for (name, io_value) in self.iter_ios() {
             write!(f, "{}&", if !diff { "" } else { unchanged })?;
             self.write_string(f, name)?;
@@ -770,24 +948,43 @@ impl Display for Design {
             writeln!(f, ":{}", io_value.len())?;
         }
 
-        let write_cell = |f: &mut std::fmt::Formatter, index: usize, cell: &Cell| {
+        let write_cell = |f: &mut std::fmt::Formatter, index: usize, cell: &Cell, metadata: MetaItemIndex| {
+            for item in self.ref_metadata_item(metadata).iter() {
+                let mut scope_names = Vec::new();
+                let mut scope = item;
+                while !scope.is_none() {
+                    let MetaItem::NamedScope { name, parent, .. } = scope.get() else { break };
+                    scope_names.push(name);
+                    scope = parent;
+                }
+                if !scope_names.is_empty() {
+                    write!(f, "{comment}scope ")?;
+                    for (index, name) in scope_names.iter().rev().enumerate() {
+                        if index > 0 {
+                            write!(f, ".")?;
+                        }
+                        self.write_string(f, &*name.get())?;
+                    }
+                    writeln!(f)?;
+                }
+            }
             if matches!(cell, Cell::Target(..)) {
                 for index in (index..index + cell.output_len()).rev() {
                     if let Some((name, offset)) = net_names.get(&Net::from_cell_index(index)) {
-                        write!(f, "{}; ", if !diff { "" } else { unchanged })?;
+                        write!(f, "{comment}drives ")?;
                         self.write_string(f, &*name)?;
                         writeln!(f, "+{offset}")?;
                     }
                 }
             }
             if !diff {
-                self.write_cell(f, "", index, cell)?;
+                self.write_cell(f, "", index, cell, metadata)?;
             } else if changes.unalived_cells.contains(&index) {
-                self.write_cell(f, removed, index, cell)?;
+                self.write_cell(f, removed, index, cell, metadata)?;
             } else {
                 let mut mapped_cell;
                 if let Some(replaced_cell) = changes.replaced_cells.get(&index) {
-                    mapped_cell = replaced_cell.clone();
+                    mapped_cell = (*replaced_cell.get()).clone();
                 } else {
                     mapped_cell = cell.clone();
                 }
@@ -797,31 +994,30 @@ impl Display for Design {
                     }
                 });
                 if index >= self.cells.len() {
-                    self.write_cell(f, added, index, &mapped_cell)?;
+                    self.write_cell(f, added, index, &mapped_cell, metadata)?;
                 } else if mapped_cell != *cell {
-                    self.write_cell(f, removed, index, cell)?;
+                    self.write_cell(f, removed, index, cell, metadata)?;
                     writeln!(f)?;
-                    self.write_cell(f, added, index, &mapped_cell)?;
+                    self.write_cell(f, added, index, &mapped_cell, metadata)?;
                 } else {
-                    self.write_cell(f, unchanged, index, cell)?;
+                    self.write_cell(f, unchanged, index, cell, metadata)?;
                 }
             }
-            writeln!(f)?;
-            Ok(())
+            writeln!(f)
         };
 
         if f.alternate() {
             for cell_ref in self.iter_cells() {
-                write_cell(f, cell_ref.index, &*cell_ref.get())?;
+                write_cell(f, cell_ref.index, &*cell_ref.get(), cell_ref.metadata_index())?;
             }
         } else {
             for cell_ref in self.iter_cells_topo() {
-                write_cell(f, cell_ref.index, &*cell_ref.get())?;
+                write_cell(f, cell_ref.index, &*cell_ref.get(), cell_ref.metadata_index())?;
             }
         }
-        for (offset, cell_repr) in changes.added_cells.iter().enumerate() {
-            if !matches!(cell_repr, CellRepr::Skip(_) | CellRepr::Void) {
-                write_cell(f, self.cells.len() + offset, &*cell_repr.get())?;
+        for (offset, cell) in changes.added_cells.iter().enumerate() {
+            if !matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
+                write_cell(f, self.cells.len() + offset, &*cell.get(), cell.meta)?;
             }
         }
 

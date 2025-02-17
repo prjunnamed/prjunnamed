@@ -34,6 +34,20 @@ fn test_comment() {
 }
 
 #[test]
+fn test_metadata() {
+    roundtrip("!1 = source \"top.py\" (#1 #2) (#3 #4)\n");
+    roundtrip("!1 = scope \"top\"\n");
+    roundtrip("!1 = source \"top.py\" (#1 #2) (#3 #4)\n!2 = scope \"top\" src=!1\n");
+    roundtrip("!1 = scope \"top\"\n!2 = scope \"cpu\" in=!1\n");
+    roundtrip("!1 = scope \"io\"\n!2 = scope #1 in=!1\n");
+    roundtrip("!1 = scope \"top\"\n!2 = ident \"addr\" in=!1\n");
+    roundtrip("!1 = scope \"top\"\n!2 = ident \"addr\" in=!1\n!3 = { !1 !2 }\n");
+    roundtrip("!1 = attr \"foo\" 1101\n");
+    roundtrip("!1 = attr \"foo\" #1\n");
+    roundtrip("!1 = attr \"foo\" \"bar\"\n");
+}
+
+#[test]
 fn test_const() {
     roundtrip("%0:1 = buf 0\n");
     roundtrip("%0:1 = buf 1\n");
@@ -113,6 +127,12 @@ fn test_cells() {
     roundtrip("%0:2 = buf 00\n%2:0 = output \"bite\" %0:2\n");
     roundtrip("%0:2 = buf 00\n%2:0 = name \"meow\" %0:2\n");
     roundtrip("%0:2 = buf 00\n%2:0 = debug \"hiss\" %0:2\n");
+}
+
+#[test]
+fn test_cells_metadata() {
+    roundtrip("!1 = source \"top.py\" (#1 #2) (#3 #4)\n%0:1 = buf 0 !1\n");
+    roundtrip("!1 = source \"top.py\" (#1 #2) (#3 #4)\n%0:2 = buf 00\n%2:3 = match %0:2 !1 { (00 01) 10 11 }\n");
 }
 
 #[test]
@@ -201,6 +221,11 @@ fn test_memories() {
 }
 
 #[test]
+fn test_memories_metadata() {
+    roundtrip("!1 = source \"op.py\" (#1 #2) (#3 #4)\n%0:0 = memory depth=#1 width=#1 !1 {\n  init 1\n}\n");
+}
+
+#[test]
 fn test_instances() {
     roundtrip("%0:1 = buf 0\n%1:_ = \"TBUF\" {\n  input \"EN\" = %0\n}\n");
     roundtrip("%2:_ = \"TBUF\" {\n  %2:2 = output \"I\"\n}\n");
@@ -214,6 +239,11 @@ fn test_instances() {
         "%4:0 = output \"q\" %2\n",
         "%5:0 = output \"qn\" %3\n"
     ));
+}
+
+#[test]
+fn test_instances_metadata() {
+    roundtrip("!1 = source \"op.py\" (#1 #2) (#3 #4)\n%0:1 = buf 0\n%1:_ = \"TBUF\" !1 {\n  input \"EN\" = %0\n}\n");
 }
 
 #[test]
@@ -236,6 +266,7 @@ impl TestTarget {
         Arc::new(TestTarget {
             options,
             prototypes: BTreeMap::from([
+                ("BUF".into(), TargetPrototype::new_pure().add_input("A", Const::undef(1)).add_output("Q", 1)),
                 (
                     "QUAD_IOBUF".into(),
                     TargetPrototype::new_has_effects()
@@ -318,8 +349,8 @@ fn test_target() {
         "set target \"test\"\n",
         "%0:1 = input \"A\"\n",
         "%1:1 = input \"B\"\n",
-        "; \"co\"+0\n",
-        "; \"o\"+0\n",
+        "; drives \"co\"+0\n",
+        "; drives \"o\"+0\n",
         "%4:_ = target \"ADD\" {\n",
         "  input \"A\" = %0\n",
         "  input \"B\" = %1\n",
@@ -328,5 +359,25 @@ fn test_target() {
         "}\n",
         "%6:0 = output \"o\" %4\n",
         "%7:0 = output \"co\" %5\n",
+    ));
+    roundtrip(concat!(
+        "set target \"test\"\n",
+        "!1 = source \"op.py\" (#1 #2) (#3 #4)\n",
+        "%0:1 = input \"A\"\n",
+        "%1:1 = target \"BUF\" !1 {\n",
+        "  input \"A\" = %0\n",
+        "}\n"
+    ));
+    roundtrip(concat!(
+        "set target \"test\"\n",
+        "!1 = source \"op.py\" (#1 #2) (#3 #4)\n",
+        "%0:1 = input \"A\"\n",
+        "%1:1 = input \"B\"\n",
+        "%4:_ = target \"ADD\" !1 {\n",
+        "  input \"A\" = %0\n",
+        "  input \"B\" = %1\n",
+        "  %4:1 = output \"O\"\n",
+        "  %5:1 = output \"CO\"\n",
+        "}\n",
     ));
 }

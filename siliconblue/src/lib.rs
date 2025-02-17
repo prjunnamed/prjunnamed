@@ -313,6 +313,7 @@ impl Target for SiliconBlueTarget {
     fn import(&self, design: &mut Design) -> Result<(), TargetImportError> {
         for cell_ref in design.iter_cells() {
             let Cell::Other(instance) = &*cell_ref.get() else { continue };
+            let _guard = design.with_metadata_from(&[cell_ref]);
             let orig_kind = &instance.kind[..];
             let mut instance = instance.clone();
             match orig_kind {
@@ -508,6 +509,7 @@ impl Target for SiliconBlueTarget {
 
         for cell_ref in design.iter_cells() {
             let Cell::Target(target_cell) = &*cell_ref.get() else { continue };
+            let _guard = design.with_metadata_from(&[cell_ref]);
             let prototype = design.target_prototype(target_cell);
             let mut instance = prototype.target_cell_to_instance(target_cell);
             let mut removed_outputs = BTreeSet::new();
@@ -692,31 +694,31 @@ impl SiliconBlueTarget {
     pub fn lower_iobufs(&self, design: &mut Design) {
         let prototype = self.prototype(SB_IO).unwrap();
         for cell_ref in design.iter_cells() {
-            if let Cell::IoBuf(io_buffer) = &*cell_ref.get() {
-                let enable = io_buffer.enable.into_pos(design);
-                let mut output_value = Value::new();
-                for bit_index in 0..io_buffer.output.len() {
-                    let mut target_cell = TargetCell::new(SB_IO, prototype);
-                    if io_buffer.enable.is_always(false) {
-                        // no output
-                        prototype.apply_param(&mut target_cell, "PIN_TYPE", Const::lit("000001"));
-                    } else if io_buffer.enable.is_always(true) {
-                        // always-on output
-                        prototype.apply_input(&mut target_cell, "D_OUT_0", io_buffer.output[bit_index]);
-                        prototype.apply_param(&mut target_cell, "PIN_TYPE", Const::lit("011001"));
-                    } else {
-                        // tristate output
-                        prototype.apply_input(&mut target_cell, "D_OUT_0", io_buffer.output[bit_index]);
-                        prototype.apply_input(&mut target_cell, "OUTPUT_ENABLE", enable);
-                        prototype.apply_param(&mut target_cell, "PIN_TYPE", Const::lit("101001"));
-                    }
-                    prototype.apply_io(&mut target_cell, "PACKAGE_PIN", io_buffer.io[bit_index]);
-                    let target_output = design.add_target(target_cell);
-                    output_value.extend(prototype.extract_output(&target_output, "D_IN_0"));
+            let Cell::IoBuf(io_buffer) = &*cell_ref.get() else { continue };
+            let _guard = design.with_metadata_from(&[cell_ref]);
+            let enable = io_buffer.enable.into_pos(design);
+            let mut output_value = Value::new();
+            for bit_index in 0..io_buffer.output.len() {
+                let mut target_cell = TargetCell::new(SB_IO, prototype);
+                if io_buffer.enable.is_always(false) {
+                    // no output
+                    prototype.apply_param(&mut target_cell, "PIN_TYPE", Const::lit("000001"));
+                } else if io_buffer.enable.is_always(true) {
+                    // always-on output
+                    prototype.apply_input(&mut target_cell, "D_OUT_0", io_buffer.output[bit_index]);
+                    prototype.apply_param(&mut target_cell, "PIN_TYPE", Const::lit("011001"));
+                } else {
+                    // tristate output
+                    prototype.apply_input(&mut target_cell, "D_OUT_0", io_buffer.output[bit_index]);
+                    prototype.apply_input(&mut target_cell, "OUTPUT_ENABLE", enable);
+                    prototype.apply_param(&mut target_cell, "PIN_TYPE", Const::lit("101001"));
                 }
-                design.replace_value(cell_ref.output(), output_value);
-                cell_ref.unalive();
+                prototype.apply_io(&mut target_cell, "PACKAGE_PIN", io_buffer.io[bit_index]);
+                let target_output = design.add_target(target_cell);
+                output_value.extend(prototype.extract_output(&target_output, "D_IN_0"));
             }
+            design.replace_value(cell_ref.output(), output_value);
+            cell_ref.unalive();
         }
         design.compact();
     }
@@ -724,48 +726,48 @@ impl SiliconBlueTarget {
     pub fn lower_ffs(&self, design: &mut Design) {
         let prototype = self.prototype(SB_DFF).unwrap();
         for cell_ref in design.iter_cells() {
-            if let Cell::Dff(flip_flop) = &*cell_ref.get() {
-                let mut flip_flop = flip_flop.clone();
-                if !flip_flop.reset.is_always(false) && !flip_flop.clear.is_always(false) {
-                    flip_flop.unmap_reset(design);
-                }
-                flip_flop.remap_enable_over_reset(design);
-                let output = cell_ref.output();
-                let enable = flip_flop.enable.into_pos(design);
-                let (is_reset_async, reset) = if !flip_flop.clear.is_always(false) {
-                    assert!(flip_flop.reset.is_always(false));
-                    (true, flip_flop.clear.into_pos(design))
-                } else {
-                    (false, flip_flop.reset.into_pos(design))
-                };
-
-                for index in 0..flip_flop.data.len() {
-                    let mut ff_slice = flip_flop.slice(index..index + 1);
-                    let mut output_slice = output.slice(index..index + 1);
-                    if ff_slice.init_value[0] == Trit::One {
-                        output_slice = ff_slice.invert(design, &output_slice);
-                    }
-                    let reset_value = if reset == Net::ZERO {
-                        Trit::Undef
-                    } else if is_reset_async {
-                        ff_slice.clear_value[0]
-                    } else {
-                        ff_slice.reset_value[0]
-                    };
-                    let mut target_cell = TargetCell::new(SB_DFF, prototype);
-                    prototype.apply_param(&mut target_cell, "RESET_VALUE", reset_value);
-                    prototype.apply_param(&mut target_cell, "IS_RESET_ASYNC", is_reset_async);
-                    prototype.apply_param(&mut target_cell, "IS_C_INVERTED", ff_slice.clock.is_negative());
-                    prototype.apply_input(&mut target_cell, "D", ff_slice.data);
-                    prototype.apply_input(&mut target_cell, "C", ff_slice.clock.net());
-                    prototype.apply_input(&mut target_cell, "E", enable);
-                    prototype.apply_input(&mut target_cell, "R", reset);
-                    let target_output = design.add_target(target_cell);
-                    let q = prototype.extract_output(&target_output, "Q");
-                    design.replace_value(output_slice, q);
-                }
-                cell_ref.unalive();
+            let Cell::Dff(flip_flop) = &*cell_ref.get() else { continue };
+            let _guard = design.with_metadata_from(&[cell_ref]);
+            let mut flip_flop = flip_flop.clone();
+            if !flip_flop.reset.is_always(false) && !flip_flop.clear.is_always(false) {
+                flip_flop.unmap_reset(design);
             }
+            flip_flop.remap_enable_over_reset(design);
+            let output = cell_ref.output();
+            let enable = flip_flop.enable.into_pos(design);
+            let (is_reset_async, reset) = if !flip_flop.clear.is_always(false) {
+                assert!(flip_flop.reset.is_always(false));
+                (true, flip_flop.clear.into_pos(design))
+            } else {
+                (false, flip_flop.reset.into_pos(design))
+            };
+
+            for index in 0..flip_flop.data.len() {
+                let mut ff_slice = flip_flop.slice(index..index + 1);
+                let mut output_slice = output.slice(index..index + 1);
+                if ff_slice.init_value[0] == Trit::One {
+                    output_slice = ff_slice.invert(design, &output_slice);
+                }
+                let reset_value = if reset == Net::ZERO {
+                    Trit::Undef
+                } else if is_reset_async {
+                    ff_slice.clear_value[0]
+                } else {
+                    ff_slice.reset_value[0]
+                };
+                let mut target_cell = TargetCell::new(SB_DFF, prototype);
+                prototype.apply_param(&mut target_cell, "RESET_VALUE", reset_value);
+                prototype.apply_param(&mut target_cell, "IS_RESET_ASYNC", is_reset_async);
+                prototype.apply_param(&mut target_cell, "IS_C_INVERTED", ff_slice.clock.is_negative());
+                prototype.apply_input(&mut target_cell, "D", ff_slice.data);
+                prototype.apply_input(&mut target_cell, "C", ff_slice.clock.net());
+                prototype.apply_input(&mut target_cell, "E", enable);
+                prototype.apply_input(&mut target_cell, "R", reset);
+                let target_output = design.add_target(target_cell);
+                let q = prototype.extract_output(&target_output, "Q");
+                design.replace_value(output_slice, q);
+            }
+            cell_ref.unalive();
         }
         design.compact();
     }

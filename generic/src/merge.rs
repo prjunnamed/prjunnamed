@@ -87,6 +87,10 @@ pub fn merge(design: &mut Design) -> bool {
                 eprintln!(">merge {} => {}", design.display_value(&output), design.display_value(&canon));
             }
         }
+        for canon_net in canon.iter() {
+            let Ok((canon_cell_ref, _offset)) = design.find_cell(canon_net) else { unreachable!() };
+            canon_cell_ref.append_metadata(cell_ref.metadata());
+        }
         design.replace_value(output, canon);
     }
     design.compact()

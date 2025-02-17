@@ -26,7 +26,8 @@ macro_rules! netlist_match {
         {
             'block: {
                 let pattern = $crate::netlist_match!( @NEW@ [ $($pat)+ ] );
-                match pattern.execute($design, $target) {
+                let collector = $crate::CellCollector::new($design);
+                match pattern.execute(&collector, $target) {
                     Some($crate::netlist_match!( @PAT@ [ $($pat)+ ] )) $( if $guard )? => {
                         if cfg!(feature = "trace") {
                             eprintln!(">match {} => {}",
@@ -34,6 +35,7 @@ macro_rules! netlist_match {
                                 $design.inner().display_value(&*$target)
                             );
                         }
+                        let _guard = $design.inner().with_metadata_from(&collector.into_cells()[..]);
                         break 'block Some($result.into())
                     }
                     _ => ()
@@ -46,7 +48,8 @@ macro_rules! netlist_match {
         {
             'block: {
                 let pattern = $crate::netlist_match!( @NEW@ [ $($pat)+ ] );
-                match pattern.execute($design, $target) {
+                let collector = $crate::CellCollector::new($design);
+                match pattern.execute(&collector, $target) {
                     Some($crate::netlist_match!( @PAT@ [ $($pat)+ ] )) => {
                         if let $gpat = $gexpr {
                             if cfg!(feature = "trace") {
@@ -55,6 +58,7 @@ macro_rules! netlist_match {
                                     $design.inner().display_value(&*$target)
                                 );
                             }
+                            let _guard = $design.inner().with_metadata_from(&collector.into_cells()[..]);
                             break 'block Some($result.into())
                         }
                     }
@@ -126,7 +130,7 @@ mod bitwise;
 mod shift;
 mod arithmetic;
 
-pub use traits::{NetOrValue, DesignDyn};
+pub use traits::{NetOrValue, DesignDyn, CellCollector};
 
 pub mod patterns {
     pub use crate::simple::*;

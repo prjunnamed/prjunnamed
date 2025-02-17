@@ -1,4 +1,7 @@
-use std::fmt::{Debug, Display};
+use std::{
+    cell::RefCell,
+    fmt::{Debug, Display},
+};
 
 use prjunnamed_netlist::{CellRef, Const, Design, Net, Trit, Value};
 
@@ -86,5 +89,36 @@ impl DesignDyn for Design {
 
     fn inner(&self) -> &Design {
         self
+    }
+}
+
+pub struct CellCollector<'a> {
+    inner: &'a dyn DesignDyn,
+    cells: RefCell<Vec<CellRef<'a>>>,
+}
+
+impl<'a> CellCollector<'a> {
+    pub fn new(design: &'a dyn DesignDyn) -> Self {
+        Self { inner: design, cells: RefCell::new(Vec::new()) }
+    }
+
+    pub fn into_cells(self) -> Vec<CellRef<'a>> {
+        self.cells.into_inner()
+    }
+}
+
+impl DesignDyn for CellCollector<'_> {
+    fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
+        match self.inner.find_cell(net) {
+            Ok((cell_ref, offset)) => {
+                self.cells.borrow_mut().push(cell_ref);
+                Ok((cell_ref, offset))
+            }
+            Err(trit) => Err(trit),
+        }
+    }
+
+    fn inner(&self) -> &Design {
+        self.inner.inner()
     }
 }

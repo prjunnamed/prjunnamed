@@ -40,6 +40,7 @@ fn lower_shift(
 
 pub fn lower_arith(design: &mut Design) {
     for cell_ref in design.iter_cells() {
+        let _guard = design.with_metadata_from(&[cell_ref]);
         let new_cell = match &*cell_ref.get() {
             Cell::Eq(a, b) => {
                 if a.is_empty() {

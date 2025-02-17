@@ -1,8 +1,8 @@
 use std::{borrow::Cow, fmt::Display};
 
 use crate::{
-    Cell, CellRef, Const, ControlNet, Design, IoNet, IoValue, MemoryPortRelation, Net, ParamValue, TargetOutput, Trit,
-    Value,
+    metadata::MetaItemIndex, Cell, CellRef, Const, ControlNet, Design, IoNet, IoValue, MemoryPortRelation, Net,
+    ParamValue, TargetOutput, Trit, Value,
 };
 
 struct DisplayFn<'a, F: for<'b> Fn(&Design, &mut std::fmt::Formatter<'b>) -> std::fmt::Result>(&'a Design, F);
@@ -224,14 +224,32 @@ impl Design {
         Ok(())
     }
 
+    pub(crate) fn write_param_value(&self, f: &mut std::fmt::Formatter, value: &ParamValue) -> std::fmt::Result {
+        match value {
+            ParamValue::Const(value) => write!(f, "{value}"),
+            ParamValue::Int(value) => write!(f, "#{value}"),
+            ParamValue::Float(_value) => unimplemented!("float parameter"),
+            ParamValue::String(value) => self.write_string(f, value),
+        }
+    }
+
     pub(crate) fn write_cell(
         &self,
         f: &mut std::fmt::Formatter,
         prefix: &str,
         index: usize,
         cell: &Cell,
+        metadata: MetaItemIndex,
     ) -> std::fmt::Result {
         let newline = &format!("\n{prefix}");
+
+        let write_metadata = |f: &mut std::fmt::Formatter| -> std::fmt::Result {
+            if metadata != MetaItemIndex::NONE {
+                write!(f, " {metadata}")
+            } else {
+                Ok(())
+            }
+        };
 
         let write_control_net = |f: &mut std::fmt::Formatter, control_net: ControlNet| -> std::fmt::Result {
             if control_net.is_negative() {
@@ -263,15 +281,6 @@ impl Design {
                 write!(f, " #{stride}")?;
                 Ok(())
             };
-
-        let write_param_value = |f: &mut std::fmt::Formatter, value: &ParamValue| -> std::fmt::Result {
-            match value {
-                ParamValue::Const(value) => write!(f, "{value}"),
-                ParamValue::Int(value) => write!(f, "#{value}"),
-                ParamValue::Float(_value) => unimplemented!("float parameter"),
-                ParamValue::String(value) => self.write_string(f, value),
-            }
-        };
 
         let write_cell_argument = |f: &mut std::fmt::Formatter, keyword: &str, name: &str| -> std::fmt::Result {
             write!(f, "  {keyword} ")?;
@@ -344,6 +353,7 @@ impl Design {
                     .map(|alternates| alternates.iter().map(Const::len).sum::<usize>())
                     .sum::<usize>()
                     > 80;
+                write_metadata(f)?;
                 write!(f, " {{")?;
                 if multiline {
                     write!(f, "{newline}")?;
@@ -421,7 +431,9 @@ impl Design {
                 }
             }
             Cell::Memory(memory) => {
-                write!(f, "memory depth=#{} width=#{} {{{newline}", memory.depth, memory.width)?;
+                write!(f, "memory depth=#{} width=#{}", memory.depth, memory.width)?;
+                write_metadata(f)?;
+                write!(f, " {{{newline}")?;
                 for write_port in &memory.write_ports {
                     write!(f, "  write addr=")?;
                     self.write_value(f, &write_port.addr)?;
@@ -507,10 +519,11 @@ impl Design {
             }
             Cell::Other(instance) => {
                 self.write_string(f, instance.kind.as_str())?;
+                write_metadata(f)?;
                 write!(f, " {{{newline}")?;
                 for (name, value) in instance.params.iter() {
                     write_cell_argument(f, "param", name)?;
-                    write_param_value(f, value)?;
+                    self.write_param_value(f, value)?;
                     write!(f, "{newline}")?;
                 }
                 for (name, value) in instance.inputs.iter() {
@@ -534,10 +547,11 @@ impl Design {
                 write!(f, "target ")?;
                 let prototype = self.target_prototype(target_cell);
                 self.write_string(f, &target_cell.kind)?;
+                write_metadata(f)?;
                 write!(f, " {{{newline}")?;
                 for (param, value) in prototype.params.iter().zip(target_cell.params.iter()) {
                     write_cell_argument(f, "param", &param.name)?;
-                    write_param_value(f, value)?;
+                    self.write_param_value(f, value)?;
                     write!(f, "{newline}")?;
                 }
                 for target_input in &prototype.inputs {
@@ -583,6 +597,10 @@ impl Design {
                 self.write_value(f, value)?;
             }
         }
+        match cell {
+            Cell::Match(..) | Cell::Memory(..) | Cell::Other(..) | Cell::Target(..) => (),
+            _ => write_metadata(f)?,
+        }
         Ok(())
     }
 
@@ -599,7 +617,7 @@ impl Design {
     pub fn display_cell<'a>(&'a self, cell_ref: CellRef<'a>) -> impl Display + 'a {
         DisplayFn(self, move |design: &Design, f| {
             write!(f, "%{}:{} = ", cell_ref.debug_index(), cell_ref.output_len())?;
-            design.write_cell(f, "", cell_ref.debug_index(), &*cell_ref.get())
+            design.write_cell(f, "", cell_ref.debug_index(), &*cell_ref.get(), cell_ref.metadata().index())
         })
     }
 }
