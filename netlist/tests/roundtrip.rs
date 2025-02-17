@@ -119,7 +119,7 @@ fn test_cells() {
     roundtrip("%0:4 = buf 0000\n%4:2 = assign %0+0:2 %0+2:2\n");
     roundtrip("%0:4 = buf 0000\n%4:2 = assign en=%0+2 %0+0:2 %0+3 at=#1\n");
     roundtrip("%0:2 = buf 00\n%2:1 = dff %0+0 clk=%0+1\n");
-    roundtrip("%0:0 = memory depth=#256 width=#16 {\n}\n");
+    roundtrip("%0:_ = memory depth=#256 width=#16 {\n}\n");
     roundtrip("&\"purr\":1\n%0:2 = buf 00\n%2:1 = iobuf &\"purr\" o=%0+0 en=%0+1\n");
     roundtrip("&\"purr\":2\n%0:2 = buf 00\n%2:2 = iobuf &\"purr\":2 o=%0:2 en=%0+1\n");
     roundtrip("%0:_ = \"instance\" {\n}\n");
@@ -149,80 +149,80 @@ fn test_dffs() {
 
 #[test]
 fn test_memories() {
-    roundtrip("%0:0 = memory depth=#3 width=#4 {\n  init 0001\n  init 0010\n  init 1000\n}\n");
+    roundtrip("%0:_ = memory depth=#3 width=#4 {\n  init 0001\n  init 0010\n  init 1000\n}\n");
     roundtrip(
         "%0:1 = buf 0\n%1:3 = buf 000\n%4:4 = buf 0000\n\
-         %8:0 = memory depth=#8 width=#4 {\n  \
+         %8:_ = memory depth=#8 width=#4 {\n  \
          write addr=%1:3 data=%4:4 clk=%0\n}\n",
     );
     roundtrip(
         "%0:1 = buf 0\n%1:3 = buf 000\n%4:4 = buf 0000\n%8:4 = buf 0001\n\
-         %12:0 = memory depth=#8 width=#4 {\n  \
+         %12:_ = memory depth=#8 width=#4 {\n  \
          write addr=%1:3 data=%4:4 mask=%8:4 clk=%0\n}\n",
     );
     roundtrip(
         "%0:1 = buf 0\n%1:3 = buf 000\n\
-         %4:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%1:3 width=#4\n}\n",
+         %8:_ = memory depth=#8 width=#4 {\n  \
+         %8:4 = read addr=%1:3\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 init=1010 []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 init=1010 []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 clr=%0+2 []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 clr=%0+2 []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 rst=%0+2 []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 en=%0+2 []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 en=%0+2 []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 rst=%0+2 en=%0+3 rst>en []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 en=%0+3 rst>en []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 rst=%0+2 en=!%0+3 en>rst []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 en=!%0+3 en>rst []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
-         %8:4 = memory depth=#8 width=#4 {\n  \
-         read addr=%5:3 width=#4 clk=%0+1 clr=%0+2 rst=%0+3 en=%0+4 en>rst init=1010 []\n}\n",
+         %12:_ = memory depth=#8 width=#4 {\n  \
+         %12:4 = read addr=%5:3 clk=%0+1 clr=%0+2 rst=%0+3 en=%0+4 en>rst init=1010 []\n}\n",
     );
     roundtrip(
         "%0:1 = buf 0\n%1:3 = buf 000\n%4:4 = buf 0000\n%8:4 = buf 0001\n\
-         %12:4 = memory depth=#8 width=#4 {\n  \
+         %16:_ = memory depth=#8 width=#4 {\n  \
          write addr=%1:3 data=%4:4 mask=%8:4 clk=%0\n  \
-         read addr=%1:3 width=#4 clk=%0 [undef]\n}\n",
+         %16:4 = read addr=%1:3 clk=%0 [undef]\n}\n",
     );
     roundtrip(
         "%0:1 = buf 0\n%1:3 = buf 000\n%4:4 = buf 0000\n%8:4 = buf 0001\n\
-         %12:4 = memory depth=#8 width=#4 {\n  \
+         %16:_ = memory depth=#8 width=#4 {\n  \
          write addr=%1:3 data=%4:4 mask=%8:4 clk=%0\n  \
          write addr=%1:3 data=%4:4 mask=%8:4 clk=%0\n  \
-         read addr=%1:3 width=#4 clk=%0 [trans rdfirst]\n}\n",
+         %16:4 = read addr=%1:3 clk=%0 [trans rdfirst]\n}\n",
     );
 }
 
 #[test]
 fn test_memories_metadata() {
-    roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n; source file://top.py#2\n%0:0 = memory depth=#1 width=#1 !0 {\n  init 1\n}\n");
+    roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n; source file://top.py#2\n%0:_ = memory depth=#1 width=#1 !0 {\n  init 1\n}\n");
 }
 
 #[test]

@@ -45,6 +45,21 @@ impl Design {
                 }
                 unreachable!()
             }
+            Cell::Memory(memory) => {
+                let mut port_offset = 0;
+                for port in &memory.read_ports {
+                    let port_range = port_offset..port_offset + port.data_len;
+                    if port_range.contains(&offset) {
+                        return Ok((
+                            cell_ref.output().slice(port_range.clone()),
+                            cell_index + port_range.start,
+                            offset - port_range.start,
+                        ));
+                    }
+                    port_offset += port.data_len;
+                }
+                unreachable!()
+            }
             _ => Ok((cell_ref.output(), cell_index, offset)),
         }
     }
@@ -292,6 +307,7 @@ impl Design {
         let single_output = match &cell {
             Cell::Other(..) => false,
             Cell::Target(target_cell) if self.target_prototype(target_cell).outputs.len() > 1 => false,
+            Cell::Memory(..) => false,
             _ => true,
         };
         if single_output {
@@ -446,10 +462,10 @@ impl Design {
                     write_control(f, " clk", write_port.clock)?;
                     write!(f, "{newline}")?;
                 }
+                let mut port_offset = 0;
                 for read_port in &memory.read_ports {
-                    write!(f, "  read addr=")?;
+                    write!(f, "  %{}:{} = read addr=", index + port_offset, read_port.data_len)?;
                     self.write_value(f, &read_port.addr)?;
-                    write!(f, " width=#{}", read_port.data_len)?;
                     if let Some(ref flip_flop) = read_port.flip_flop {
                         write_control(f, " clk", flip_flop.clock)?;
                         if flip_flop.has_clear() {
@@ -491,6 +507,7 @@ impl Design {
                         write!(f, "]")?;
                     }
                     write!(f, "{newline}")?;
+                    port_offset += read_port.data_len;
                 }
                 let fully_undef_rows_at_end = memory
                     .init_value

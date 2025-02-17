@@ -28,18 +28,18 @@ fn test_simple() {
         "%80:1 = input \"r1e\"\n",
         "%90:1 = input \"wclk\"\n",
         "%91:1 = input \"rclk\"\n",
-        "%100:12 = memory depth=#4 width=#4 {\n",
+        "%100:_ = memory depth=#4 width=#4 {\n",
         "    init 0101\n",
         "    init 0000\n",
         "    init 1111\n",
         "    init X01X\n",
         "    write addr=%10:4 data=%0:8 mask=%20*8 clk=%90\n",
         "    write addr=%40:4 data=%30:4 mask=%50*4 clk=%90\n",
-        "    read addr=%60:4 width=#8\n",
-        "    read addr=%70:4 width=#4 clk=%91 en=%80 [undef undef]\n",
+        "    %100:8 = read addr=%60:4\n",
+        "    %101:4 = read addr=%70:4 clk=%91 en=%80 [undef undef]\n",
         "}\n",
-        "%110:0 = output \"r0d\" %100+0:8\n",
-        "%120:0 = output \"r1d\" %100+8:4\n",
+        "%110:0 = output \"r0d\" %100:8\n",
+        "%120:0 = output \"r1d\" %101:4\n",
     ))
     .unwrap();
     lower_fallback(&mut design);

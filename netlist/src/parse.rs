@@ -438,9 +438,7 @@ fn parse_metadata_scope(t: &mut WithContext<impl Tokens<Item = char>, Context>) 
             let name = ctx.design.ref_metadata_string(name_index);
             Some(ctx.design.add_metadata_item(&MetaItem::NamedScope { name, parent, source }))
         }
-        Scope::Indexed(index) => {
-            Some(ctx.design.add_metadata_item(&MetaItem::IndexedScope { index, parent, source }))
-        }
+        Scope::Indexed(index) => Some(ctx.design.add_metadata_item(&MetaItem::IndexedScope { index, parent, source })),
     }
 }
 
@@ -811,8 +809,84 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         Some(())
     }
 
+    fn parse_memory_init(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Const> {
+        parse_keyword_expect(t, "init")?;
+        parse_blank(t);
+        parse_const(t)
+    }
+
+    fn parse_memory_write(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MemoryWritePort> {
+        parse_keyword_expect(t, "write")?;
+        parse_blank(t);
+        parse_keyword_eq_expect(t, "addr")?;
+        let addr = parse_value_arg(t)?;
+        parse_blank(t);
+        parse_keyword_eq_expect(t, "data")?;
+        let data = parse_value_arg(t)?;
+        parse_blank(t);
+        let mask = t
+            .optional(|t| {
+                parse_keyword_eq_expect(t, "mask")?;
+                parse_value_arg(t)
+            })
+            .unwrap_or_else(|| Value::ones(data.len()));
+        let clock = parse_control_arg(t, "clk")?;
+        Some(MemoryWritePort { addr, data, mask, clock })
+    }
+
+    fn parse_memory_read(
+        t: &mut WithContext<impl Tokens<Item = char>, Context>,
+    ) -> Option<(MemoryReadPort, usize, usize)> {
+        let (cell_index, width) = parse_cell_index_width(t)?;
+        parse_blank(t);
+        parse_symbol(t, '=')?;
+        parse_blank(t);
+        parse_keyword_expect(t, "read")?;
+        parse_blank(t);
+        parse_keyword_eq_expect(t, "addr")?;
+        let addr = parse_value_arg(t)?;
+        let flip_flop = t.optional(|t| {
+            let clock = parse_control_arg(t, "clk")?;
+            let (clear, clear_value) =
+                t.optional(|t| parse_dff_reset_control_net_arg(t, "clr")).unwrap_or((ControlNet::Pos(Net::ZERO), None));
+            let (reset, reset_value) =
+                t.optional(|t| parse_dff_reset_control_net_arg(t, "rst")).unwrap_or((ControlNet::Pos(Net::ZERO), None));
+            let enable = t.optional(|t| parse_control_arg(t, "en")).unwrap_or(ControlNet::Pos(Net::ONE));
+            let reset_over_enable = t.optional(|t| parse_reset_over_enable_arg(t)).unwrap_or(false);
+            let init_value = t.optional(|t| parse_dff_init_value_arg(t)).unwrap_or_else(|| Const::undef(width));
+            let mut relations = vec![];
+            parse_blank(t);
+            parse_symbol(t, '[')?;
+            while let Some(()) = t.optional(|t| {
+                parse_blank(t);
+                let keyword = parse_keyword(t)?;
+                relations.push(match keyword.as_str() {
+                    "undef" => MemoryPortRelation::Undefined,
+                    "rdfirst" => MemoryPortRelation::ReadBeforeWrite,
+                    "trans" => MemoryPortRelation::Transparent,
+                    _ => return None,
+                });
+                Some(())
+            }) {}
+            parse_blank(t);
+            parse_symbol(t, ']')?;
+            Some(MemoryReadFlipFlop {
+                clock,
+                clear,
+                clear_value: clear_value.unwrap_or_else(|| init_value.clone()),
+                reset,
+                reset_value: reset_value.unwrap_or_else(|| init_value.clone()),
+                enable,
+                reset_over_enable,
+                init_value,
+                relations,
+            })
+        });
+        Some((MemoryReadPort { addr, data_len: width, flip_flop }, cell_index, width))
+    }
+
     fn parse_memory_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<()> {
-        let (index, width) = parse_cell_index_width(t)?;
+        parse_cell_index_placeholder(t)?;
         parse_blank(t);
         parse_symbol(t, '=')?;
         parse_blank(t);
@@ -832,80 +906,20 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         let mut init_value = Const::new();
         let mut write_ports = Vec::new();
         let mut read_ports = Vec::new();
+        let mut output = Value::new();
         while let Some(()) = t.optional(|t| {
             parse_blank(t);
-            let keyword = parse_keyword(t)?;
-            parse_blank(t);
-            match keyword.as_str() {
-                "init" => {
-                    init_value.extend(parse_const(t)?);
-                }
-                "write" => {
-                    parse_keyword_eq_expect(t, "addr")?;
-                    let addr = parse_value_arg(t)?;
-                    parse_blank(t);
-                    parse_keyword_eq_expect(t, "data")?;
-                    let data = parse_value_arg(t)?;
-                    parse_blank(t);
-                    let mask = t
-                        .optional(|t| {
-                            parse_keyword_eq_expect(t, "mask")?;
-                            parse_value_arg(t)
-                        })
-                        .unwrap_or_else(|| Value::ones(data.len()));
-                    let clock = parse_control_arg(t, "clk")?;
-                    write_ports.push(MemoryWritePort { addr, data, mask, clock })
-                }
-                "read" => {
-                    parse_keyword_eq_expect(t, "addr")?;
-                    let addr = parse_value_arg(t)?;
-                    parse_blank(t);
-                    parse_keyword_eq_expect(t, "width")?;
-                    let width = parse_integer(t)?;
-                    let flip_flop = t.optional(|t| {
-                        let clock = parse_control_arg(t, "clk")?;
-                        let (clear, clear_value) = t
-                            .optional(|t| parse_dff_reset_control_net_arg(t, "clr"))
-                            .unwrap_or((ControlNet::Pos(Net::ZERO), None));
-                        let (reset, reset_value) = t
-                            .optional(|t| parse_dff_reset_control_net_arg(t, "rst"))
-                            .unwrap_or((ControlNet::Pos(Net::ZERO), None));
-                        let enable = t.optional(|t| parse_control_arg(t, "en")).unwrap_or(ControlNet::Pos(Net::ONE));
-                        let reset_over_enable = t.optional(|t| parse_reset_over_enable_arg(t)).unwrap_or(false);
-                        let init_value =
-                            t.optional(|t| parse_dff_init_value_arg(t)).unwrap_or_else(|| Const::undef(width));
-                        let mut relations = vec![];
-                        parse_blank(t);
-                        parse_symbol(t, '[')?;
-                        while let Some(()) = t.optional(|t| {
-                            parse_blank(t);
-                            let keyword = parse_keyword(t)?;
-                            relations.push(match keyword.as_str() {
-                                "undef" => MemoryPortRelation::Undefined,
-                                "rdfirst" => MemoryPortRelation::ReadBeforeWrite,
-                                "trans" => MemoryPortRelation::Transparent,
-                                _ => return None,
-                            });
-                            Some(())
-                        }) {}
-                        parse_blank(t);
-                        parse_symbol(t, ']')?;
-                        Some(MemoryReadFlipFlop {
-                            clock,
-                            clear,
-                            clear_value: clear_value.unwrap_or_else(|| init_value.clone()),
-                            reset,
-                            reset_value: reset_value.unwrap_or_else(|| init_value.clone()),
-                            enable,
-                            reset_over_enable,
-                            init_value,
-                            relations,
-                        })
-                    });
-                    read_ports.push(MemoryReadPort { addr, data_len: width, flip_flop })
-                }
-                _ => return None,
-            }
+            one_of!(t;
+                parse_memory_init(t).map(|value| init_value.extend(value)),
+                parse_memory_write(t).map(|port| write_ports.push(port)),
+                parse_memory_read(t).map(|(port, index, width)| {
+                    read_ports.push(port);
+                    let ctx = t.context_mut();
+                    let value = ctx.design.add_void(width);
+                    ctx.add_def(index, width, value.clone());
+                    output = output.concat(value);
+                }),
+            );
             parse_blank(t);
             parse_symbol(t, '\n')?;
             Some(())
@@ -913,19 +927,20 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_blank(t);
         parse_symbol(t, '}')?;
         let ctx = t.context_mut();
-        let output = ctx.design.add_cell_with_metadata_index(
-            Cell::Memory(Memory {
-                depth: memory_depth,
-                width: memory_width,
-                init_value: init_value
-                    .concat(Const::undef((memory_depth * memory_width).checked_sub(init_value.len()).unwrap())),
-                write_ports,
-                read_ports,
-            }),
-            metadata,
+        ctx.design.replace_value(
+            output,
+            ctx.design.add_cell_with_metadata_index(
+                Cell::Memory(Memory {
+                    depth: memory_depth,
+                    width: memory_width,
+                    init_value: init_value
+                        .concat(Const::undef((memory_depth * memory_width).checked_sub(init_value.len()).unwrap())),
+                    write_ports,
+                    read_ports,
+                }),
+                metadata,
+            ),
         );
-        assert_eq!(output.len(), width, "cell output width must match declaration width");
-        ctx.add_def(index, width, output);
         Some(())
     }
 
