@@ -1,11 +1,9 @@
-//! This crate defines the IR of Project Unnamed.
+//! This library provides the in-memory form of the Project Unnamed IR.
 //!
-//! A [`Design`] is represented as a sea of [`Cell`]s. Each cell is identified
-//! only by a range of indices; neither cells nor the nets connecting them have
-//! names.
-//!
-//! No distinction is made between coarse and fine netlists — a single IR is
-//! used for both.
+//! A [`Design`] is represented as a sea of [`Cell`]s identified by a contiguous range of indices,
+//! connected by [`Net`]s and [`Value`]s that refer back to cells by their index. This representation
+//! is equally suited for bit-level and word-level netlists, including bit-level cells with multiple
+//! outputs.
 
 mod logic;
 mod value;

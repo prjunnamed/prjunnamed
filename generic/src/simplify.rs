@@ -146,7 +146,7 @@ pub fn simplify(design: &mut Design) -> bool {
     for cell_ref in design.iter_cells() {
         // Fold inverters into controls first. This only ever replaces the cells themselves.
         fold_controls(design, cell_ref);
-        // Fine rules are more powerful, but some rules are coarse-only.
+        // Rules that match individual bits of a cell are more powerful, but some rules must match an entire cell.
         let value = cell_ref.output();
         if rules(design, &value) {
             continue;
