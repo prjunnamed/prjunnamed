@@ -1326,8 +1326,8 @@ mod test {
             patterns: vec![
                 vec![
                     Const::lit("00"), // x1
-                    Const::lit("11"),
-                ], // x1
+                    Const::lit("11"), // x1
+                ],
                 vec![Const::lit("01")], // x2
                 vec![Const::lit("10")], // x3
             ],
@@ -1363,8 +1363,8 @@ mod test {
             patterns: vec![
                 vec![
                     Const::lit("00"), // x1
-                    Const::lit("11"),
-                ], // x1
+                    Const::lit("11"), // x1
+                ],
                 vec![Const::lit("01")], // x2
                 vec![Const::lit("10")], // x3
             ],
