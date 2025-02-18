@@ -516,7 +516,11 @@ pub struct UnknownTargetError(String);
 
 impl Display for UnknownTargetError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "unknown target {:?}", self.0)
+        write!(f, "unknown target {:?} (known targets:", self.0)?;
+        for target in REGISTRY.lock().unwrap().keys() {
+            write!(f, " {target}")?;
+        }
+        write!(f, ")")
     }
 }
 
