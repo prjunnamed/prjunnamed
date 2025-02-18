@@ -1,4 +1,4 @@
-Language Reference
+Language reference
 ==================
 
 Project Unnamed is based around an [intermediate representation][ir]: a kind of human readable and writable (primarily by compiler developers) programming language designed for convenience of implementing transformations. These transformations include optimization, technology mapping, verification, and more.

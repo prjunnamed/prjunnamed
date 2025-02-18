@@ -1,6 +1,6 @@
 # Summary
 
-- [Introduction](intro.md)
+[Introduction](intro.md)
 
 # User's Guide
 
@@ -8,4 +8,5 @@
 
 # Developer's Guide
 
+- [Building from Source](dev/build.md)
 - [Language Reference](dev/langref.md)
