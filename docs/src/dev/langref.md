@@ -100,6 +100,8 @@ For example:
 
 *Strings* are delimited by `"` on both ends and denote byte sequences (not character sequences). Within a string, `` \ `` followed by two hexadecimal digits `0`..`9` or `a`..`f` (lowercase only) corresponds to that particular byte, and any other character corresponds to its unique [UTF-8] encoding. No normalization is performed.
 
+A string containing a `` \ `` followed by two characters that are not hexadecimal digits is ill-formed.
+
 
 ### Decimal numbers {#decimal}
 

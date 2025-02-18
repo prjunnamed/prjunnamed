@@ -67,7 +67,7 @@ impl Design {
     pub(crate) fn write_string(&self, f: &mut std::fmt::Formatter, str: &str) -> std::fmt::Result {
         write!(f, "\"")?;
         for byte in str.as_bytes() {
-            if (byte.is_ascii_graphic() || matches!(byte, b' ' | b'\t')) && *byte != b'"' {
+            if (byte.is_ascii_graphic() || matches!(byte, b' ' | b'\t')) && ![b'\\', b'"'].contains(byte) {
                 write!(f, "{}", *byte as char)?;
             } else {
                 assert!(byte.is_ascii());

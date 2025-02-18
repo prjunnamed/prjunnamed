@@ -40,6 +40,15 @@ fn test_comment() {
 }
 
 #[test]
+fn test_string() {
+    roundtrip("%0:1 = input \"meow\"\n");
+    roundtrip("%0:1 = input \"this\\0ais a anewline\"\n");
+    roundtrip("%0:1 = input \"\\22quoted\\22\"\n");
+    roundtrip("%0:1 = input \"\\5cescaped\"\n");
+    assert!(parse(None, "%0:1 = input \"invalid\\xx\"\n").is_err());
+}
+
+#[test]
 fn test_metadata() {
     roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n");
     roundtrip("!0 = scope \"top\"\n");
