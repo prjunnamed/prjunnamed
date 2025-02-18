@@ -433,7 +433,8 @@ impl<'a> AssignChains<'a> {
         let mut roots: BTreeSet<CellRef> = BTreeSet::new();
         let mut links: BTreeMap<CellRef, BTreeSet<CellRef>> = BTreeMap::new();
         for cell_ref in design.iter_cells() {
-            let Cell::Assign(AssignCell { value, offset: 0, .. }) = &*cell_ref.get() else { continue };
+            let Cell::Assign(AssignCell { value, offset: 0, update, .. }) = &*cell_ref.get() else { continue };
+            if update.len() != value.len() { continue }
             if let Ok((value_cell_ref, _offset)) = design.find_cell(value[0]) {
                 if value_cell_ref.output() == *value {
                     if let Cell::Assign(_) = &*value_cell_ref.get() {
@@ -1350,6 +1351,33 @@ mod test {
         dr.add_output("y", m3);
 
         assert_isomorphic!(dl, dr);
+    }
+
+    #[test]
+    fn test_assign_lower_disjoint_partial() {
+        let mut dl = Design::new();
+        let c = dl.add_input("c", 2);
+        let m = dl.add_match(MatchCell {
+            value: c.clone(),
+            enable: Net::ONE,
+            patterns: vec![
+                vec![
+                    Const::lit("00"), // x1
+                    Const::lit("11"),
+                ], // x1
+                vec![Const::lit("01")], // x2
+                vec![Const::lit("10")], // x3
+            ],
+        });
+        let a1 = dl.add_assign(assign(Value::zero(4), m[0], dl.add_input("x1", 4)));
+        let a2 = dl.add_assign(assign(a1, m[1], dl.add_input("x2", 4)));
+        let a3 = dl.add_assign(assign(a2, m[2], dl.add_input("x3", 3)));
+        dl.add_output("y", a3);
+        dl.apply();
+
+        decision(&mut dl);
+        // the particular output generated here is uninteresting, assert that
+        // lowering doesn't panic and is accepted by SMT
     }
 
     #[test]
