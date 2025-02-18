@@ -151,7 +151,7 @@ Constants are not interchangeable with [decimal numbers](#decimal); where both a
 ### Metadata identifiers {#metadata}
 
 ```
-!<digits>
+!<index>
 ```
 
 For example:
@@ -227,7 +227,7 @@ To avoid confusion, the IR printer ensures that in references, `<index>` is equa
 </div>
 
 
-### Repetition {#repeat}
+### Repetitions {#repeat}
 
 ```
 <value>*<count>
@@ -303,5 +303,152 @@ The target specification defines the specific device for which the netlist is in
 
 
 ## Declarations {#decls}
+
+*Declarations* are syntactic constructs that, taken together, describe the entire netlist. There are two kinds of declarations: *metadata declarations* and *cell declarations*.
+
+The general structure of a declaration is:
+
+```
+<ident> = <keyword> <operand>...
+```
+
+For example:
+
+```
+!1 = ident "clk" in=!0
+%0:1 = input "clk" !2
+```
+
+In the snippet above, `!1` and `%0:1` are identifiers *introduced* by the declaration, `ident` and `input` are *keywords*, and `"clk"`, `in=!0`, and `!2` are *operands*.
+
+A [metadata identifier](#metadata) can only reference a metadata declaration introduced at an earlier point in the file. In contrast, a [cell identifier](#cell) can reference a cell declaration introduced anywhere in the file, including by the cell declaration it is an operand of.
+
+
+### Metadata declarations {#metadata-decls}
+
+Metadata declarations correspond to the [enum prjunnamed_netlist::MetaItem](/api/prjunnamed_netlist/enum.MetaItem.html).
+
+<div class="warning">
+
+The names that occur within metadata are opaque: they must not be examined by the tools for any reason other than communicating it to the user or to other tools.
+
+In particular, it is forbidden to interpret names with certain suffixes such as `inst[0]` or `wire[2:0]` in a special way. If necessary, this may be done prior to generating Unnamed IR.
+
+</div>
+
+
+#### Metadata sets {#metadata-set}
+
+```
+!<decl> = { !<ref> !<ref>... }
+```
+
+For example:
+
+```
+!10 = { !2 !3 }
+!11 = { !2 !3 !4 }
+```
+
+*Metadata sets* are used to group multiple pieces of metadata to be referenced in [cell declarations](#cell-decls) with a single index.
+
+A metadata set with less than two elements is ill-formed. A metadata set that refers to another metadata set is ill-formed.
+
+
+#### Source metadata {#metadata-source}
+
+```
+!<decl> = source "<file>" (#<start-line> #<start-col>) (#<end-line> #<end-col>)
+```
+
+For example:
+
+```
+!1 = source "/home/whitequark/design/top.py" (#20 #4) (#20 #10)
+```
+
+*Source metadata* is used to refer to a contiguous possibly empty range of characters within a source file.
+
+The `"<file>"` [string](#string) is an environment specific location of a source file, which may be absolute or relative. It cannot be empty, or the declaration is ill-formed.
+
+The `#<start-line>` and `#<start-col>` [decimal numbers](#decimal) are zero-based non-negative indices into the contents of `"<file>"`, where `#<start-line>` is the number of `U+000A LINE FEED` characters before the start of the range, and `#<start-col>` is the number of the Unicode code points after the last `U+000A LINE FEED` character and before the beginning of the range.
+
+The `#<end-line>` and `#<end-col>` [decimal numbers](#decimal) are zero-based non-negative indices defined in the same way, except they point to the end of the range. The index `#<end-line>` cannot be less than `#<start-line>`, and if the two are equal, the index `#<end-col>` cannot be less than `#<start-col>`, or the declaration is ill-formed.
+
+If the IR generator does not have access to accurate location information, the range may be left empty. If only line number information is available, the range should be specified as `(#<line> #0) (#<line> #0)`.
+
+
+#### Scope metadata {#metadata-scope}
+
+```
+!<decl> = scope "<name>" in=!<parent> src=!<source>
+!<decl> = scope #<index> in=!<parent> src=!<source>
+```
+
+For example:
+
+```
+!10 = scope "top"
+!11 = scope "cpu" in=!10
+!12 = scope "alu" in=!11 src=!0
+!13 = scope "io" src=!1
+!14 = scope #0 in=!13
+!14 = scope #1 in=!13 src=!2
+```
+
+*Scope metadata* is used to describe a hierarchy of regions within the source code. The nature of a region is not constrained here, and includes without limitation: modules, conditional blocks, instance declarations, and so on. By traversing the chain of scope metadata, it should be possible for tools like timing analyzers, source level debuggers, and so on to be able to unambiguously locate a declaration by its hierarchical name.
+
+There are two kinds of scopes: *named scopes* and *indexed scopes*. Indexed scopes typically correspond to source-level declarations of arrays, whereas named scopes correspond to any other source-level declarations. Negative indices are accepted for indexed scopes.
+
+Hierarchy arises when a scope is declared to be a part of another scope using the optional `in=!<parent>` operand. The `!<parent>` [metadata identifier](#metadata) must refer to scope metadata, or the declaration is ill-formed.
+
+A scope may have a [source location](#metadata-source) attached using the optional `src=!<source>` operand. The `!<source>` [metadata identifier](#metadata) must refer to source metadata, or the declaration is ill-formed.
+
+If the `"<name>"` [string](#string) is empty, the declaration is ill-formed.
+
+
+#### Identifier metadata {#metadata-ident}
+
+```
+!<decl> = ident "<name>" in=!<scope>
+```
+
+For example:
+
+```
+!1 = ident "clk" in=!0
+```
+
+*Identifier metadata* is used to refer to a specific declaration within an elaborated hierarchy. The full hierarchical name is obtained by collecting the names or indices while recursively traversing [scope metadata](#metadata-scope) referenced by the `!<scope>` [metadata identifier](#metadata) and appending the `"<name>"` [string](#string) at the end.
+
+If the `"<name>"` is empty, or the `!<scope>` does not refer to scope metadata, the declaration is ill-formed.
+
+
+#### Attribute metadata {#metadata-attr}
+
+```
+!<decl> = attr "<name>" <const>
+!<decl> = attr "<name>" #<int>
+!<decl> = attr "<name>" "<string>"
+```
+
+For example:
+
+```
+!0 = attr "top" #1
+!1 = attr "PIN_TYPE" 110000
+!2 = attr "BEL" "X0/Y1"
+```
+
+*Attribute metadata* is used to encapsulate source-level attributes that are not otherwise recognized by the target-independent or target-specific parts of the flow. An attribute has a `"<name>"` [string](#string) and a payload. There are three possible types of payloads: [constants](#constant), [integers](#decimal), and [strings](#string).
+
+Attribute metadata is strongly typed: the tools preserve the type of the payload and ensure it matches the expected type whenever the payload is examined.
+
+If the `"<name>"` is empty, the declaration is ill-formed.
+
+
+### Cell declarations {#cell-decls}
+
+Cell declarations correspond to the [enum prjunnamed_netlist::Cell](/api/prjunnamed_netlist/enum.Cell.html).
 
 To be written.
