@@ -12,7 +12,6 @@ doctest = false
 [dependencies]
 prjunnamed-netlist.workspace = true
 prjunnamed-pattern.workspace = true
-union-find-rs.workspace = true
 
 [features]
 trace = []
