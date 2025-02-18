@@ -1,0 +1,6 @@
+[book]
+src = "src"
+title = "The Project Unnamed Book"
+authors = ["Project Unnamed contributors"]
+multilingual = false
+language = "en"

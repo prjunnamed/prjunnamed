@@ -18,6 +18,51 @@ jobs:
       run: cargo test
     - name: Run tests and verify with SMT
       run: cargo test --features verify -p prjunnamed-generic
+
+  document:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+      - name: Set up mdBook
+        uses: peaceiris/actions-mdbook@v2
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Build the book
+        run: mdbook build docs
+      - name: Build the API docs
+        run: cargo doc --lib --no-deps
+      - name: Compile documentation
+        run: |
+          mkdir output
+          touch output/.nojekyll
+          cp -r docs/book  output/book
+          cp -r target/doc output/api
+      - name: Upload documentation archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: output/
+
+  publish:
+    needs: document
+    if: ${{ github.event_name == 'push' && github.event.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+      - name: Download documentation archive
+        uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: output/
+      - name: Publish documentation
+        uses: JamesIves/github-pages-deploy-action@releases/v4
+        with:
+          folder: output/
+
   cargo-deny:
     runs-on: ubuntu-latest
     steps:
