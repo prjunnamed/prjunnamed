@@ -4,3 +4,6 @@ title = "The Project Unnamed Book"
 authors = ["Project Unnamed contributors"]
 multilingual = false
 language = "en"
+
+[build]
+build-dir = "out"

@@ -29,20 +29,17 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Build the book
-        run: mdbook build docs
-      - name: Build the API docs
-        run: cargo doc --lib --no-deps
-      - name: Compile documentation
         run: |
-          mkdir output
-          touch output/.nojekyll
-          cp -r docs/book  output/book
-          cp -r target/doc output/api
+          mdbook build docs
+      - name: Build the API docs
+        run: |
+          cargo doc --lib --no-deps
+          cp -r target/doc docs/out/api
       - name: Upload documentation archive
         uses: actions/upload-artifact@v4
         with:
           name: docs
-          path: output/
+          path: docs/out
 
   publish:
     needs: document
@@ -57,11 +54,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: docs
-          path: output/
+          path: docs/out
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v4
         with:
-          folder: output/
+          folder: docs/out/
 
   cargo-deny:
     runs-on: ubuntu-latest
