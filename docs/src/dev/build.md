@@ -1,5 +1,5 @@
 Building from source
---------------------
+====================
 
 In order to build Project Unnamed and run its testsuite, you will need [Rust][] (latest stable release) and [Z3][]. We recommend using [rustup][] or installing Rust from the software repository of your Linux distribution. Once you have these tools, run:
 
