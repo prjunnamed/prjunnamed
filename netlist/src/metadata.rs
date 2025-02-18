@@ -36,6 +36,7 @@ pub enum MetaItem<'a> {
     None,
     /// Multiple metadata items.
     /// The purpose of this variant is to make collections of metadata indices take less memory.
+    /// A metadata set cannot contain less than two metadata items.
     Set(BTreeSet<MetaItemRef<'a>>),
     /// Source location.
     Source {
@@ -47,7 +48,8 @@ pub enum MetaItem<'a> {
         end: Position,
     },
     /// Scope identified by a name.
-    /// A top-level named scope could be a module declaration. A named scope with a parent could be a block
+    /// A top-level named scope could be a module declaration. A named scope with a parent could be a block within
+    /// a module.
     NamedScope {
         /// Name.  Must not be empty.
         name: MetaStringRef<'a>,
@@ -149,42 +151,52 @@ impl MetaItem<'_> {
         match self {
             MetaItem::None => (),
             MetaItem::Set(items) => {
-                assert!(items.len() > 1, "Set must contain more than one element");
+                assert!(items.len() > 1, "MetaItem::Set must contain more than one element");
                 for item in items {
                     assert!(
                         !matches!(&*item.get_repr(), MetaItemRepr::None | MetaItemRepr::Set(..)),
-                        "Set item must not be None or another Set"
+                        "MetaItem::Set item must not be MetaItem::None or another MetaItem::Set"
                     )
                 }
             }
-            MetaItem::Source { file, start: _, end: _ } => {
-                assert!(!file.get().is_empty(), "Source must have a file");
+            MetaItem::Source { file, start, end } => {
+                assert!(!file.get().is_empty(), "MetaItem::Source must have a file");
+                assert!(
+                    end.line > start.line || (end.line == start.line && end.column >= start.column),
+                    "MetaItem::Source must specify a range in non-descending order"
+                );
             }
             MetaItem::NamedScope { name: _, source, parent } | MetaItem::IndexedScope { index: _, source, parent } => {
                 if let MetaItem::NamedScope { name, .. } = self {
-                    assert!(!name.get().is_empty(), "NamedScope must have a name");
+                    assert!(!name.get().is_empty(), "MetaItem::NamedScope must have a name");
                 }
                 assert!(
                     matches!(&*source.get_repr(), MetaItemRepr::None | MetaItemRepr::Source { .. }),
-                    "source of a scope must be None or Source"
+                    concat!(
+                        "source of a MetaItem::NamedScope or MetaItem::IndexedScope must be ",
+                        "MetaItem::None or MetaItem::Source"
+                    )
                 );
                 assert!(
                     matches!(
                         &*parent.get_repr(),
                         MetaItemRepr::None | MetaItemRepr::NamedScope { .. } | MetaItemRepr::IndexedScope { .. }
                     ),
-                    "parent of a scope must be None, NamedScope, or IndexedScope"
+                    concat!(
+                        "parent of a MetaItem::NamedScope or MetaItem::IndexedScope must be ",
+                        "MetaItem::None, MetaItem::NamedScope, or MetaItem::IndexedScope"
+                    )
                 );
             }
             MetaItem::Ident { name, scope } => {
-                assert!(!name.get().is_empty(), "Ident must have a name");
+                assert!(!name.get().is_empty(), "MetaItem::Ident must have a name");
                 assert!(
                     matches!(&*scope.get_repr(), MetaItemRepr::NamedScope { .. } | MetaItemRepr::IndexedScope { .. }),
-                    "scope of an Ident must be NamedScope, or IndexedScope"
+                    "scope of a MetaItem::Ident must be MetaItem::NamedScope or MetaItem::IndexedScope"
                 );
             }
             MetaItem::Attr { name, value: _ } => {
-                assert!(!name.get().is_empty(), "Attr must have a name");
+                assert!(!name.get().is_empty(), "MetaItem::Attr must have a name");
             }
         }
     }
