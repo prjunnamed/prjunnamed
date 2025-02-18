@@ -104,10 +104,23 @@ fn parse_blank(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> bool {
 
 #[must_use]
 fn parse_symbol(t: &mut WithContext<impl Tokens<Item = char>, Context>, symbol: char) -> Option<()> {
+    debug_assert!(symbol != '\n', "use parse_newline()");
     if !t.token(symbol) {
         return None;
     }
     Some(())
+}
+
+#[must_use]
+fn parse_newline(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<()> {
+    if one_of!(t;
+        t.token('\n'),
+        t.token('\r') && t.token('\n')
+    ) {
+        Some(())
+    } else {
+        None
+    }
 }
 
 fn parse_decimal<T: FromStr>(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<T> {
@@ -353,7 +366,7 @@ fn parse_target(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Optio
         }
     }
     parse_blank(t);
-    parse_symbol(t, '\n')?;
+    parse_newline(t)?;
     let context = t.context_mut();
     if !context.design.is_empty() {
         panic!("target specification must come before any definitions");
@@ -479,7 +492,7 @@ fn parse_metadata(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Opt
         parse_metadata_attr(t),
     )?;
     parse_blank(t);
-    parse_symbol(t, '\n')?;
+    parse_newline(t)?;
     t.context_mut().add_meta(index, item_index);
     Some(())
 }
@@ -487,7 +500,7 @@ fn parse_metadata(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Opt
 fn parse_io(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<IoValue> {
     let (name, size) = parse_io_name_size(t)?;
     parse_blank(t);
-    parse_symbol(t, '\n')?;
+    parse_newline(t)?;
     let ctx = t.context_mut();
     let io_value = ctx.add_io(name, size);
     ctx.design.apply();
@@ -631,7 +644,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_blank(t);
         parse_symbol(t, '{')?;
         parse_blank(t);
-        parse_symbol(t, '\n')?;
+        parse_newline(t)?;
         while let Some(()) = t.optional(|t| {
             parse_blank(t);
             one_of!(t;
@@ -654,7 +667,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
                     assert!(instance.ios.insert(name, io_value).is_none(), "duplicate IO name in instance"))
             );
             parse_blank(t);
-            parse_symbol(t, '\n')?;
+            parse_newline(t)?;
             Some(())
         }) {}
         parse_blank(t);
@@ -779,7 +792,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_blank(t);
         parse_symbol(t, '{')?;
         parse_blank(t);
-        let _ = parse_symbol(t, '\n');
+        let _ = parse_newline(t);
         while let Some(()) = t.optional(|t| {
             parse_blank(t);
             let mut alternates = Vec::new();
@@ -795,7 +808,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
                 alternates.push(parse_const(t)?);
             }
             parse_blank(t);
-            let _ = parse_symbol(t, '\n');
+            let _ = parse_newline(t);
             patterns.push(alternates);
             Some(())
         }) {}
@@ -902,7 +915,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_blank(t);
         parse_symbol(t, '{')?;
         parse_blank(t);
-        parse_symbol(t, '\n')?;
+        parse_newline(t)?;
         let mut init_value = Const::new();
         let mut write_ports = Vec::new();
         let mut read_ports = Vec::new();
@@ -921,7 +934,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
                 }),
             );
             parse_blank(t);
-            parse_symbol(t, '\n')?;
+            parse_newline(t)?;
             Some(())
         }) {}
         parse_blank(t);
@@ -1020,7 +1033,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_other_cell(t),
     )?;
     parse_blank(t);
-    parse_symbol(t, '\n')?;
+    parse_newline(t)?;
     Some(())
 }
 
@@ -1031,7 +1044,7 @@ fn parse_line(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> bool {
         parse_metadata(t).is_some(),
         parse_io(t).is_some(),
         parse_cell(t).is_some(),
-        t.token('\n')
+        parse_newline(t).is_some()
     )
 }
 

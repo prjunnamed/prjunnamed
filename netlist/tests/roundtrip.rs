@@ -25,6 +25,12 @@ fn test_empty() {
 }
 
 #[test]
+fn test_crlf() {
+    parse(None, "\r\n").unwrap();
+    parse(None, "%0:1 = buf 0\r\n%1:1 = buf 0\r\n").unwrap();
+}
+
+#[test]
 fn test_comment() {
     parse(None, ";\n").unwrap();
     parse(None, "; foo\n").unwrap();
