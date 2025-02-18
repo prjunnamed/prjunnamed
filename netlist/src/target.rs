@@ -58,6 +58,9 @@ impl TargetParamKind {
             (TargetParamKind::Bits(width), ParamValue::Const(value)) if value.len() == *width => {
                 Some(ParamValue::Const(value.clone()))
             }
+            (TargetParamKind::Bits(width), ParamValue::Int(value)) if *value >= 0 && *value < 1 << *width => {
+                Some(ParamValue::Const(Const::from_uint((*value).try_into().unwrap(), *width)))
+            }
             (TargetParamKind::Bool, ParamValue::Int(value)) => match *value {
                 1 => Some(ParamValue::Const(Const::ones(1))),
                 0 => Some(ParamValue::Const(Const::zero(1))),
