@@ -437,9 +437,9 @@ impl Design {
                 }
                 if flip_flop.has_reset() && flip_flop.has_enable() {
                     if flip_flop.reset_over_enable {
-                        write!(f, " rst>en")?;
+                        write!(f, " rst/en")?;
                     } else {
-                        write!(f, " en>rst")?;
+                        write!(f, " en/rst")?;
                     }
                 }
                 if flip_flop.has_init_value() {
@@ -485,9 +485,9 @@ impl Design {
                         }
                         if flip_flop.has_reset() && flip_flop.has_enable() {
                             if flip_flop.reset_over_enable {
-                                write!(f, " rst>en")?;
+                                write!(f, " rst/en")?;
                             } else {
-                                write!(f, " en>rst")?;
+                                write!(f, " en/rst")?;
                             }
                         }
                         if flip_flop.has_init_value() {
