@@ -15,7 +15,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 use union_find_rs::{traits::UnionFind, disjoint_sets::DisjointSets};
 
-use prjunnamed_netlist::{AssignCell, Cell, CellRef, Const, Design, MatchCell, Net, Value};
+use prjunnamed_netlist::{AssignCell, Cell, CellRef, Const, Design, MatchCell, Net, Trit, Value};
 
 /// Maps `pattern` (a constant where 0 and 1 match the respective states, and X matches any state)
 /// to a set of `rules` (the nets that are asserted if the `pattern` matches the value being tested).
@@ -674,7 +674,7 @@ mod test {
 
     use std::collections::{BTreeMap, BTreeSet};
 
-    use prjunnamed_netlist::{assert_isomorphic, AssignCell, Cell, Const, Design, MatchCell, Net, Trit, Value};
+    use prjunnamed_netlist::{assert_isomorphic, AssignCell, Cell, Const, Design, MatchCell, Net, Value};
 
     use super::{decision, AssignChains, Decision, MatchMatrix, MatchRow, MatchTrees};
 
