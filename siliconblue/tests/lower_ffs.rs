@@ -46,7 +46,7 @@ fn test_lower_ff_sync() {
         %2:1 = input "c"
         %3:1 = input "r"
         %4:1 = input "e"
-        %5:2 = dff %0:2 clk=%2 rst=%3,10 en=%4 en>rst init=00
+        %5:2 = dff %0:2 clk=%2 rst=%3,10 en=%4 en/rst init=00
         %7:0 = output "q" %5:2
     "#};
     target.lower_ffs(&mut design);
@@ -85,7 +85,7 @@ fn test_lower_ff_sync_neg() {
         %2:1 = input "c"
         %3:1 = input "r"
         %4:1 = input "e"
-        %5:2 = dff %0:2 clk=!%2 rst=!%3,10 en=!%4 en>rst init=00
+        %5:2 = dff %0:2 clk=!%2 rst=!%3,10 en=!%4 en/rst init=00
         %7:0 = output "q" %5:2
     "#};
     target.lower_ffs(&mut design);
@@ -126,7 +126,7 @@ fn test_lower_ff_sync_remap() {
         %2:1 = input "c"
         %3:1 = input "r"
         %4:1 = input "e"
-        %5:2 = dff %0:2 clk=%2 rst=%3,10 en=%4 rst>en init=00
+        %5:2 = dff %0:2 clk=%2 rst=%3,10 en=%4 rst/en init=00
         %7:0 = output "q" %5:2
     "#};
     target.lower_ffs(&mut design);
@@ -166,7 +166,7 @@ fn test_lower_ff_sync_inv() {
         %2:1 = input "c"
         %3:1 = input "r"
         %4:1 = input "e"
-        %5:2 = dff %0:2 clk=%2 rst=%3,10 en=%4 en>rst init=11
+        %5:2 = dff %0:2 clk=%2 rst=%3,10 en=%4 en/rst init=11
         %7:0 = output "q" %5:2
     "#};
     target.lower_ffs(&mut design);
@@ -333,7 +333,7 @@ fn test_lower_ff_unmap_reset() {
         %3:1 = input "clr"
         %4:1 = input "rst"
         %5:1 = input "e"
-        %6:2 = dff %0:2 clk=%2 clr=%3,10 rst=%4,01 en=%5 en>rst init=XX
+        %6:2 = dff %0:2 clk=%2 clr=%3,10 rst=%4,01 en=%5 en/rst init=XX
         %8:0 = output "q" %6:2
     "#};
     target.lower_ffs(&mut design);

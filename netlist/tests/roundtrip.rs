@@ -142,9 +142,9 @@ fn test_dffs() {
     roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 clr=%0+2\n");
     roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 rst=%0+2\n");
     roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 en=%0+2\n");
-    roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 rst=%0+2 en=%0+3 rst>en\n");
-    roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 rst=%0+2 en=!%0+3 en>rst\n");
-    roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 clr=%0+2 rst=%0+3 en=%0+4 en>rst init=1\n");
+    roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 rst=%0+2 en=%0+3 rst/en\n");
+    roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 rst=%0+2 en=!%0+3 en/rst\n");
+    roundtrip("%0:5 = buf 00000\n%5:1 = dff %0+0 clk=%0+1 clr=%0+2 rst=%0+3 en=%0+4 en/rst init=1\n");
 }
 
 #[test]
@@ -193,17 +193,17 @@ fn test_memories() {
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
          %12:_ = memory depth=#8 width=#4 {\n  \
-         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 en=%0+3 rst>en []\n}\n",
+         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 en=%0+3 rst/en []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
          %12:_ = memory depth=#8 width=#4 {\n  \
-         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 en=!%0+3 en>rst []\n}\n",
+         %12:4 = read addr=%5:3 clk=%0+1 rst=%0+2 en=!%0+3 en/rst []\n}\n",
     );
     roundtrip(
         "%0:5 = buf 00000\n%5:3 = buf 000\n\
          %12:_ = memory depth=#8 width=#4 {\n  \
-         %12:4 = read addr=%5:3 clk=%0+1 clr=%0+2 rst=%0+3 en=%0+4 en>rst init=1010 []\n}\n",
+         %12:4 = read addr=%5:3 clk=%0+1 clr=%0+2 rst=%0+3 en=%0+4 en/rst init=1010 []\n}\n",
     );
     roundtrip(
         "%0:1 = buf 0\n%1:3 = buf 000\n%4:4 = buf 0000\n%8:4 = buf 0001\n\

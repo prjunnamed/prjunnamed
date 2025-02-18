@@ -161,7 +161,7 @@ fn parse_const(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option
 }
 
 fn parse_keyword(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<String> {
-    let name: String = t.take_while(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '>')).collect();
+    let name: String = t.take_while(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '/')).collect();
     if name.is_empty() {
         return None;
     }
@@ -561,8 +561,8 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
     fn parse_reset_over_enable_arg(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<bool> {
         parse_blank(t);
         one_of!(t;
-            parse_keyword(t).filter(|kw| kw == "rst>en").map(|_| true),
-            parse_keyword(t).filter(|kw| kw == "en>rst").map(|_| false),
+            parse_keyword(t).filter(|kw| kw == "rst/en").map(|_| true),
+            parse_keyword(t).filter(|kw| kw == "en/rst").map(|_| false),
         )
     }
 

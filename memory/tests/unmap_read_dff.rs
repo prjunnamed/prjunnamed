@@ -33,7 +33,7 @@ fn test_simple() {
         "%50:_ = memory depth=#16 width=#4 {\n",
         "    init 0101\n",
         "    write addr=%10:4 data=%0:4 mask=%20*4 clk=%40 \n",
-        "    %50:4 = read addr=%30:4 clk=%41 clr=%42,1111 rst=%43,0000 en=%21 rst>en init=1010 [undef]\n",
+        "    %50:4 = read addr=%30:4 clk=%41 clr=%42,1111 rst=%43,0000 en=%21 rst/en init=1010 [undef]\n",
         "}\n",
         "%60:0 = output \"rd\" %50:4\n",
     ))
@@ -54,7 +54,7 @@ fn test_simple() {
         "    write addr=%10:4 data=%0:4 mask=%20*4 clk=%40\n",
         "    %50:4 = read addr=%30:4\n",
         "}\n",
-        "%60:4 = dff %50:4 clk=%41 clr=%42,1111 rst=%43,0000 en=%21 rst>en init=1010\n",
+        "%60:4 = dff %50:4 clk=%41 clr=%42,1111 rst=%43,0000 en=%21 rst/en init=1010\n",
         "%70:0 = output \"rd\" %60:4\n",
     ))
     .unwrap();
@@ -75,7 +75,7 @@ fn test_trans_simple() {
         "%50:_ = memory depth=#16 width=#4 {\n",
         "    init 0101\n",
         "    write addr=%10:4 data=%0:4 mask=%20*4 clk=%40 \n",
-        "    %50:4 = read addr=%30:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%21 rst>en init=1010 [trans]\n",
+        "    %50:4 = read addr=%30:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%21 rst/en init=1010 [trans]\n",
         "}\n",
         "%60:0 = output \"rd\" %50:4\n",
     ))
@@ -98,7 +98,7 @@ fn test_trans_simple() {
         "%60:1 = eq %30:4 %10:4\n",
         "%61:1 = mux %60 %20 0\n",
         "%70:4 = mux %61 %0:4 %50:4\n",
-        "%100:4 = dff %70:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%21 rst>en init=1010\n",
+        "%100:4 = dff %70:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%21 rst/en init=1010\n",
         "%110:0 = output \"rd\" %100:4\n",
     ))
     .unwrap();
@@ -123,7 +123,7 @@ fn test_trans_double() {
         "    init 0101\n",
         "    write addr=%10:4 data=%0:4 mask=%20*4 clk=%40 \n",
         "    write addr=%14:4 data=%4:4 mask=%21*4 clk=%40 \n",
-        "    %50:4 = read addr=%30:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%22 rst>en init=1010 [trans trans]\n",
+        "    %50:4 = read addr=%30:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%22 rst/en init=1010 [trans trans]\n",
         "}\n",
         "%60:0 = output \"rd\" %50:4\n",
     ))
@@ -153,7 +153,7 @@ fn test_trans_double() {
         "%80:1 = eq %30:4 %14:4\n",
         "%81:1 = mux %80 %21 0\n",
         "%90:4 = mux %81 %4:4 %70:4\n",
-        "%100:4 = dff %90:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%22 rst>en init=1010\n",
+        "%100:4 = dff %90:4 clk=%40 clr=%42,1111 rst=%43,0000 en=%22 rst/en init=1010\n",
         "%110:0 = output \"rd\" %100:4\n",
     ))
     .unwrap();
