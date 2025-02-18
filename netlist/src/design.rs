@@ -764,7 +764,7 @@ impl Design {
                     }
                 }
             });
-            self.cells.push(AnnotatedCell { repr: CellRepr::Coarse(Box::new(Cell::Debug(name, value))), meta });
+            self.cells.push(AnnotatedCell { repr: CellRepr::Boxed(Box::new(Cell::Debug(name, value))), meta });
         }
 
         did_change
@@ -773,46 +773,46 @@ impl Design {
     pub fn statistics(&self) -> BTreeMap<String, usize> {
         let result = RefCell::new(BTreeMap::<String, usize>::new());
         for cell_ref in self.iter_cells() {
-            let fine = |name: &str, amount: usize| {
+            let bitwise = |name: &str, amount: usize| {
                 *result.borrow_mut().entry(format!("{name}")).or_default() += amount;
             };
-            let coarse = |name: &str, size: usize| {
+            let wide = |name: &str, size: usize| {
                 *result.borrow_mut().entry(format!("{name}:{size}")).or_default() += 1;
             };
             let custom = |args: std::fmt::Arguments| {
                 *result.borrow_mut().entry(format!("{args}")).or_default() += 1;
             };
             match &*cell_ref.get() {
-                Cell::Buf(arg) => fine("buf", arg.len()),
-                Cell::Not(arg) => fine("not", arg.len()),
-                Cell::And(arg, _) => fine("and", arg.len()),
-                Cell::Or(arg, _) => fine("or", arg.len()),
-                Cell::Xor(arg, _) => fine("xor", arg.len()),
-                Cell::Mux(_, arg, _) => fine("mux", arg.len()),
-                Cell::Adc(arg, _, _) => coarse("adc", arg.len()),
-                Cell::Eq(arg, _) => coarse("eq", arg.len()),
-                Cell::ULt(arg, _) => coarse("ult", arg.len()),
-                Cell::SLt(arg, _) => coarse("slt", arg.len()),
-                Cell::Shl(arg, _, _) => coarse("shl", arg.len()),
-                Cell::UShr(arg, _, _) => coarse("ushr", arg.len()),
-                Cell::SShr(arg, _, _) => coarse("sshr", arg.len()),
-                Cell::XShr(arg, _, _) => coarse("xshr", arg.len()),
-                Cell::Mul(arg, _) => coarse("mul", arg.len()),
-                Cell::UDiv(arg, _) => coarse("udiv", arg.len()),
-                Cell::UMod(arg, _) => coarse("umod", arg.len()),
-                Cell::SDivTrunc(arg, _) => coarse("sdiv_trunc", arg.len()),
-                Cell::SDivFloor(arg, _) => coarse("sdiv_floor", arg.len()),
-                Cell::SModTrunc(arg, _) => coarse("smod_trunc", arg.len()),
-                Cell::SModFloor(arg, _) => coarse("smod_floor", arg.len()),
+                Cell::Buf(arg) => bitwise("buf", arg.len()),
+                Cell::Not(arg) => bitwise("not", arg.len()),
+                Cell::And(arg, _) => bitwise("and", arg.len()),
+                Cell::Or(arg, _) => bitwise("or", arg.len()),
+                Cell::Xor(arg, _) => bitwise("xor", arg.len()),
+                Cell::Mux(_, arg, _) => bitwise("mux", arg.len()),
+                Cell::Adc(arg, _, _) => wide("adc", arg.len()),
+                Cell::Eq(arg, _) => wide("eq", arg.len()),
+                Cell::ULt(arg, _) => wide("ult", arg.len()),
+                Cell::SLt(arg, _) => wide("slt", arg.len()),
+                Cell::Shl(arg, _, _) => wide("shl", arg.len()),
+                Cell::UShr(arg, _, _) => wide("ushr", arg.len()),
+                Cell::SShr(arg, _, _) => wide("sshr", arg.len()),
+                Cell::XShr(arg, _, _) => wide("xshr", arg.len()),
+                Cell::Mul(arg, _) => wide("mul", arg.len()),
+                Cell::UDiv(arg, _) => wide("udiv", arg.len()),
+                Cell::UMod(arg, _) => wide("umod", arg.len()),
+                Cell::SDivTrunc(arg, _) => wide("sdiv_trunc", arg.len()),
+                Cell::SDivFloor(arg, _) => wide("sdiv_floor", arg.len()),
+                Cell::SModTrunc(arg, _) => wide("smod_trunc", arg.len()),
+                Cell::SModFloor(arg, _) => wide("smod_floor", arg.len()),
                 Cell::Match(_) => custom(format_args!("match")),
-                Cell::Assign(AssignCell { value, .. }) => fine("assign", value.len()),
-                Cell::Dff(FlipFlop { data, .. }) => fine("dff", data.len()),
+                Cell::Assign(AssignCell { value, .. }) => bitwise("assign", value.len()),
+                Cell::Dff(FlipFlop { data, .. }) => bitwise("dff", data.len()),
                 Cell::Memory(Memory { depth, width, .. }) => custom(format_args!("memory:{depth}:{width}")),
-                Cell::IoBuf(IoBuffer { io, .. }) => fine("iobuf", io.len()),
+                Cell::IoBuf(IoBuffer { io, .. }) => bitwise("iobuf", io.len()),
                 Cell::Target(TargetCell { kind, .. }) => custom(format_args!("{kind}")),
                 Cell::Other(Instance { kind, .. }) => custom(format_args!("{kind}")),
-                Cell::Input(_, width) => fine("input", *width),
-                Cell::Output(_, value) => fine("output", value.len()),
+                Cell::Input(_, width) => bitwise("input", *width),
+                Cell::Output(_, value) => bitwise("output", value.len()),
                 Cell::Name(..) | Cell::Debug(..) => (),
             }
         }

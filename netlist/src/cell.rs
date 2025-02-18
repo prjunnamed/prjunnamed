@@ -42,7 +42,7 @@ pub(crate) enum CellRepr {
     Mux(Net, Net, Net), // a ? b : c
     Adc(Net, Net, Net), // a + b + ci
 
-    Coarse(Box<Cell>),
+    Boxed(Box<Cell>),
 }
 
 /// A unit of logic.
@@ -321,7 +321,7 @@ impl CellRepr {
             CellRepr::Mux(arg1, arg2, arg3) => Cow::Owned(Cell::Mux(arg1, Value::from(arg2), Value::from(arg3))),
             CellRepr::Adc(arg1, arg2, arg3) => Cow::Owned(Cell::Adc(Value::from(arg1), Value::from(arg2), arg3)),
 
-            CellRepr::Coarse(ref coarse) => Cow::Borrowed(coarse),
+            CellRepr::Boxed(ref cell) => Cow::Borrowed(cell),
         }
     }
 }
@@ -337,7 +337,7 @@ impl From<Cell> for CellRepr {
             Cell::Mux(arg1, arg2, arg3) if arg2.len() == 1 && arg3.len() == 1 => CellRepr::Mux(arg1, arg2[0], arg3[0]),
             Cell::Adc(arg1, arg2, arg3) if arg1.len() == 1 && arg2.len() == 1 => CellRepr::Adc(arg1[0], arg2[0], arg3),
 
-            coarse => CellRepr::Coarse(Box::new(coarse)),
+            cell => CellRepr::Boxed(Box::new(cell)),
         }
     }
 }
@@ -356,7 +356,7 @@ impl CellRepr {
             | CellRepr::Mux(..) => 1,
             CellRepr::Adc(..) => 2,
 
-            CellRepr::Coarse(coarse) => coarse.output_len(),
+            CellRepr::Boxed(cell) => cell.output_len(),
         }
     }
 
@@ -376,7 +376,7 @@ impl CellRepr {
                 arg3.visit(&mut f);
             }
 
-            CellRepr::Coarse(coarse) => coarse.visit(&mut f),
+            CellRepr::Boxed(cell) => cell.visit(&mut f),
         }
     }
 
@@ -396,7 +396,7 @@ impl CellRepr {
                 arg3.visit_mut(&mut f);
             }
 
-            CellRepr::Coarse(coarse) => coarse.visit_mut(&mut f),
+            CellRepr::Boxed(cell) => cell.visit_mut(&mut f),
         }
     }
 }
