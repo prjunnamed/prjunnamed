@@ -1474,5 +1474,7 @@ mod test {
         design.apply();
 
         decision(&mut design);
+        // the particular output generated here is uninteresting, assert that
+        // lowering doesn't panic and is accepted by SMT
     }
 }
