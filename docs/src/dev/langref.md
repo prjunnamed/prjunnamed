@@ -1,7 +1,7 @@
 Language reference
 ==================
 
-Project Unnamed is based around an [intermediate representation][ir]: a kind of human readable and writable (primarily by compiler developers) programming language designed for convenience of implementing transformations. These transformations include optimization, technology mapping, verification, and more.
+Project Unnamed is based around an [intermediate representation][ir]: a kind of compiler developer readable and writable programming language designed for convenience of implementing transformations. These transformations include optimization, technology mapping, verification, and more.
 
 The Project Unnamed intermediate representation is called "Unnamed IR", and it has two forms: the in-memory form composed out of the data structures in the [prjunnamed-netlist][] crate, and the text form described in this document. The text form is a part of the public interface, and incompatible changes to it are considered breaking changes to Project Unnamed itself.
 
