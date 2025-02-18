@@ -3,8 +3,8 @@
 //! The `decision` pass implements decision tree lowering based on the well-known heuristic
 //! algorithm developed for ML from the paper "Tree pattern matching for ML" by Marianne Baudinet
 //! and David MacQueen (unpublished, 1985) the extended abstract of which is available from:
-//! *  https://smlfamily.github.io/history/Baudinet-DM-tree-pat-match-12-85.pdf (scan)
-//! *  https://www.classes.cs.uchicago.edu/archive/2011/spring/22620-1/papers/macqueen-baudinet85.pdf (OCR)
+//! *  <https://smlfamily.github.io/history/Baudinet-DM-tree-pat-match-12-85.pdf> (scan)
+//! *  <https://www.classes.cs.uchicago.edu/archive/2011/spring/22620-1/papers/macqueen-baudinet85.pdf> (OCR)
 //!
 //! The algorithm is described in §4 "Decision trees and the dispatching problem". Only two
 //! of the heuristics described apply here: the relevance heuristic and the branching factor
