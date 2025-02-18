@@ -7,3 +7,6 @@ language = "en"
 
 [build]
 build-dir = "out"
+
+[output.html]
+git-repository-url = "https://github.com/prjunnamed/prjunnamed"
