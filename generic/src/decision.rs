@@ -259,8 +259,9 @@ impl MatchMatrix {
                 //   00 => x
                 //   10 => x
                 //   XX => y
-                // regardless of the column selection order. Even if the column 1 is chosen (as it should be),
-                // there are two rows but the `y` rule is still unreachable due to irrefutability.
+                // regardless of the column selection order. This is readily apparent when the left-hand
+                // column is split on first, but even if the right-hand column is chosen, there will a
+                // case-split with both arms leading to `Decision::Result(x)`.
                 if0
             } else {
                 Decision::Branch { test, if0: if0.into(), if1: if1.into() }
