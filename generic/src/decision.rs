@@ -13,7 +13,6 @@
 use std::fmt::Display;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
-use union_find_rs::{traits::UnionFind, disjoint_sets::DisjointSets};
 
 use prjunnamed_netlist::{AssignCell, Cell, CellRef, Const, Design, MatchCell, Net, Trit, Value};
 
@@ -269,26 +268,13 @@ impl MatchMatrix {
 }
 
 impl Decision {
-    /// Union `Net`s if they can both be true at the same time.
-    fn disjoint(&self, disjoint_sets: &mut DisjointSets<Net>) {
+    /// Register the branches within [`MutuallyExclusive`]
+    fn register_branches(&self, mex: &mut MutuallyExclusive) {
         match self {
-            Decision::Result { rules } => {
-                let mut unify_with = None;
-                for &rule in rules {
-                    let _ = disjoint_sets.make_set(rule);
-                    if let Some(other_rule) = unify_with {
-                        // work around https://gitlab.com/rustychoi/union_find/-/issues/1
-                        if disjoint_sets.find_set(&rule).unwrap() != disjoint_sets.find_set(&other_rule).unwrap() {
-                            disjoint_sets.union(&rule, &other_rule).unwrap();
-                        }
-                    } else {
-                        unify_with = Some(rule);
-                    }
-                }
-            }
+            Decision::Result { rules } => mex.add_branch(rules),
             Decision::Branch { if0, if1, .. } => {
-                if0.disjoint(disjoint_sets);
-                if1.disjoint(disjoint_sets);
+                if0.register_branches(mex);
+                if1.register_branches(mex);
             }
         }
     }
@@ -328,6 +314,76 @@ impl Decision {
                 design.add_mux(*test, if1.emit_one_hot_mux(design, nets), if0.emit_one_hot_mux(design, nets))
             }
         }
+    }
+}
+
+/// Keeps track of whether two outputs can occur in the same branch of a
+/// decision tree
+#[derive(Debug, Clone)]
+struct MutuallyExclusive {
+    /// For each `Net`, list of branches it occurs in
+    occurs: BTreeMap<Net, Vec<u32>>,
+    next_branch: u32,
+}
+
+/// A set of mutually-exclusive `Net`s that knows whether it can be extended.
+#[derive(Debug, Clone)]
+struct DisjointSet<'a> {
+    mex: &'a MutuallyExclusive,
+    /// Set of branches that drive a `Net` within this set.
+    branches: BTreeSet<u32>,
+}
+
+impl MutuallyExclusive {
+    fn new() -> Self {
+        Self {
+            occurs: BTreeMap::new(),
+            next_branch: 0,
+        }
+    }
+
+    /// Take note of a branch that drives `outputs`.
+    fn add_branch(&mut self, outputs: &BTreeSet<Net>) {
+        let branch = self.next_branch;
+        self.next_branch += 1;
+
+        for &output in outputs {
+            self.occurs.entry(output).or_default().push(branch);
+        }
+    }
+
+    /// Create an empty [`DisjointSet`] linked to this `MutuallyExclusive`.
+    fn make_disjoint(&self) -> DisjointSet<'_> {
+        DisjointSet {
+            mex: self,
+            branches: BTreeSet::new(),
+        }
+    }
+}
+
+impl DisjointSet<'_> {
+    /// Checks whether this set can be extended with `net`, and does so if it
+    /// is.
+    ///
+    /// Note that the intended usecase assumes that a result of `false` will
+    /// lead to the `DisjointSet` not being used anymore, and as a result,
+    /// a failed extend can leave the set with the new net already partly
+    /// inserted.
+    fn try_extend(&mut self, net: Net) -> bool {
+        let Some(occurs) = self.mex.occurs.get(&net) else {
+            // net is not driven by any branches in this decision tree.
+            // this can happen if a pattern turns out to be impossible
+            // (e.g. due to constant propagation)
+            return true;
+        };
+
+        for &occurrence in occurs {
+            if !self.branches.insert(occurrence) {
+                return false;
+            }
+        }
+
+        true
     }
 }
 
@@ -471,7 +527,7 @@ impl<'a> AssignChains<'a> {
     fn iter_disjoint<'b>(
         &'b self,
         decisions: &'a BTreeMap<Net, Rc<Decision>>,
-        disjoint_sets: &'a DisjointSets<Net>,
+        mex: &'b MutuallyExclusive,
     ) -> impl Iterator<Item = (Rc<Decision>, &'b [CellRef<'a>])> {
         fn enable_of(cell_ref: CellRef) -> Net {
             let Cell::Assign(AssignCell { enable, .. }) = &*cell_ref.get() else { unreachable!() };
@@ -479,25 +535,22 @@ impl<'a> AssignChains<'a> {
         }
 
         self.chains.iter().filter_map(|chain| {
-            // Check if the enables belong to the same decision tree.
-            let decision = decisions.get(&enable_of(chain[0]))?;
+            // Check if the enables belong to disjoint branches within the same decision tree
+            // (like in a SystemVerilog "unique" or "unique0" statement).
+            let enable = enable_of(chain[0]);
+            let decision = decisions.get(&enable)?;
+            let mut disjoint = mex.make_disjoint();
+            assert!(disjoint.try_extend(enable));
             let mut end_index = chain.len();
             'chain: for (index, &other_cell) in chain.iter().enumerate().skip(1) {
-                let other_decision = decisions.get(&enable_of(other_cell))?;
-                if !Rc::ptr_eq(decision, other_decision) {
+                let enable = enable_of(other_cell);
+                let other_decision = decisions.get(&enable)?;
+                if !Rc::ptr_eq(decision, other_decision) || !disjoint.try_extend(enable) {
                     end_index = index;
                     break 'chain;
                 }
             }
             let chain = &chain[..end_index];
-
-            // Check if the enables are disjoint (like in a SystemVerilog "unique" or "unique0" statement).
-            let enables = BTreeSet::from_iter(chain.iter().map(|&cell_ref| enable_of(cell_ref)));
-            let unique_enables =
-                BTreeSet::from_iter(enables.iter().filter_map(|enable| disjoint_sets.find_set(enable).ok()));
-            if chain.len() != enables.len() || chain.len() != unique_enables.len() {
-                return None;
-            }
 
             Some((decision.clone(), chain))
         })
@@ -515,14 +568,7 @@ pub fn decision(design: &mut Design) {
     // Then build a decision tree for it and use it to drive the output.
     let mut decisions: BTreeMap<Net, Rc<Decision>> = BTreeMap::new();
 
-    // Nets are in the same set if they are driven by the same decision tree
-    // and they can be driven at the same time.
-    //
-    // Note that this is currently conservative. For example, in the following
-    // match matrix, %2 and %3 are not considered mutually exclusive:
-    //   10 => %1 %2
-    //   11 => %1 %3
-    let mut disjoint_sets: DisjointSets<Net> = DisjointSets::new();
+    let mut mex = MutuallyExclusive::new();
     for (matrix, matches) in match_trees.iter_matrices() {
         let all_outputs = BTreeSet::from_iter(matrix.iter_outputs());
         if cfg!(feature = "trace") {
@@ -534,7 +580,7 @@ pub fn decision(design: &mut Design) {
             eprint!(">decision tree:\n{decision}")
         }
 
-        decision.disjoint(&mut disjoint_sets);
+        decision.register_branches(&mut mex);
         for &output in &all_outputs {
             decisions.insert(output, decision.clone());
         }
@@ -547,7 +593,7 @@ pub fn decision(design: &mut Design) {
     // Find chains of `assign` cells that are order-independent.
     // Then lower these cells to a `mux` tree without `eq` cells.
     let mut used_assigns = BTreeSet::new();
-    for (decision, chain) in assign_chains.iter_disjoint(&decisions, &disjoint_sets) {
+    for (decision, chain) in assign_chains.iter_disjoint(&decisions, &mex) {
         let (first_assign, last_assign) = (chain.first().unwrap(), chain.last().unwrap());
         if cfg!(feature = "trace") {
             eprintln!(">disjoint:");
@@ -1385,6 +1431,48 @@ mod test {
     }
 
     #[test]
+    fn test_assign_lower_disjoint_child() {
+        let mut dl = Design::new();
+        let c1 = dl.add_input("c1", 1);
+        let m1 = dl.add_match(MatchCell {
+            value: c1,
+            enable: Net::ONE,
+            patterns: vec![
+                vec![Const::lit("0")], // m2
+                vec![Const::lit("1")], // x2
+            ],
+        });
+
+        let c2 = dl.add_input("c2", 2);
+        let m2 = dl.add_match(MatchCell {
+            value: c2,
+            enable: m1[0],
+            patterns: vec![
+                vec![Const::lit("01")], // x1
+            ],
+        });
+
+        let a1 = dl.add_assign(assign(Value::zero(4), m2[0], dl.add_input("x1", 4)));
+        let a2 = dl.add_assign(assign(a1, m1[1], dl.add_input("x2", 4)));
+        dl.add_output("y", a2);
+        dl.apply();
+
+        decision(&mut dl);
+
+        let mut dr = Design::new();
+        let c1 = dr.add_input("c1", 1);
+        let c2 = dr.add_input("c2", 2);
+        let x1 = dr.add_input("x1", 4);
+        let x2 = dr.add_input("x2", 4);
+        let m1 = dr.add_mux(c2[1], Value::zero(4), &x1);
+        let m2 = dr.add_mux(c2[0], &m1, Value::zero(4));
+        let m3 = dr.add_mux(c1[0], &x2, &m2);
+        dr.add_output("y", m3);
+
+        assert_isomorphic!(dl, dr);
+    }
+
+    #[test]
     fn test_assign_lower_overlapping() {
         let mut dl = Design::new();
         let c = dl.add_input("c", 1);
@@ -1407,8 +1495,7 @@ mod test {
         let x2 = dr.add_input("x2", 4);
         let x3 = dr.add_input("x3", 4);
         let mc = dr.add_mux(c, Const::lit("10"), Const::lit("01"));
-        let m1 = dr.add_mux(mc[0], x1, Value::zero(4));
-        let m2 = dr.add_mux(mc[1], x2, m1);
+        let m2 = dr.add_mux(c, x2, x1);
         let m3 = dr.add_mux(mc[1], x3, m2);
         dr.add_output("y", m3);
 
