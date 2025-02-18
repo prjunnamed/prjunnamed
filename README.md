@@ -23,10 +23,19 @@ We use [rustfmt][] to ensure consistent formatting of the entire codebase. Prior
 $ cargo fmt
 ```
 
+In order to build the documentation, you will need [mdbook][] (which can be installed in a number of ways including via [rustup][]). Once you have it, run:
+
+```console
+$ mdbook serve docs
+```
+
+The documentation will be accessible in a browser at [http://localhost:3000](http://localhost:3000).
+
 [rust]: https://rust-lang.org/
 [rustfmt]: https://rust-lang.github.io/rustfmt/
 [rustup]: https://rustup.rs/
 [z3]: https://github.com/Z3Prover/z3
+[mdbook]: https://rust-lang.github.io/mdBook/guide/installation.html
 
 
 Community
