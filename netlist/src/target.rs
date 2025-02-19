@@ -66,13 +66,13 @@ impl TargetParamKind {
                 0 => Some(ParamValue::Const(Const::zero(1))),
                 _ => None,
             },
-            (TargetParamKind::Bool, ParamValue::Const(value)) => match value.as_uint() {
-                Some(1) => Some(ParamValue::Const(Const::ones(1))),
-                Some(0) => Some(ParamValue::Const(Const::zero(1))),
+            (TargetParamKind::Bool, ParamValue::Const(value)) => match value.try_into() {
+                Ok(0u64) => Some(ParamValue::Const(Const::zero(1))),
+                Ok(1u64) => Some(ParamValue::Const(Const::ones(1))),
                 _ => None,
             },
             (TargetParamKind::IntEnum(items), ParamValue::Const(value)) => {
-                let value = value.as_int()?;
+                let value = value.try_into().ok()?;
                 if items.contains(&value) {
                     Some(ParamValue::Int(value))
                 } else {
