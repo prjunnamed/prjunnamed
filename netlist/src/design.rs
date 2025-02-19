@@ -945,7 +945,7 @@ impl Display for Design {
                             writeln!(f)?;
                         }
                     }
-                    _ => ()
+                    _ => (),
                 }
             }
             if matches!(cell, Cell::Target(..)) {

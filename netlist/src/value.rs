@@ -166,7 +166,7 @@ impl PartialEq for ValueRepr {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.eq(rgt),
-            _ => self.as_slice().eq(other.as_slice())
+            _ => self.as_slice().eq(other.as_slice()),
         }
     }
 }
@@ -177,7 +177,7 @@ impl PartialOrd for ValueRepr {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
             (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.partial_cmp(rgt),
-            _ => self.as_slice().partial_cmp(other.as_slice())
+            _ => self.as_slice().partial_cmp(other.as_slice()),
         }
     }
 }
@@ -186,7 +186,7 @@ impl Ord for ValueRepr {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match (self, other) {
             (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.cmp(rgt),
-            _ => self.as_slice().cmp(other.as_slice())
+            _ => self.as_slice().cmp(other.as_slice()),
         }
     }
 }
