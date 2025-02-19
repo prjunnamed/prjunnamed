@@ -142,6 +142,7 @@ impl Design {
         Value::from_cell_range(index, width)
     }
 
+    #[inline]
     pub fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
         let index = net.as_cell_index()?;
         match self.cells[index].repr {

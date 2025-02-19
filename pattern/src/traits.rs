@@ -83,6 +83,7 @@ pub trait DesignDyn {
 }
 
 impl DesignDyn for Design {
+    #[inline]
     fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
         Design::find_cell(self, net)
     }
@@ -112,6 +113,7 @@ impl<'a> CellCollector<'a> {
 }
 
 impl DesignDyn for CellCollector<'_> {
+    #[inline]
     fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
         match self.inner.find_cell(net) {
             Ok((cell_ref, offset)) => {

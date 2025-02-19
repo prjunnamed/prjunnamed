@@ -17,6 +17,7 @@ macro_rules! bitwise_patterns {
         impl<T: NetOrValue, P: Pattern<T>> Pattern<T> for $name<P> {
             type Capture = (T, P::Capture);
 
+            #[inline]
             fn execute(&self, design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
                 let mut cap = None;
                 for net in target.iter() {
@@ -50,6 +51,7 @@ macro_rules! bitwise_patterns {
         impl<T: NetOrValue, P1: Pattern<T>, P2: Pattern<T>> Pattern<T> for $name<P1, P2> {
             type Capture = (T, P1::Capture, P2::Capture);
 
+            #[inline]
             fn execute(&self, design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
                 let mut cap1 = None;
                 let mut cap2 = None;
@@ -95,6 +97,7 @@ impl<P1, P2, P3> PMux<P1, P2, P3> {
 impl<T: NetOrValue, P1: Pattern<Net>, P2: Pattern<T>, P3: Pattern<T>> Pattern<T> for PMux<P1, P2, P3> {
     type Capture = (T, P1::Capture, P2::Capture, P3::Capture);
 
+    #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
         let mut cap1 = None;
         let mut cap2 = None;
@@ -133,6 +136,7 @@ impl<P> PDff<P> {
 impl<P: Pattern<Net>> Pattern<Net> for PDff<P> {
     type Capture = (FlipFlop, P::Capture);
 
+    #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &Net) -> Option<Self::Capture> {
         if let Ok((cell_ref, offset)) = design.find_cell(*target) {
             if let Cell::Dff(flip_flop) = &*cell_ref.get() {
@@ -153,6 +157,7 @@ impl<P: Pattern<Net>> Pattern<Net> for PDff<P> {
 impl<P: Pattern<Value>> Pattern<Value> for PDff<P> {
     type Capture = (FlipFlop, P::Capture);
 
+    #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &Value) -> Option<Self::Capture> {
         let mut target_flip_flop = None::<FlipFlop>;
         for target_net in target.iter() {
