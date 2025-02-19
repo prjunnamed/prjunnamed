@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     fmt::{Debug, Display},
     ops::{Index, IndexMut},
+    hash::Hash,
     slice::SliceIndex,
 };
 
@@ -46,6 +47,10 @@ impl Net {
         } else {
             Err(self.as_const().unwrap())
         }
+    }
+
+    pub fn is_const(self) -> bool {
+        self.as_const().is_some()
     }
 
     pub fn is_cell(self) -> bool {
@@ -122,87 +127,136 @@ impl Display for Net {
     }
 }
 
-/// A value is a (possibly empty) sequence of [`Net`]s.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Value {
-    nets: Vec<Net>,
+#[derive(Clone)]
+enum ValueRepr {
+    None,
+    Some(Net),
+    Many(Vec<Net>),
 }
 
-fn shift_count(val: &Const, stride: u32) -> usize {
-    let stride = stride as usize;
-    let mut result: usize = 0;
-    for (index, trit) in val.iter().enumerate() {
-        if trit == Trit::One {
-            if index >= usize::BITS as usize {
-                return usize::MAX;
-            } else {
-                result |= 1 << index;
+impl ValueRepr {
+    fn as_slice(&self) -> &[Net] {
+        match self {
+            ValueRepr::None => &[],
+            ValueRepr::Some(net) => std::slice::from_ref(net),
+            ValueRepr::Many(nets) => nets.as_slice(),
+        }
+    }
+
+    fn as_slice_mut(&mut self) -> &mut [Net] {
+        match self {
+            ValueRepr::None => &mut [],
+            ValueRepr::Some(net) => std::slice::from_mut(net),
+            ValueRepr::Many(nets) => nets.as_mut_slice(),
+        }
+    }
+
+    fn push(&mut self, new_net: Net) {
+        match self {
+            ValueRepr::None => *self = ValueRepr::Some(new_net),
+            ValueRepr::Some(net) => *self = ValueRepr::Many(vec![*net, new_net]),
+            ValueRepr::Many(nets) => {
+                nets.push(new_net);
             }
         }
     }
-    result.checked_mul(stride).unwrap_or(usize::MAX)
 }
+
+impl PartialEq for ValueRepr {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.eq(rgt),
+            _ => self.as_slice().eq(other.as_slice())
+        }
+    }
+}
+
+impl Eq for ValueRepr {}
+
+impl PartialOrd for ValueRepr {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.partial_cmp(rgt),
+            _ => self.as_slice().partial_cmp(other.as_slice())
+        }
+    }
+}
+
+impl Ord for ValueRepr {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (self, other) {
+            (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.cmp(rgt),
+            _ => self.as_slice().cmp(other.as_slice())
+        }
+    }
+}
+
+impl Hash for ValueRepr {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.as_slice().hash(state);
+    }
+}
+
+/// A value is a (possibly empty) sequence of [`Net`]s.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Value(ValueRepr);
 
 impl Value {
     /// Creates an empty value.
     pub fn new() -> Self {
-        Self { nets: vec![] }
+        Value(ValueRepr::None)
     }
 
     /// Creates an all-`0` value of given width.
     pub fn zero(width: usize) -> Self {
-        Self::from_iter(std::iter::repeat_n(Net::ZERO, width))
+        Value::from_iter(std::iter::repeat_n(Net::ZERO, width))
     }
 
     /// Creates an all-`1` value of given width.
     pub fn ones(width: usize) -> Self {
-        Self::from_iter(std::iter::repeat_n(Net::ONE, width))
+        Value::from_iter(std::iter::repeat_n(Net::ONE, width))
     }
 
     /// Creates an all-`X` value of given width.
     pub fn undef(width: usize) -> Self {
-        Self::from_iter(std::iter::repeat_n(Net::UNDEF, width))
+        Value::from_iter(std::iter::repeat_n(Net::UNDEF, width))
     }
 
     /// Creates a reference to `count` outputs of cell at position `cell_index` in their natural order.
     pub(crate) fn from_cell_range(cell_index: usize, count: usize) -> Value {
-        let mut nets = vec![];
-        for net_index in 0..count {
-            nets.push(Net::from_cell_index(cell_index + net_index));
-        }
-        Value { nets }
+        Value::from_iter((cell_index..(cell_index + count)).map(Net::from_cell_index))
     }
 
     pub fn len(&self) -> usize {
-        self.nets.len()
+        self.0.as_slice().len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.nets.is_empty()
+        self.0.as_slice().is_empty()
     }
 
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = Net> + ExactSizeIterator + '_ {
-        self.nets.iter().copied()
+        self.0.as_slice().iter().copied()
     }
 
     pub fn iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Net> + ExactSizeIterator + '_ {
-        self.nets.iter_mut()
+        self.0.as_slice_mut().iter_mut()
     }
 
-    pub fn push(&mut self, net: impl Into<Net>) {
-        self.nets.push(net.into());
+    pub fn push(&mut self, new_net: impl Into<Net>) {
+        self.0.push(new_net.into())
     }
 
     pub fn is_undef(&self) -> bool {
-        self.nets.iter().all(|&net| net == Net::UNDEF)
+        self.iter().all(|net| net == Net::UNDEF)
     }
 
     pub fn is_zero(&self) -> bool {
-        self.nets.iter().all(|&net| net == Net::ZERO)
+        self.iter().all(|net| net == Net::ZERO)
     }
 
     pub fn is_ones(&self) -> bool {
-        self.nets.iter().all(|&net| net == Net::ONE)
+        self.iter().all(|net| net == Net::ONE)
     }
 
     pub fn lsb(&self) -> Net {
@@ -214,16 +268,13 @@ impl Value {
     }
 
     pub fn has_undef(&self) -> bool {
-        self.nets.iter().any(|&net| net == Net::UNDEF)
+        self.iter().any(|net| net == Net::UNDEF)
     }
 
     pub fn as_const(&self) -> Option<Const> {
-        if self.nets.iter().all(|net| net.as_const().is_some()) {
-            let mut trits = vec![];
-            for net in self.nets.iter() {
-                trits.push(net.as_const().unwrap())
-            }
-            Some(Const::from(trits))
+        let nets = self.0.as_slice();
+        if nets.iter().all(|net| net.is_const()) {
+            Some(Const::from_iter(nets.iter().map(|net| net.as_const().unwrap())))
         } else {
             None
         }
@@ -242,11 +293,11 @@ impl Value {
     }
 
     pub fn concat<'a>(&self, other: impl Into<Cow<'a, Value>>) -> Self {
-        Self::from_iter(self.iter().chain(other.into().iter()))
+        Value::from_iter(self.iter().chain(other.into().iter()))
     }
 
-    pub fn repeat(&self, n: usize) -> Self {
-        Self::from_iter((0..n).flat_map(|_| self))
+    pub fn repeat(&self, count: usize) -> Self {
+        Value::from_iter((0..count).flat_map(|_| self))
     }
 
     pub fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Value {
@@ -261,7 +312,22 @@ impl Value {
     pub fn sext(&self, width: usize) -> Self {
         assert!(!self.is_empty());
         assert!(width >= self.len());
-        Self::from_iter(self.iter().chain(std::iter::repeat_n(self[self.len() - 1], width - self.len())))
+        Value::from_iter(self.iter().chain(std::iter::repeat_n(self.msb(), width - self.len())))
+    }
+
+    fn shift_count(value: &Const, stride: u32) -> usize {
+        let stride = stride as usize;
+        let mut result: usize = 0;
+        for (index, trit) in value.iter().enumerate() {
+            if trit == Trit::One {
+                if index >= usize::BITS as usize {
+                    return usize::MAX;
+                } else {
+                    result |= 1 << index;
+                }
+            }
+        }
+        result.checked_mul(stride).unwrap_or(usize::MAX)
     }
 
     pub fn shl<'a>(&self, other: impl Into<Cow<'a, Const>>, stride: u32) -> Value {
@@ -269,7 +335,7 @@ impl Value {
         if other.has_undef() {
             return Value::undef(self.len());
         }
-        let shcnt = shift_count(&other, stride);
+        let shcnt = Self::shift_count(&other, stride);
         if shcnt >= self.len() {
             return Value::zero(self.len());
         }
@@ -281,7 +347,7 @@ impl Value {
         if other.has_undef() {
             return Value::undef(self.len());
         }
-        let shcnt = shift_count(&other, stride);
+        let shcnt = Self::shift_count(&other, stride);
         if shcnt >= self.len() {
             return Value::zero(self.len());
         }
@@ -293,7 +359,7 @@ impl Value {
         if other.has_undef() {
             return Value::undef(self.len());
         }
-        let shcnt = shift_count(&other, stride);
+        let shcnt = Self::shift_count(&other, stride);
         if shcnt >= self.len() {
             return Value::from(self.msb()).sext(self.len());
         }
@@ -305,7 +371,7 @@ impl Value {
         if other.has_undef() {
             return Value::undef(self.len());
         }
-        let shcnt = shift_count(&other, stride);
+        let shcnt = Self::shift_count(&other, stride);
         if shcnt >= self.len() {
             return Value::undef(self.len());
         }
@@ -313,22 +379,28 @@ impl Value {
     }
 
     pub fn visit(&self, mut f: impl FnMut(Net)) {
-        for &net in self.nets.iter() {
+        for net in self.iter() {
             f(net)
         }
     }
 
     pub fn visit_mut(&mut self, mut f: impl FnMut(&mut Net)) {
-        for net in self.nets.iter_mut() {
+        for net in self.iter_mut() {
             f(net)
         }
+    }
+}
+
+impl Default for Value {
+    fn default() -> Self {
+        Value::new()
     }
 }
 
 impl Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "Value::from_iter([")?;
-        for (index, net) in self.nets.iter().enumerate() {
+        for (index, net) in self.iter().enumerate() {
             if index != 0 {
                 write!(f, ", ")?;
             }
@@ -347,7 +419,7 @@ impl Display for Value {
             write!(f, "{}", self[0])
         } else {
             write!(f, "{{")?;
-            for net in self.nets.iter().rev() {
+            for net in self.iter().rev() {
                 write!(f, " {}", net)?;
             }
             write!(f, " }}")
@@ -359,20 +431,20 @@ impl<I: SliceIndex<[Net]>> Index<I> for Value {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
-        &self.nets[index]
+        &self.0.as_slice()[index]
     }
 }
 
 impl<I: SliceIndex<[Net]>> IndexMut<I> for Value {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.nets[index]
+        &mut self.0.as_slice_mut()[index]
     }
 }
 
 impl Extend<Net> for Value {
     fn extend<T: IntoIterator<Item = Net>>(&mut self, iter: T) {
         for net in iter {
-            self.nets.push(net);
+            self.push(net);
         }
     }
 }
@@ -385,31 +457,31 @@ impl From<&Value> for Value {
 
 impl From<Net> for Value {
     fn from(net: Net) -> Self {
-        Value { nets: vec![net] }
+        Value(ValueRepr::Some(net))
     }
 }
 
 impl From<&Net> for Value {
     fn from(net: &Net) -> Self {
-        Value { nets: vec![*net] }
+        Value::from(*net)
     }
 }
 
 impl From<Trit> for Value {
     fn from(trit: Trit) -> Self {
-        Value { nets: vec![Net::from(trit)] }
+        Value(ValueRepr::Some(trit.into()))
     }
 }
 
 impl From<&[Net]> for Value {
     fn from(nets: &[Net]) -> Self {
-        Value { nets: nets.to_vec() }
+        Value::from_iter(nets.iter().cloned())
     }
 }
 
 impl From<Vec<Net>> for Value {
     fn from(nets: Vec<Net>) -> Self {
-        Value { nets }
+        Value::from(&nets[..])
     }
 }
 
@@ -463,25 +535,55 @@ impl<'a> From<&'a Value> for Cow<'a, Value> {
 
 impl FromIterator<Net> for Value {
     fn from_iter<T: IntoIterator<Item = Net>>(iter: T) -> Self {
-        Value { nets: iter.into_iter().collect() }
+        let mut iter = iter.into_iter();
+        match iter.size_hint() {
+            (_, Some(0 | 1)) => {
+                let mut value = match iter.next() {
+                    None => Value::new(),
+                    Some(net) => Value::from(net),
+                };
+                while let Some(net) = iter.next() {
+                    value.push(net);
+                }
+                value
+            }
+            _ => Value(ValueRepr::Many(iter.collect())),
+        }
     }
 }
 
-impl IntoIterator for &Value {
+impl<'a> IntoIterator for &'a Value {
     type Item = Net;
-    type IntoIter = std::vec::IntoIter<Net>;
+    type IntoIter = std::iter::Cloned<std::slice::Iter<'a, Net>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.nets.clone().into_iter()
+        self.0.as_slice().into_iter().cloned()
+    }
+}
+
+pub struct ValueIntoIter {
+    repr: ValueRepr,
+    index: usize,
+}
+
+impl Iterator for ValueIntoIter {
+    type Item = Net;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self.repr.as_slice().get(self.index).cloned();
+        if item.is_some() {
+            self.index += 1;
+        }
+        item
     }
 }
 
 impl IntoIterator for Value {
     type Item = Net;
-    type IntoIter = std::vec::IntoIter<Net>;
+    type IntoIter = ValueIntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.nets.into_iter()
+        ValueIntoIter { repr: self.0, index: 0 }
     }
 }
 
