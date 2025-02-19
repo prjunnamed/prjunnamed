@@ -308,6 +308,10 @@ impl Const {
         Self::from_iter(self.iter().chain(other.into().iter()))
     }
 
+    pub fn repeat(&self, count: usize) -> Self {
+        Const::from_iter((0..count).flat_map(|_| self))
+    }
+
     pub fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Const {
         Const::from_iter(self[(range.start_bound().cloned(), range.end_bound().cloned())].iter().copied())
     }
