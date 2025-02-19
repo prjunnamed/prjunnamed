@@ -14,8 +14,9 @@ macro_rules! netlist_match {
     { @TOP@ $design:ident $target:ident $($rest:tt)* } => {
         {
             if $target.len() > 0 {
-                use $crate::Pattern;
-                $crate::netlist_match! { @RULE@ $design $target $($rest)* }
+                use $crate::{Pattern, DesignDyn};
+                let design = $crate::CellCollector::new($design);
+                $crate::netlist_match! { @RULE@ design $target $($rest)* }
             } else {
                 None
             }
@@ -25,11 +26,11 @@ macro_rules! netlist_match {
     { @RULE@ $design:ident $target:ident [ $($pat:tt)+ ] $( if $gexpr:expr )? => $result:expr; $($rest:tt)* } => {
         {
             'block: {
+                $design.clear();
                 let pattern = $crate::netlist_match!( @NEW@ [ $($pat)+ ] );
-                let collector = $crate::CellCollector::new($design);
-                match pattern.execute(&collector, $target) {
+                match pattern.execute(&$design, $target) {
                     Some($crate::netlist_match!( @PAT@ [ $($pat)+ ] )) => {
-                        let _guard = $design.inner().use_metadata_from(&collector.into_cells()[..]);
+                        let _guard = $design.inner().use_metadata_from(&$design.cells());
                         $( if $gexpr )? {
                             if cfg!(feature = "trace") {
                                 eprintln!(">match {} => {}",
@@ -49,11 +50,11 @@ macro_rules! netlist_match {
     { @RULE@ $design:ident $target:ident [ $($pat:tt)+ ] if let $gpat:pat = $gexpr:expr => $result:expr; $($rest:tt)* } => {
         {
             'block: {
+                $design.clear();
                 let pattern = $crate::netlist_match!( @NEW@ [ $($pat)+ ] );
-                let collector = $crate::CellCollector::new($design);
-                match pattern.execute(&collector, $target) {
+                match pattern.execute(&$design, $target) {
                     Some($crate::netlist_match!( @PAT@ [ $($pat)+ ] )) => {
-                        let _guard = $design.inner().use_metadata_from(&collector.into_cells()[..]);
+                        let _guard = $design.inner().use_metadata_from(&$design.cells());
                         if let $gpat = $gexpr {
                             if cfg!(feature = "trace") {
                                 eprintln!(">match {} => {}",
