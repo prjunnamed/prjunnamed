@@ -17,6 +17,7 @@ macro_rules! shift_patterns {
         impl<P1: Pattern<Value>, P2: Pattern<Value>, P3: Pattern<u32>> Pattern<Value> for $name<P1, P2, P3> {
             type Capture = (Value, P1::Capture, P2::Capture, P3::Capture);
 
+            #[inline]
             fn execute(&self, design: &dyn DesignDyn, target: &Value) -> Option<Self::Capture> {
                 if target.is_empty() {
                     return None;
