@@ -102,9 +102,7 @@ impl MatchMatrix {
     }
 
     fn iter_outputs(&self) -> impl Iterator<Item = Net> {
-        let mut outputs: Vec<Net> = self.rows.iter()
-            .flat_map(|row| row.rules.iter().copied())
-            .collect();
+        let mut outputs: Vec<Net> = self.rows.iter().flat_map(|row| row.rules.iter().copied()).collect();
         outputs.sort();
         outputs.dedup();
         outputs.into_iter()
@@ -366,14 +364,17 @@ impl<'a> MatchTrees<'a> {
 
         // Whenever multiple subtrees are connected to the same one-hot output, it is not possible
         // to merge all of them into the same matrix. Turn all of these subtrees into roots.
-        let subtrees = subtrees.into_iter().filter_map(|(key, subtrees)| {
-            if subtrees.len() == 1 {
-                Some((key, subtrees.into_iter().next().unwrap()))
-            } else {
-                roots.extend(subtrees);
-                None
-            }
-        }).collect();
+        let subtrees = subtrees
+            .into_iter()
+            .filter_map(|(key, subtrees)| {
+                if subtrees.len() == 1 {
+                    Some((key, subtrees.into_iter().next().unwrap()))
+                } else {
+                    roots.extend(subtrees);
+                    None
+                }
+            })
+            .collect();
 
         Self { design, roots, subtrees }
     }
@@ -435,7 +436,9 @@ impl<'a> AssignChains<'a> {
         let mut links: BTreeMap<CellRef, BTreeSet<CellRef>> = BTreeMap::new();
         for cell_ref in design.iter_cells() {
             let Cell::Assign(AssignCell { value, offset: 0, update, .. }) = &*cell_ref.get() else { continue };
-            if update.len() != value.len() { continue }
+            if update.len() != value.len() {
+                continue;
+            }
             if let Ok((value_cell_ref, _offset)) = design.find_cell(value[0]) {
                 if value_cell_ref.output() == *value {
                     if let Cell::Assign(_) = &*value_cell_ref.get() {
@@ -483,7 +486,7 @@ impl<'a> AssignChains<'a> {
                 let other_decision = decisions.get(&enable_of(other_cell))?;
                 if !Rc::ptr_eq(decision, other_decision) {
                     end_index = index;
-                    break 'chain
+                    break 'chain;
                 }
             }
             let chain = &chain[..end_index];

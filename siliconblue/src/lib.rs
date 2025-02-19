@@ -948,7 +948,7 @@ impl SiliconBlueTarget {
                                     carry[index],
                                     carry[index + 1],
                                 ),
-                                cell.metadata()
+                                cell.metadata(),
                             ),
                         );
                     }
