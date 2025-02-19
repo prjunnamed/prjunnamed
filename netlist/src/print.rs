@@ -509,21 +509,22 @@ impl Design {
                     write!(f, "{newline}")?;
                     port_offset += read_port.data_len;
                 }
-                let fully_undef_rows_at_end = memory
-                    .init_value
-                    .iter()
-                    .rev()
-                    .enumerate()
-                    .find(|(_index, trit)| !matches!(trit, Trit::Undef))
-                    .map(|(index, _trit)| index)
-                    .unwrap_or(memory.width * memory.depth)
-                    / memory.width;
-                for index in 0..(memory.depth - fully_undef_rows_at_end) {
-                    write!(f, "  init ")?;
-                    for trit in memory.init_value[(index * memory.width)..((index + 1) * memory.width)].iter().rev() {
-                        write!(f, "{trit}")?;
+                let mut rows = Vec::new();
+                for index in 0..memory.depth {
+                    rows.push(memory.init_value.slice((index * memory.width)..((index + 1) * memory.width)));
+                }
+                let mut index = 0;
+                while index < rows.len() {
+                    write!(f, "  init {}", rows[index])?;
+                    let mut repeats = 1;
+                    while rows.get(index) == rows.get(index + repeats) {
+                        repeats += 1;
+                    }
+                    if repeats > 1 {
+                        write!(f, "*{repeats}")?;
                     }
                     write!(f, "{newline}")?;
+                    index += repeats;
                 }
                 write!(f, "}}")?;
             }

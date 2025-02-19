@@ -825,7 +825,12 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
     fn parse_memory_init(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Const> {
         parse_keyword_expect(t, "init")?;
         parse_blank(t);
-        parse_const(t)
+        let value = parse_const(t)?;
+        let repeats = t.optional(|t| {
+            parse_symbol(t, '*')?;
+            parse_decimal(t)
+        }).unwrap_or(1);
+        Some(value.repeat(repeats))
     }
 
     fn parse_memory_write(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MemoryWritePort> {
