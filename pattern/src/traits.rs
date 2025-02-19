@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Ref, RefCell},
     fmt::{Debug, Display},
 };
 
@@ -102,8 +102,12 @@ impl<'a> CellCollector<'a> {
         Self { inner: design, cells: RefCell::new(Vec::new()) }
     }
 
-    pub fn into_cells(self) -> Vec<CellRef<'a>> {
-        self.cells.into_inner()
+    pub fn cells(&self) -> Ref<[CellRef<'a>]> {
+        Ref::map(self.cells.borrow(), |cells| &cells[..])
+    }
+
+    pub fn clear(&self) {
+        self.cells.borrow_mut().clear();
     }
 }
 
