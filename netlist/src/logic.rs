@@ -208,46 +208,6 @@ impl Const {
         Self { trits }
     }
 
-    pub fn as_uint(&self) -> Option<u64> {
-        if self.has_undef() {
-            return None;
-        }
-        let mut res = 0;
-        for (pos, trit) in self.iter().enumerate() {
-            if trit == Trit::One {
-                if pos >= 64 {
-                    return None;
-                }
-                res |= 1 << pos;
-            }
-        }
-        Some(res)
-    }
-
-    pub fn as_int(&self) -> Option<i64> {
-        if self.has_undef() {
-            return None;
-        }
-        let mut width = self.len();
-        while width > 1 && self[width - 1] == self[width - 2] {
-            width -= 1;
-        }
-        if width > 64 {
-            return None;
-        }
-        let mut res = 0;
-        for (pos, trit) in self.iter().enumerate() {
-            if trit == Trit::One {
-                if pos == width - 1 {
-                    res |= -1 << pos;
-                } else {
-                    res |= 1 << pos;
-                }
-            }
-        }
-        Some(res)
-    }
-
     pub fn lit(value: &str) -> Self {
         value.parse().unwrap()
     }
@@ -469,6 +429,54 @@ impl FromStr for Const {
             trits.push(Trit::from_char(char)?)
         }
         Ok(Const { trits })
+    }
+}
+
+impl TryFrom<&Const> for u64 {
+    type Error = ();
+
+    fn try_from(value: &Const) -> Result<Self, Self::Error> {
+        if value.has_undef() {
+            return Err(());
+        }
+        let mut result = 0;
+        for (index, trit) in value.iter().enumerate() {
+            if trit == Trit::One {
+                if index >= 64 {
+                    return Err(());
+                }
+                result |= 1 << index;
+            }
+        }
+        Ok(result)
+    }
+}
+
+impl TryFrom<&Const> for i64 {
+    type Error = ();
+
+    fn try_from(value: &Const) -> Result<Self, Self::Error> {
+        if value.has_undef() {
+            return Err(());
+        }
+        let mut width = value.len();
+        while width > 1 && value[width - 1] == value[width - 2] {
+            width -= 1;
+        }
+        if width > Self::BITS as usize {
+            return Err(());
+        }
+        let mut result = 0;
+        for (index, trit) in value.iter().enumerate() {
+            if trit == Trit::One {
+                if index == width - 1 {
+                    result |= -1 << index;
+                } else {
+                    result |= 1 << index;
+                }
+            }
+        }
+        Ok(result)
     }
 }
 
