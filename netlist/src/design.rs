@@ -142,21 +142,13 @@ impl Design {
         Value::from_cell_range(index, width)
     }
 
-    fn locate_cell(&self, net: Net) -> Result<(usize, usize), Trit> {
-        if let Some(trit) = net.as_const() {
-            return Err(trit);
-        }
-        let index = net.as_cell_index().unwrap();
-        let (cell_index, bit_index) = match self.cells[index].repr {
-            CellRepr::Void => panic!("located a void cell %{index} in design"),
-            CellRepr::Skip(start) => (start as usize, index - start as usize),
-            _ => (index, 0),
-        };
-        Ok((cell_index, bit_index))
-    }
-
     pub fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
-        self.locate_cell(net).map(|(cell_index, bit_index)| (CellRef { design: self, index: cell_index }, bit_index))
+        let index = net.as_cell_index()?;
+        match self.cells[index].repr {
+            CellRepr::Void => panic!("located a void cell %{index} in design"),
+            CellRepr::Skip(start) => Ok((CellRef { design: self, index: start as usize }, index - start as usize)),
+            _ => Ok((CellRef { design: self, index }, 0)),
+        }
     }
 
     pub fn iter_cells(&self) -> CellIter {
