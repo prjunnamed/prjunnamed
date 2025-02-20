@@ -16,13 +16,13 @@ macro_rules! parse {
 #[test]
 fn test_lower_iobuf_input() {
     let (target, mut design) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = iobuf &"io" o=X en=0
         %1:0 = output "x" %0
     "#};
     target.lower_iobufs(&mut design);
     let (_, mut gold) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:0 = output "x" %1+0
         %1:_ = target "SB_IO" {
             param "PIN_TYPE" = 000001
@@ -50,14 +50,14 @@ fn test_lower_iobuf_input() {
 #[test]
 fn test_lower_iobuf_output() {
     let (target, mut design) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = iobuf &"io" o=%1 en=1
         %1:1 = input "o"
         %2:0 = output "i" %0
     "#};
     target.lower_iobufs(&mut design);
     let (_, mut gold) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = input "o"
         %1:_ = target "SB_IO" {
             param "PIN_TYPE" = 011001
@@ -86,7 +86,7 @@ fn test_lower_iobuf_output() {
 #[test]
 fn test_lower_iobuf_tristate() {
     let (target, mut design) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = iobuf &"io" o=%1 en=%2
         %1:1 = input "o"
         %2:1 = input "oe"
@@ -94,7 +94,7 @@ fn test_lower_iobuf_tristate() {
     "#};
     target.lower_iobufs(&mut design);
     let (_, mut gold) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = input "o"
         %1:1 = input "oe"
         %2:0 = output "i" %3
@@ -124,7 +124,7 @@ fn test_lower_iobuf_tristate() {
 #[test]
 fn test_lower_iobuf_tristate_inv() {
     let (target, mut design) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = iobuf &"io" o=%1 en=!%2
         %1:1 = input "o"
         %2:1 = input "t"
@@ -132,7 +132,7 @@ fn test_lower_iobuf_tristate_inv() {
     "#};
     target.lower_iobufs(&mut design);
     let (_, mut gold) = parse! {r#"
-        &"io":1
+        &"io":1 = io
         %0:1 = input "o"
         %1:1 = input "t"
         %2:0 = output "i" %4
@@ -163,7 +163,7 @@ fn test_lower_iobuf_tristate_inv() {
 #[test]
 fn test_lower_iobuf_tristate_wide() {
     let (target, mut design) = parse! {r#"
-        &"io":4
+        &"io":4 = io
         %0:4 = input "o"
         %4:1 = input "oe"
         %5:4 = iobuf &"io":4 o=%0:4 en=%4
@@ -171,7 +171,7 @@ fn test_lower_iobuf_tristate_wide() {
     "#};
     target.lower_iobufs(&mut design);
     let (_, mut gold) = parse! {r#"
-        &"io":4
+        &"io":4 = io
         %0:4 = input "o"
         %4:1 = input "oe"
         %5:0 = output "i" [ %15 %12 %9 %6 ]

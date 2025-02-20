@@ -500,6 +500,9 @@ fn parse_metadata(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Opt
 fn parse_io(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<IoValue> {
     let (name, size) = parse_io_name_size(t)?;
     parse_blank(t);
+    parse_symbol(t, '=')?;
+    parse_blank(t);
+    parse_keyword_expect(t, "io")?;
     parse_newline(t)?;
     let ctx = t.context_mut();
     let io_value = ctx.add_io(name, size);

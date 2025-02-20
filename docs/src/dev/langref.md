@@ -304,7 +304,10 @@ The target specification defines the specific device for which the netlist is in
 
 ## Declarations {#decls}
 
-*Declarations* are syntactic constructs that, taken together, describe the entire netlist. There are two kinds of declarations: *metadata declarations* and *cell declarations*.
+*Declarations* are syntactic constructs that, taken together, describe the entire netlist. There are several kinds of declarations:
+- [*metadata declarations*](#metadata-decls),
+- [*I/O declarations*](#io-decls),
+- [*cell declarations*](#cell-decls).
 
 The general structure of a declaration is:
 
@@ -445,6 +448,24 @@ For example:
 Attribute metadata is strongly typed: the tools preserve the type of the payload and ensure it matches the expected type whenever the payload is examined.
 
 If the `"<name>"` is empty, the declaration is ill-formed.
+
+
+### I/O declarations {#io-decls}
+
+```
+&"<name>":<width> = io
+```
+
+For example:
+
+```
+&"clk":1 = io
+&"gpio":8 = io
+```
+
+*I/O declarations* are used to specify the width of an I/O port (using an [I/O identifier](#io) in the form specified above).
+
+If the `"<name>"` is empty, or a preceding I/O declaration uses the same `"<name>"`, the declaration is ill-formed.
 
 
 ### Cell declarations {#cell-decls}

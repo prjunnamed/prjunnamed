@@ -96,14 +96,14 @@ fn test_reference() {
 
 #[test]
 fn test_escaping() {
-    roundtrip("&\"foo bar\":1\n");
-    roundtrip("&\"foo\\22\":1\n");
-    roundtrip("&\"foo\\7f\":1\n");
+    roundtrip("&\"foo bar\":1 = io\n");
+    roundtrip("&\"foo\\22\":1 = io\n");
+    roundtrip("&\"foo\\7f\":1 = io\n");
 }
 
 #[test]
 fn test_ios() {
-    roundtrip("&\"some\":1\n");
+    roundtrip("&\"some\":1 = io\n");
 }
 
 #[test]
@@ -135,8 +135,8 @@ fn test_cells() {
     roundtrip("%0:4 = buf 0000\n%4:2 = assign en=%0+2 %0+0:2 %0+3 at=#1\n");
     roundtrip("%0:2 = buf 00\n%2:1 = dff %0+0 clk=%0+1\n");
     roundtrip("%0:_ = memory depth=#256 width=#16 {\n  init XXXXXXXXXXXXXXXX*256\n}\n");
-    roundtrip("&\"purr\":1\n%0:2 = buf 00\n%2:1 = iobuf &\"purr\" o=%0+0 en=%0+1\n");
-    roundtrip("&\"purr\":2\n%0:2 = buf 00\n%2:2 = iobuf &\"purr\":2 o=%0:2 en=%0+1\n");
+    roundtrip("&\"purr\":1 = io\n%0:2 = buf 00\n%2:1 = iobuf &\"purr\" o=%0+0 en=%0+1\n");
+    roundtrip("&\"purr\":2 = io\n%0:2 = buf 00\n%2:2 = iobuf &\"purr\":2 o=%0:2 en=%0+1\n");
     roundtrip("%0:_ = \"instance\" {\n}\n");
     roundtrip("%0:2 = input \"awa\"\n");
     roundtrip("%0:2 = buf 00\n%2:0 = output \"bite\" %0:2\n");
@@ -258,7 +258,7 @@ fn test_memories_metadata() {
 fn test_instances() {
     roundtrip("%0:1 = buf 0\n%1:_ = \"TBUF\" {\n  input \"EN\" = %0\n}\n");
     roundtrip("%2:_ = \"TBUF\" {\n  %2:2 = output \"I\"\n}\n");
-    roundtrip("&\"pin\":1\n%0:_ = \"TBUF\" {\n  io \"PIN\" = &\"pin\"\n}\n");
+    roundtrip("&\"pin\":1 = io\n%0:_ = \"TBUF\" {\n  io \"PIN\" = &\"pin\"\n}\n");
     roundtrip("%0:_ = \"TBUF\" {\n  io \"PIN\" = &_\n}\n");
     roundtrip("%0:_ = \"TBUF\" {\n  io \"PIN\" = &_:4\n}\n");
     roundtrip(concat!(
@@ -364,7 +364,7 @@ fn test_target() {
     );
     roundtrip(concat!(
         "set target \"test\"\n",
-        "&\"pins\":3\n",
+        "&\"pins\":3 = io\n",
         "%0:4 = input \"O\"\n",
         "%4:4 = target \"QUAD_IOBUF\" {\n",
         "  param \"OE_INVERT\" = 0\n",
