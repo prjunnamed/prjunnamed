@@ -354,8 +354,6 @@ fn parse_target_option(t: &mut WithContext<impl Tokens<Item = char>, Context>) -
 }
 
 fn parse_target(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<()> {
-    parse_keyword_expect(t, "set")?;
-    parse_blank(t);
     parse_keyword_expect(t, "target")?;
     parse_blank(t);
     let name = parse_string(t)?;

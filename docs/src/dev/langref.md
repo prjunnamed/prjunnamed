@@ -305,15 +305,15 @@ The header must be located at the beginning of the file, after any initial [whit
 ### Target specification {#target}
 
 ```
-set target <target> <option>=<value>...
+target <target> <option>=<value>...
 ```
 
 For example:
 
 ```
-set target "siliconblue"
-set target "siliconblue" "device"="ice40hx8k"
-set target "siliconblue" "device"="ice40up5k" "dsp"="off"
+target "siliconblue"
+target "siliconblue" "device"="ice40hx8k"
+target "siliconblue" "device"="ice40up5k" "dsp"="off"
 ```
 
 The target specification defines the specific device for which the netlist is intended, as well as target-specific configuration options for the flow. The `<target>`, `<option>`, and `<value>` are all [strings](#string) that are passed to the [builder function][target-builder] as-is.
