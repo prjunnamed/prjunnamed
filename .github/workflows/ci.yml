@@ -67,5 +67,4 @@ jobs:
     - uses: EmbarkStudios/cargo-deny-action@v2
       with:
         # Must bump above the default of 1.71.0 to accept edition 2024.
-        # Kept below 1.85.0 to work around https://github.com/EmbarkStudios/cargo-deny/issues/741
-        rust-version: 1.84
+        rust-version: 1.85
