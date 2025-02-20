@@ -271,6 +271,25 @@ Each part of an I/O concatenation must be an [I/O identifier](#io), which could 
 Each part of a value concatenation must be a [constant](#constant), a [cell identifier](#cell), or a [repetition](#repeat).
 
 
+### Value references {#value}
+
+For example:
+
+```
+0
+1010
+XXX
+[ 10 %5 ]
+%5:10
+%1*10
+[]
+```
+
+*Value references* are used as operands within [cell declarations](#cell-decls). A value reference must be a [constant](#constant), a [cell identifier](#cell), a [concatenation](#concat), or a [repetition](#repeat).
+
+The width of a value reference can be determined solely from its syntax.
+
+
 ### Other special characters {#special}
 
 Special characters `[`, `]`, `(`, `)`, `{`, `}`, `=`, and `,` are used as delimiters within [declarations](#decls).
