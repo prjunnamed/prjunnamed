@@ -559,7 +559,7 @@ fn export_module(mut design: Design) -> yosys::Module {
 }
 
 // Exporting a design to Yosys JSON can require modifying it if it has target cells that must be mapped to instances.
-pub fn export(writer: &mut impl std::io::Write, designs: BTreeMap<String, Design>) -> std::io::Result<()> {
+pub fn export<W: std::io::Write + ?Sized>(writer: &mut W, designs: BTreeMap<String, Design>) -> std::io::Result<()> {
     let mut ys_modules = BTreeMap::new();
     for (name, design) in designs {
         ys_modules.insert(name, export_module(design));
