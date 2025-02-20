@@ -905,12 +905,12 @@ impl Display for Design {
         for (name, io_value) in self.iter_ios() {
             write!(f, "{}&", if !diff { "" } else { unchanged })?;
             self.write_string(f, name)?;
-            writeln!(f, ":{}", io_value.len())?;
+            writeln!(f, ":{} = io", io_value.len())?;
         }
         for (name, io_value) in &changes.added_ios {
             write!(f, "{added}&")?;
             self.write_string(f, name)?;
-            writeln!(f, ":{}", io_value.len())?;
+            writeln!(f, ":{} = io", io_value.len())?;
         }
 
         let write_cell = |f: &mut std::fmt::Formatter, index: usize, cell: &Cell, metadata: MetaItemIndex| {
