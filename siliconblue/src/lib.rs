@@ -827,7 +827,7 @@ impl SiliconBlueTarget {
                         let mut full_merge_lut = lut.clone();
                         let mut full_merge_meta = meta;
                         for net in lut.inputs() {
-                            if let Some((NetDisposition::Lut(_depth, ref input_lut), input_meta)) =
+                            if let Some((NetDisposition::Lut(_depth, input_lut), input_meta)) =
                                 net_dispositions.get(&net)
                             {
                                 let Some(input_index) = full_merge_lut.inputs().iter().position(|input| input == net)

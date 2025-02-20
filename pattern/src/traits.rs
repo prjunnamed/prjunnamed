@@ -68,7 +68,7 @@ impl NetOrValue for Value {
 
     fn accumulate(capture: &mut Option<Self>, net: Net) -> bool {
         match capture {
-            Some(ref mut value) => *value = value.concat(net),
+            Some(value) => *value = value.concat(net),
             None => *capture = Some(Value::from(net)),
         }
         true
