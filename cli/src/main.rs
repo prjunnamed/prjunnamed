@@ -31,26 +31,53 @@ fn read_input(target: Option<Arc<dyn Target>>, name: String) -> Result<Design, B
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum OutputType {
+    YosysJson,
+    UIR,
+}
+
+impl OutputType {
+    fn for_filename(name: &str) -> Self {
+        if name.ends_with(".uir") || name.is_empty() {
+            Self::UIR
+        } else if name.ends_with(".json") {
+            Self::YosysJson
+        } else {
+            panic!("don't know what to do with output {name:?}");
+        }
+    }
+}
+
 fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Box<dyn Error>> {
-    if export || name.ends_with(".json") {
+    let output_type = OutputType::for_filename(&name);
+    let statistics = design.statistics();
+
+    if export || output_type == OutputType::YosysJson {
         if let Some(target) = design.target() {
             target.export(&mut design);
         }
     }
-    if name.ends_with(".uir") {
-        write!(&mut File::create(name)?, "{design}")?;
-    } else if name.ends_with(".json") {
-        let designs = BTreeMap::from([("top".to_owned(), design)]);
-        prjunnamed_yosys_json::export(&mut File::create(name)?, designs)?;
-    } else if name.is_empty() {
-        print!("{design}");
-        println!("; cell counts:");
-        for (class, amount) in design.statistics() {
-            println!("; {:>7} {}", amount, class);
-        }
+
+    let output: &mut dyn Write = if name.is_empty() {
+        &mut std::io::stdout()
     } else {
-        panic!("don't know what to do with output {name:?}")
+        &mut File::create(name)?
+    };
+
+    match output_type {
+        OutputType::UIR => write!(output, "{design}")?,
+        OutputType::YosysJson => {
+            let designs = BTreeMap::from([("top".to_owned(), design)]);
+            prjunnamed_yosys_json::export(output, designs)?;
+        }
     }
+
+    eprintln!("cell counts:");
+    for (class, amount) in statistics {
+        eprintln!("{:>7} {}", amount, class);
+    }
+
     Ok(())
 }
 
