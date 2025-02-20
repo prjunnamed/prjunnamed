@@ -252,7 +252,7 @@ impl MetadataStore {
         MetaItemRef { design, index }
     }
 
-    pub(crate) fn iter_items<'a>(&self, design: &'a Design) -> impl Iterator<Item = MetaItemRef<'a>> {
+    pub(crate) fn iter_items<'a>(&self, design: &'a Design) -> impl Iterator<Item = MetaItemRef<'a>> + use<'a> {
         (0..self.items.len()).map(|index| MetaItemRef { design, index: MetaItemIndex(index) })
     }
 }
@@ -314,7 +314,7 @@ impl<'a> MetaItemRef<'a> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = MetaItemRef<'a>> {
+    pub fn iter(&self) -> impl Iterator<Item = MetaItemRef<'a>> + use<'a> {
         MetaItemIterator { item: *self, offset: 0 }
     }
 

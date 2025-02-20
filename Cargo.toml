@@ -29,7 +29,7 @@ jzon = "0.12.5"
 union-find-rs = "0.2.1"
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 version = "0.1.0"
 license = "0BSD OR Apache-2.0"
 repository = "https://github.com/prjunnamed/prjunnamed"
