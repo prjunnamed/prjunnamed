@@ -348,11 +348,11 @@ impl Target for TestTarget {
 #[test]
 fn test_target() {
     register_target("test", |options| Ok(TestTarget::new(options)));
-    roundtrip("set target \"test\" \"device\"=\"example\"\n");
+    roundtrip("target \"test\" \"device\"=\"example\"\n");
     onewaytrip(
-        "set target \"test\"\n%0:4 = target \"QUAD_IOBUF\" {\n}\n",
+        "target \"test\"\n%0:4 = target \"QUAD_IOBUF\" {\n}\n",
         concat!(
-            "set target \"test\"\n",
+            "target \"test\"\n",
             "%0:4 = target \"QUAD_IOBUF\" {\n",
             "  param \"OE_INVERT\" = 0\n",
             "  param \"PULLUP\" = 0000\n",
@@ -363,7 +363,7 @@ fn test_target() {
         ),
     );
     roundtrip(concat!(
-        "set target \"test\"\n",
+        "target \"test\"\n",
         "&\"pins\":3 = io\n",
         "%0:4 = input \"O\"\n",
         "%4:4 = target \"QUAD_IOBUF\" {\n",
@@ -375,7 +375,7 @@ fn test_target() {
         "}\n"
     ));
     roundtrip(concat!(
-        "set target \"test\"\n",
+        "target \"test\"\n",
         "%0:1 = input \"A\"\n",
         "%1:1 = input \"B\"\n",
         "; drives \"co\"+0\n",
@@ -390,7 +390,7 @@ fn test_target() {
         "%7:0 = output \"co\" %5\n",
     ));
     roundtrip(concat!(
-        "set target \"test\"\n",
+        "target \"test\"\n",
         "!0 = source \"top.py\" (#1 #2) (#3 #4)\n",
         "%0:1 = input \"A\"\n",
         "; source file://top.py#2\n",
@@ -399,7 +399,7 @@ fn test_target() {
         "}\n"
     ));
     roundtrip(concat!(
-        "set target \"test\"\n",
+        "target \"test\"\n",
         "!0 = source \"top.py\" (#1 #2) (#3 #4)\n",
         "%0:1 = input \"A\"\n",
         "%1:1 = input \"B\"\n",
