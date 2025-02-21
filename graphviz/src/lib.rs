@@ -51,14 +51,18 @@ impl<'a> Node<'a> {
         self
     }
 
-    fn net(mut self, input: &Net) -> Self {
-        let to_arg = Some(self.args.len());
-        if let Ok((cell, _)) = self.cell.design().find_cell(*input) {
+    fn net_input(&mut self, net: Net, to_arg: Option<usize>) {
+        if let Ok((cell, _)) = self.cell.design().find_cell(net) {
             self.add_input(Edge {
                 from_cell: cell,
                 to_arg,
             });
         }
+    }
+
+    fn net(mut self, input: &Net) -> Self {
+        let to_arg = Some(self.args.len());
+        self.net_input(*input, to_arg);
 
         let s = self.cell.design().display_net(input).to_string();
         self.arg(s)
@@ -66,27 +70,27 @@ impl<'a> Node<'a> {
 
     fn value(mut self, input: &Value) -> Self {
         let to_arg = Some(self.args.len());
-        input.visit(|net| {
-            if let Ok((cell, _)) = self.cell.design().find_cell(net) {
-                self.add_input(Edge {
-                    from_cell: cell,
-                    to_arg,
-                });
-            }
-        });
+        for net in input.iter() {
+            self.net_input(net, to_arg);
+        }
 
         let s = self.cell.design().display_value(input).to_string();
         self.arg(s)
     }
 
+    fn prefix_value(mut self, prefix: &str, input: &Value) -> Self {
+        let to_arg = Some(self.args.len());
+        for net in input.iter() {
+            self.net_input(net, to_arg);
+        }
+
+        let s = format!("{prefix}{}", self.cell.design().display_value(input));
+        self.arg(s)
+    }
+
     fn control(mut self, name: &str, input: ControlNet, extra: Option<String>) -> Self {
         let to_arg = Some(self.args.len());
-        if let Ok((cell, _)) = self.cell.design().find_cell(input.net()) {
-            self.add_input(Edge {
-                from_cell: cell,
-                to_arg,
-            });
-        }
+        self.net_input(input.net(), to_arg);
 
         let mut s = format!("{name}={}", self.cell.design().display_control_net(input));
         if let Some(extra) = extra {
@@ -276,6 +280,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             Cell::SModTrunc(a, b) => Node::from_name(cell, "smod_trunc").value(a).value(b),
             Cell::SModFloor(a, b) => Node::from_name(cell, "smod_floor").value(a).value(b),
             Cell::Output(name, value) => Node::from_name(cell, &format!("output {name:?}")).value(value),
+
             Cell::Dff(flop) => {
                 let mut node = Node::from_name(cell, "dff")
                     .value(&flop.data)
@@ -305,6 +310,25 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
 
                 if flop.has_init_value() {
                     node = node.arg(format!("init={}", flop.init_value));
+                }
+
+                node
+            }
+            Cell::Target(target_cell) => {
+                let prototype = design.target_prototype(target_cell);
+                let mut node = Node::from_name(cell, &format!("target {:?}", target_cell.kind));
+                let mut params = String::new();
+                for (param, value) in prototype.params.iter().zip(&target_cell.params) {
+                    writeln!(&mut params, "param {:?} = {value}", param.name).unwrap();
+                }
+
+                if !params.is_empty() {
+                    node = node.arg(params);
+                }
+
+                for input in &prototype.inputs {
+                    let value = target_cell.inputs.slice(input.range.clone());
+                    node = node.prefix_value(&format!("{:?} = ", input.name), &value);
                 }
 
                 node
