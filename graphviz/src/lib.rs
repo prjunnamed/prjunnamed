@@ -182,7 +182,11 @@ impl<'a> Context<'a> {
         }
 
         if let Some(fanout) = self.high_fanout(node.cell) {
-            writeln!(writer, "  stub_{index} [label=\"{fanout} other uses...\"];")?;
+            let mut label = format!("{fanout} uses");
+            if let Some(name) = self.best_name.get(&node.cell) {
+                write!(&mut label, "\n{name:?}").unwrap();
+            }
+            writeln!(writer, "  stub_{index} [label=\"{}\"];", label.escape_default())?;
             writeln!(writer, "  node_{index}:out -> stub_{index};")?;
         }
 
