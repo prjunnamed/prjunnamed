@@ -4,12 +4,12 @@ use std::io;
 use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, Value};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct NodeInput<'a> {
+struct Edge<'a> {
     from_cell: CellRef<'a>,
     to_arg: Option<usize>,
 }
 
-impl<'a> From<CellRef<'a>> for NodeInput<'a> {
+impl<'a> From<CellRef<'a>> for Edge<'a> {
     fn from(cell: CellRef<'a>) -> Self {
         Self {
             from_cell: cell,
@@ -23,7 +23,7 @@ struct Node<'a> {
     index: usize,
     label: String,
     args: Vec<String>,
-    inputs: BTreeSet<NodeInput<'a>>,
+    inputs: BTreeSet<Edge<'a>>,
 }
 
 impl fmt::Display for Node<'_> {
@@ -66,7 +66,7 @@ impl<'a> Node<'a> {
         Self::new(cell.design(), index, label)
     }
 
-    fn add_input(&mut self, input: impl Into<NodeInput<'a>>) {
+    fn add_input(&mut self, input: impl Into<Edge<'a>>) {
         self.inputs.insert(input.into());
     }
 
@@ -78,7 +78,7 @@ impl<'a> Node<'a> {
     fn net(mut self, input: &Net) -> Self {
         let to_arg = Some(self.args.len());
         if let Ok((cell, _)) = self.design.find_cell(*input) {
-            self.add_input(NodeInput {
+            self.add_input(Edge {
                 from_cell: cell,
                 to_arg,
             });
@@ -92,7 +92,7 @@ impl<'a> Node<'a> {
         let to_arg = Some(self.args.len());
         input.visit(|net| {
             if let Ok((cell, _)) = self.design.find_cell(net) {
-                self.add_input(NodeInput {
+                self.add_input(Edge {
                     from_cell: cell,
                     to_arg,
                 });
@@ -106,7 +106,7 @@ impl<'a> Node<'a> {
     fn control(mut self, name: &str, input: ControlNet, extra: Option<String>) -> Self {
         let to_arg = Some(self.args.len());
         if let Ok((cell, _)) = self.design.find_cell(input.net()) {
-            self.add_input(NodeInput {
+            self.add_input(Edge {
                 from_cell: cell,
                 to_arg,
             });
