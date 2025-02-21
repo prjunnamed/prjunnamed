@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, error::Error, fs::File, io::BufWriter, io::Write, sync::Arc};
+use std::{collections::BTreeMap, error::Error, fs::File, io::BufWriter, io::Write, process::{Command, Stdio}, sync::Arc};
 
 use prjunnamed_netlist::{Design, Target};
 
@@ -36,6 +36,7 @@ enum OutputType {
     YosysJson,
     UIR,
     GraphvizDot,
+    GraphvizSvg,
 }
 
 impl OutputType {
@@ -46,6 +47,8 @@ impl OutputType {
             Self::YosysJson
         } else if name.ends_with(".dot") {
             Self::GraphvizDot
+        } else if name.ends_with(".svg") {
+            Self::GraphvizSvg
         } else {
             panic!("don't know what to do with output {name:?}");
         }
@@ -62,29 +65,47 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
         }
     }
 
-    let output: &mut dyn Write = if name.is_empty() {
-        &mut std::io::stdout()
-    } else {
-        &mut File::create(name)?
+    let output = || -> Result<_, Box<dyn Error>> {
+        let output: Box<dyn Write> = if name.is_empty() {
+            Box::new(std::io::stdout())
+        } else {
+            Box::new(File::create(&name)?)
+        };
+
+        Ok(BufWriter::new(output))
     };
 
-    let mut output = BufWriter::new(output);
-
     match output_type {
-        OutputType::UIR => write!(output, "{design}")?,
+        OutputType::UIR => write!(output()?, "{design}")?,
         OutputType::YosysJson => {
             let designs = BTreeMap::from([("top".to_owned(), design)]);
-            prjunnamed_yosys_json::export(&mut output, designs)?;
+            prjunnamed_yosys_json::export(&mut output()?, designs)?;
         }
         OutputType::GraphvizDot => {
-            prjunnamed_graphviz::describe(&mut output, &design)?;
+            prjunnamed_graphviz::describe(&mut output()?, &design)?;
+        }
+        OutputType::GraphvizSvg => {
+            let output: Stdio = if name.is_empty() {
+                std::io::stdout().into()
+            } else {
+                File::create(&name)?.into()
+            };
+
+            let mut dot = Command::new("dot")
+                .arg("-Tsvg")
+                .stdin(Stdio::piped())
+                .stdout(output)
+                .spawn()?;
+
+            {
+                let mut stdin = BufWriter::new(dot.stdin.take().unwrap());
+                prjunnamed_graphviz::describe(&mut stdin, &design)?;
+                stdin.flush()?;
+            }
+
+            dot.wait()?;
         }
     }
-
-    // While manually flushing allows proper error handling, we mainly want
-    // to make sure that the output has all been printed before printing
-    // the statistics.
-    output.flush()?;
 
     eprintln!("cell counts:");
     for (class, amount) in statistics {
