@@ -139,6 +139,13 @@ impl Design {
         }
     }
 
+    pub(crate) fn write_control_net(&self, f: &mut std::fmt::Formatter, control_net: ControlNet) -> std::fmt::Result {
+        if control_net.is_negative() {
+            write!(f, "!")?;
+        };
+        self.write_net(f, control_net.net())
+    }
+
     pub(crate) fn write_value(&self, f: &mut std::fmt::Formatter, value: &Value) -> std::fmt::Result {
         enum Chunk {
             Slice { cell_index: usize, offset: usize, width: usize, repeat: usize },
@@ -266,16 +273,9 @@ impl Design {
             }
         };
 
-        let write_control_net = |f: &mut std::fmt::Formatter, control_net: ControlNet| -> std::fmt::Result {
-            if control_net.is_negative() {
-                write!(f, "!")?;
-            };
-            self.write_net(f, control_net.net())
-        };
-
         let write_control = |f: &mut std::fmt::Formatter, name: &str, control_net: ControlNet| -> std::fmt::Result {
             write!(f, "{}=", name)?;
-            write_control_net(f, control_net)
+            self.write_control_net(f, control_net)
         };
 
         let write_common = |f: &mut std::fmt::Formatter, name: &str, args: &[&Value]| -> std::fmt::Result {
@@ -625,6 +625,11 @@ impl Design {
     pub fn display_net(&self, net: impl Into<Net>) -> impl Display + '_ {
         let net = net.into();
         DisplayFn(self, move |design: &Design, f| design.write_net(f, net))
+    }
+
+    pub fn display_control_net(&self, net: impl Into<ControlNet>) -> impl Display + '_ {
+        let net = net.into();
+        DisplayFn(self, move |design: &Design, f| design.write_control_net(f, net))
     }
 
     pub fn display_value<'a, 'b: 'a>(&'a self, value: impl Into<Cow<'b, Value>>) -> impl Display + 'a {
