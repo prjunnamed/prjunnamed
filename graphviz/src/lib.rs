@@ -181,6 +181,11 @@ impl<'a> Context<'a> {
             writeln!(writer, "  node_{input_index}:out -> node_{index}:{port};")?;
         }
 
+        if let Some(fanout) = self.high_fanout(node.cell) {
+            writeln!(writer, "  stub_{index} [label=\"{fanout} other uses...\"];")?;
+            writeln!(writer, "  node_{index}:out -> stub_{index};")?;
+        }
+
         Ok(())
     }
 }
