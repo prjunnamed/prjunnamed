@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, error::Error, fs::File, io::Write, sync::Arc};
+use std::{collections::BTreeMap, error::Error, fs::File, io::BufWriter, io::Write, sync::Arc};
 
 use prjunnamed_netlist::{Design, Target};
 
@@ -65,13 +65,20 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
         &mut File::create(name)?
     };
 
+    let mut output = BufWriter::new(output);
+
     match output_type {
         OutputType::UIR => write!(output, "{design}")?,
         OutputType::YosysJson => {
             let designs = BTreeMap::from([("top".to_owned(), design)]);
-            prjunnamed_yosys_json::export(output, designs)?;
+            prjunnamed_yosys_json::export(&mut output, designs)?;
         }
     }
+
+    // While manually flushing allows proper error handling, we mainly want
+    // to make sure that the output has all been printed before printing
+    // the statistics.
+    output.flush()?;
 
     eprintln!("cell counts:");
     for (class, amount) in statistics {
