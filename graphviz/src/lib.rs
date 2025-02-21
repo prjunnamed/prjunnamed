@@ -206,16 +206,29 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             .or_insert(name.to_string());
     };
 
-    for cell in design.iter_cells() {
+    'outer: for cell in design.iter_cells() {
         match &*cell.get() {
             Cell::Name(name, value) | Cell::Debug(name, value) => {
+                let mut prev = None;
+                for net in value.iter() {
+                    let Ok((target, _)) = design.find_cell(net) else { continue 'outer};
+                    if let Some(prev) = prev {
+                        if prev != target {
+                            continue 'outer;
+                        }
+                    } else {
+                        prev = Some(target);
+                    }
+                }
+
+                let Some(target) = prev else { continue };
+                if target.output() == *value {
+                    consider_name(target, name);
+                }
+
                 for net in value.iter() {
                     if let Ok((target, _)) = design.find_cell(net) {
                         names.entry(target).or_default().insert(cell);
-
-                        if target.output() == *value {
-                            consider_name(target, name);
-                        }
                     }
                 }
             }
