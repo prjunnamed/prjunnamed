@@ -467,14 +467,19 @@ impl<'a> CellRef<'a> {
         changes.unalived_cells.insert(self.index);
     }
 
-    // Returns the same index as the one used by `Display` implementation. There is intentionally no way to retrieve
-    // a cell by its index.
+    /// Returns the same index as the one used by `Display` implementation. There is intentionally no way to retrieve
+    /// a cell by its index.
     pub fn debug_index(&self) -> usize {
         self.index
     }
 
     pub(crate) fn metadata_index(&self) -> MetaItemIndex {
         self.design.cells[self.index].meta
+    }
+
+    /// Returns a reference to the underlying [`Design`].
+    pub fn design(self) -> &'a Design {
+        self.design
     }
 }
 
