@@ -134,9 +134,27 @@ impl<'a> Context<'a> {
     }
 
     fn print_node(&self, writer: &mut impl io::Write, node: &Node<'_>) -> io::Result<()> {
+        let mut clarify = vec![BTreeSet::new(); node.args.len()];
+        for input in &node.inputs {
+            if self.high_fanout(input.from_cell).is_some() {
+                let Some(name) = self.best_name.get(&input.from_cell) else { continue };
+                let Some(arg) = input.to_arg else { continue };
+                clarify[arg].insert(name);
+            }
+        }
+
         let mut label = format!("<out> {}", node.label);
-        for (i, arg) in node.args.iter().enumerate() {
+        for (i, (arg, clarify)) in node.args.iter().zip(clarify).enumerate() {
             write!(&mut label, " | <arg{i}> {arg}").unwrap();
+            if !clarify.is_empty() {
+                write!(&mut label, " (").unwrap();
+                let mut iter = clarify.into_iter();
+                write!(&mut label, "{:?}", iter.next().unwrap()).unwrap();
+                for input in iter {
+                    write!(&mut label, ", {:?}", input).unwrap();
+                }
+                write!(&mut label, ")").unwrap();
+            }
         }
 
         let index = node.cell.debug_index();
@@ -144,30 +162,17 @@ impl<'a> Context<'a> {
         writeln!(writer, "  node_{index} [shape=record label=\"{label}\"];")?;
 
         for input in &node.inputs {
+            if self.high_fanout(input.from_cell).is_some() {
+                continue;
+            }
+
             let input_index = input.from_cell.debug_index();
             let port = match input.to_arg {
                 Some(n) => format!("arg{n}"),
                 None => format!("out"),
             };
 
-            let driver = if self.high_fanout(input.from_cell).is_some() {
-                let label = match self.best_name.get(&input.from_cell) {
-                    Some(name) => format!("{name:?}"),
-                    None => {
-                        let output = input.from_cell.output();
-                        format!("{}", node.cell.design().display_value(output))
-                    }
-                };
-
-                let label = label.escape_default();
-                let stub_name = format!("stub_{index}_{input_index}");
-                writeln!(writer, "  {stub_name} [label=\"{label}\"];")?;
-                stub_name
-            } else {
-                format!("node_{input_index}:out")
-            };
-
-            writeln!(writer, "  {driver} -> node_{index}:{port};")?;
+            writeln!(writer, "  node_{input_index}:out -> node_{index}:{port};")?;
         }
 
         Ok(())
@@ -240,6 +245,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             Cell::SDivFloor(a, b) => Node::from_name(cell, "sdiv_floor").value(a).value(b),
             Cell::SModTrunc(a, b) => Node::from_name(cell, "smod_trunc").value(a).value(b),
             Cell::SModFloor(a, b) => Node::from_name(cell, "smod_floor").value(a).value(b),
+            Cell::Output(name, value) => Node::from_name(cell, &format!("output {name:?}")).value(value),
             Cell::Dff(flop) => {
                 let mut node = Node::from_name(cell, "dff")
                     .value(&flop.data)
