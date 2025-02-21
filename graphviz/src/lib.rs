@@ -138,9 +138,11 @@ impl<'a> Context<'a> {
     }
 
     fn print_node(&self, writer: &mut impl io::Write, node: &Node<'_>) -> io::Result<()> {
+        let force = node.inputs.len() == 1;
+
         let mut clarify = vec![BTreeSet::new(); node.args.len()];
         for input in &node.inputs {
-            if self.high_fanout(input.from_cell).is_some() {
+            if !force && self.high_fanout(input.from_cell).is_some() {
                 let Some(name) = self.best_name.get(&input.from_cell) else { continue };
                 let Some(arg) = input.to_arg else { continue };
                 clarify[arg].insert(name);
@@ -166,7 +168,7 @@ impl<'a> Context<'a> {
         writeln!(writer, "  node_{index} [shape=record label=\"{label}\"];")?;
 
         for input in &node.inputs {
-            if self.high_fanout(input.from_cell).is_some() {
+            if !force && self.high_fanout(input.from_cell).is_some() {
                 continue;
             }
 
