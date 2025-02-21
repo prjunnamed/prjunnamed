@@ -414,15 +414,15 @@ impl Debug for Value {
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
-            write!(f, "{{}}")
+            write!(f, "[]")
         } else if self.len() == 1 {
             write!(f, "{}", self[0])
         } else {
-            write!(f, "{{")?;
+            write!(f, "[")?;
             for net in self.iter().rev() {
                 write!(f, " {}", net)?;
             }
-            write!(f, " }}")
+            write!(f, " ]")
         }
     }
 }
