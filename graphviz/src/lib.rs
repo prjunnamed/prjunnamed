@@ -333,6 +333,51 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
 
                 node
             }
+            Cell::Memory(memory) => {
+                let header = format!("memory depth=#{} width=#{}", memory.depth, memory.width);
+                let mut node = Node::from_name(cell, &header);
+                for port in &memory.write_ports {
+                    node = node.prefix_value("write addr=", &port.addr)
+                        .prefix_value(". data=", &port.data);
+                    if !port.mask.is_ones() {
+                        node = node.prefix_value(". mask=", &port.mask);
+                    }
+                    node = node.control(". clk", port.clock, None);
+                }
+
+                for port in &memory.read_ports {
+                    node = node.prefix_value("read addr=", &port.addr);
+                    if let Some(flop) = &port.flip_flop {
+                        node = node.control(". clk", flop.clock, None);
+                        if flop.has_clear() {
+                            let has_value = flop.clear_value != flop.init_value;
+                            node = node.control(". clr", flop.clear, has_value.then(|| flop.clear_value.to_string()));
+                        }
+
+                        if flop.has_reset() {
+                            let has_value = flop.reset_value != flop.init_value;
+                            node = node.control(". rst", flop.reset, has_value.then(|| flop.reset_value.to_string()));
+                        }
+
+                        if flop.has_enable() {
+                            node = node.control(". en", flop.enable, None);
+                        }
+
+                        if flop.has_reset() && flop.has_enable() {
+                            if flop.reset_over_enable {
+                                node = node.arg(". rst/en");
+                            } else {
+                                node = node.arg(". en/rst");
+                            }
+                        }
+
+                        if flop.has_init_value() {
+                            node = node.arg(format!(". init={}", flop.init_value));
+                        }
+                    }
+                }
+                node
+            }
             _ => {
                 let label = design.display_cell(cell).to_string();
                 let mut node = Node::new(cell, label);
