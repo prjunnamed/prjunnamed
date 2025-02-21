@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{self, Write};
 use std::io;
 use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, Value};
@@ -33,7 +33,8 @@ impl fmt::Display for Node<'_> {
             write!(&mut label, " | <arg{i}> {arg}")?;
         }
 
-        writeln!(f, "  node_{} [shape=record label=\"{}\"];", self.index, label.escape_default())?;
+        let label = label.escape_default().to_string().replace("\\n", "\\l");
+        writeln!(f, "  node_{} [shape=record label=\"{}\"];", self.index, label)?;
 
         for input in &self.inputs {
             let input_index = input.from_cell.debug_index();
@@ -121,11 +122,27 @@ impl<'a> Node<'a> {
 }
 
 pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> {
+    // for each cell, a list of name/debug cells that reference it
+    let mut names: BTreeMap<CellRef<'_>, BTreeSet<CellRef<'_>>> = BTreeMap::new();
+    for cell in design.iter_cells() {
+        match &*cell.get() {
+            Cell::Name(_, value) | Cell::Debug(_, value) => {
+                for net in value.iter() {
+                    if let Ok((target, _)) = design.find_cell(net) {
+                        names.entry(target).or_default().insert(cell);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+
     writeln!(writer, "digraph {{")?;
     writeln!(writer, "  rankdir=LR;")?;
     writeln!(writer, "  node [fontname=\"monospace\"];")?;
     for cell in design.iter_cells_topo() {
-        let node = match &*cell.get() {
+        let mut node = match &*cell.get() {
             Cell::Name(_, _) | Cell::Debug(_, _) => continue,
             Cell::Buf(a) => Node::from_name(cell, "buf").value(a),
             Cell::Not(a) => Node::from_name(cell, "not").value(a),
@@ -195,6 +212,30 @@ pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> 
                 node
             }
         };
+
+        if let Some(names) = names.get(&cell) {
+            let mut exact_names = String::new();
+            let mut approx_names = String::new();
+            for name in names.iter() {
+                let (Cell::Name(s, v) | Cell::Debug(s, v)) = &*name.get() else {
+                    unreachable!()
+                };
+
+                if cell.output() == *v {
+                    writeln!(&mut exact_names, "{s:?}").unwrap();
+                } else {
+                    writeln!(&mut approx_names, "{s:?} = {}", design.display_value(v)).unwrap();
+                }
+            }
+
+            if !exact_names.is_empty() {
+                node = node.arg(exact_names);
+            }
+
+            if !approx_names.is_empty() {
+                node = node.arg(approx_names);
+            }
+        }
 
         writeln!(writer, "  {node}")?;
     }
