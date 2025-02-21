@@ -846,12 +846,12 @@ impl Display for Design {
 
         if let Some(target) = self.target() {
             write!(f, "{}target ", if !diff { "" } else { unchanged })?;
-            self.write_string(f, target.name())?;
+            Design::write_string(f, target.name())?;
             for (name, value) in target.options() {
                 write!(f, " ")?;
-                self.write_string(f, &name)?;
+                Design::write_string(f, &name)?;
                 write!(f, "=")?;
-                self.write_string(f, &value)?;
+                Design::write_string(f, &value)?;
             }
             writeln!(f)?;
         }
@@ -874,14 +874,14 @@ impl Display for Design {
                 }
                 MetaItem::Source { file, start, end } => {
                     write!(f, "source ")?;
-                    self.write_string(f, &file.get())?;
+                    Design::write_string(f, &file.get())?;
                     write!(f, " (#{} #{}) (#{} #{})", start.line, start.column, end.line, end.column)?;
                 }
                 MetaItem::NamedScope { name: _, source, parent }
                 | MetaItem::IndexedScope { index: _, source, parent } => {
                     write!(f, "scope ")?;
                     match item {
-                        MetaItem::NamedScope { name, .. } => self.write_string(f, &name.get())?,
+                        MetaItem::NamedScope { name, .. } => Design::write_string(f, &name.get())?,
                         MetaItem::IndexedScope { index, .. } => write!(f, "#{index}")?,
                         _ => unreachable!(),
                     }
@@ -894,14 +894,13 @@ impl Display for Design {
                 }
                 MetaItem::Ident { name, scope } => {
                     write!(f, "ident ")?;
-                    self.write_string(f, &name.get())?;
+                    Design::write_string(f, &name.get())?;
                     write!(f, " in={}", scope.index())?;
                 }
                 MetaItem::Attr { name, value } => {
                     write!(f, "attr ")?;
-                    self.write_string(f, &name.get())?;
-                    write!(f, " ")?;
-                    self.write_param_value(f, &value)?;
+                    Design::write_string(f, &name.get())?;
+                    write!(f, " {value}")?;
                 }
             }
             writeln!(f)?;
@@ -909,12 +908,12 @@ impl Display for Design {
 
         for (name, io_value) in self.iter_ios() {
             write!(f, "{}&", if !diff { "" } else { unchanged })?;
-            self.write_string(f, name)?;
+            Design::write_string(f, name)?;
             writeln!(f, ":{} = io", io_value.len())?;
         }
         for (name, io_value) in &changes.added_ios {
             write!(f, "{added}&")?;
-            self.write_string(f, name)?;
+            Design::write_string(f, name)?;
             writeln!(f, ":{} = io", io_value.len())?;
         }
 
@@ -950,7 +949,7 @@ impl Display for Design {
                 for index in (index..index + cell.output_len()).rev() {
                     if let Some((name, offset)) = net_names.get(&Net::from_cell_index(index)) {
                         write!(f, "{comment}drives ")?;
-                        self.write_string(f, &*name)?;
+                        Design::write_string(f, &*name)?;
                         writeln!(f, "+{offset}")?;
                     }
                 }
