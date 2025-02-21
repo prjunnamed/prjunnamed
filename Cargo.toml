@@ -28,7 +28,6 @@ easy-smt = { git = "https://github.com/whitequark/easy-smt", branch = "buf-write
 env_logger = "0.11"
 argparse = "0.2"
 jzon = "0.12.5"
-union-find-rs = "0.2.1"
 
 [workspace.package]
 edition = "2024"
