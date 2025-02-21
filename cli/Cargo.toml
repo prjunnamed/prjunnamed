@@ -16,6 +16,7 @@ prjunnamed-pattern.workspace = true
 prjunnamed-generic.workspace = true
 prjunnamed-yosys_json.workspace = true
 prjunnamed-siliconblue.workspace = true
+prjunnamed-graphviz.workspace = true
 argparse.workspace = true
 env_logger.workspace = true
 

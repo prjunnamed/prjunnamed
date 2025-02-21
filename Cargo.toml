@@ -8,6 +8,7 @@ members = [
     "memory",
     "yosys_json",
     "siliconblue",
+    "graphviz",
     "cli",
 ]
 
@@ -19,6 +20,7 @@ prjunnamed-lut.path = "lut"
 prjunnamed-memory.path = "memory"
 prjunnamed-yosys_json.path = "yosys_json"
 prjunnamed-siliconblue.path = "siliconblue"
+prjunnamed-graphviz.path = "graphviz"
 indexmap = "2.7.1"
 yap = "0.12.0"
 # easy-smt = "0.2.7"

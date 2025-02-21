@@ -35,6 +35,7 @@ fn read_input(target: Option<Arc<dyn Target>>, name: String) -> Result<Design, B
 enum OutputType {
     YosysJson,
     UIR,
+    GraphvizDot,
 }
 
 impl OutputType {
@@ -43,6 +44,8 @@ impl OutputType {
             Self::UIR
         } else if name.ends_with(".json") {
             Self::YosysJson
+        } else if name.ends_with(".dot") {
+            Self::GraphvizDot
         } else {
             panic!("don't know what to do with output {name:?}");
         }
@@ -72,6 +75,9 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
         OutputType::YosysJson => {
             let designs = BTreeMap::from([("top".to_owned(), design)]);
             prjunnamed_yosys_json::export(&mut output, designs)?;
+        }
+        OutputType::GraphvizDot => {
+            prjunnamed_graphviz::describe(&mut output, &design)?;
         }
     }
 

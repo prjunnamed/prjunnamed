@@ -2,6 +2,8 @@
 /target
 /build
 *.uir
+*.dot
+*.svg
 
 # llvm-cov
 *.profraw

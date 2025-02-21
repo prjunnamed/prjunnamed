@@ -1,0 +1,13 @@
+[package]
+name = "prjunnamed-graphviz"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+prjunnamed-netlist.workspace = true
