@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::fmt::{self, Write};
 use std::io;
-use prjunnamed_netlist::{Cell, CellRef, Design, Net, Value};
+use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, Value};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct NodeInput<'a> {
@@ -102,6 +102,22 @@ impl<'a> Node<'a> {
         let s = self.design.display_value(input).to_string();
         self.arg(s)
     }
+
+    fn control(mut self, name: &str, input: ControlNet, extra: Option<String>) -> Self {
+        let to_arg = Some(self.args.len());
+        if let Ok((cell, _)) = self.design.find_cell(input.net()) {
+            self.add_input(NodeInput {
+                from_cell: cell,
+                to_arg,
+            });
+        }
+
+        let mut s = format!("{name}={}", self.design.display_control_net(input));
+        if let Some(extra) = extra {
+            write!(&mut s, ",{extra}").unwrap();
+        }
+        self.arg(s)
+    }
 }
 
 pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> {
@@ -132,6 +148,39 @@ pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> 
             Cell::SDivFloor(a, b) => Node::from_name(cell, "sdiv_floor").value(a).value(b),
             Cell::SModTrunc(a, b) => Node::from_name(cell, "smod_trunc").value(a).value(b),
             Cell::SModFloor(a, b) => Node::from_name(cell, "smod_floor").value(a).value(b),
+            Cell::Dff(flop) => {
+                let mut node = Node::from_name(cell, "dff")
+                    .value(&flop.data)
+                    .control("clk", flop.clock, None);
+
+                if flop.has_clear() {
+                    let has_value = flop.clear_value != flop.init_value;
+                    node = node.control("clr", flop.clear, has_value.then(|| flop.clear_value.to_string()));
+                }
+
+                if flop.has_reset() {
+                    let has_value = flop.reset_value != flop.init_value;
+                    node = node.control("rst", flop.reset, has_value.then(|| flop.reset_value.to_string()));
+                }
+
+                if flop.has_enable() {
+                    node = node.control("en", flop.enable, None);
+                }
+
+                if flop.has_reset() && flop.has_enable() {
+                    if flop.reset_over_enable {
+                        node = node.arg("rst/en");
+                    } else {
+                        node = node.arg("en/rst");
+                    }
+                }
+
+                if flop.has_init_value() {
+                    node = node.arg(format!("init={}", flop.init_value));
+                }
+
+                node
+            }
             _ => {
                 let index = cell.debug_index();
                 let label = design.display_cell(cell).to_string();
