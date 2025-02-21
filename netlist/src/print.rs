@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Display};
 
 use crate::{
     metadata::MetaItemIndex, Cell, CellRef, Const, ControlNet, Design, IoNet, IoValue, MemoryPortRelation, Net,
-    ParamValue, TargetOutput, Trit, Value,
+    TargetOutput, Trit, Value,
 };
 
 struct DisplayFn<'a, F: for<'b> Fn(&Design, &mut std::fmt::Formatter<'b>) -> std::fmt::Result>(&'a Design, F);
@@ -64,7 +64,7 @@ impl Design {
         }
     }
 
-    pub(crate) fn write_string(&self, f: &mut std::fmt::Formatter, str: &str) -> std::fmt::Result {
+    pub(crate) fn write_string(f: &mut std::fmt::Formatter, str: &str) -> std::fmt::Result {
         write!(f, "\"")?;
         for byte in str.as_bytes() {
             if (byte.is_ascii_graphic() || matches!(byte, b' ' | b'\t')) && ![b'\\', b'"'].contains(byte) {
@@ -85,7 +85,7 @@ impl Design {
             write!(f, "&")?;
             match self.find_io(io_net) {
                 Some((name, offset)) => {
-                    self.write_string(f, name)?;
+                    Design::write_string(f, name)?;
                     if self.get_io(name).unwrap().len() > 1 {
                         write!(f, "+{}", offset)?;
                     }
@@ -107,7 +107,7 @@ impl Design {
             if let Some((name, _offset)) = self.find_io(io_value[0]) {
                 if self.get_io(name).unwrap() == *io_value {
                     write!(f, "&")?;
-                    self.write_string(f, name)?;
+                    Design::write_string(f, name)?;
                     write!(f, ":{}", io_value.len())?;
                     return Ok(());
                 }
@@ -246,15 +246,6 @@ impl Design {
         Ok(())
     }
 
-    pub(crate) fn write_param_value(&self, f: &mut std::fmt::Formatter, value: &ParamValue) -> std::fmt::Result {
-        match value {
-            ParamValue::Const(value) => write!(f, "{value}"),
-            ParamValue::Int(value) => write!(f, "#{value}"),
-            ParamValue::Float(_value) => unimplemented!("float parameter"),
-            ParamValue::String(value) => self.write_string(f, value),
-        }
-    }
-
     pub(crate) fn write_cell(
         &self,
         f: &mut std::fmt::Formatter,
@@ -299,7 +290,7 @@ impl Design {
 
         let write_cell_argument = |f: &mut std::fmt::Formatter, keyword: &str, name: &str| -> std::fmt::Result {
             write!(f, "  {keyword} ")?;
-            self.write_string(f, name)?;
+            Design::write_string(f, name)?;
             write!(f, " = ")?;
             Ok(())
         };
@@ -536,13 +527,12 @@ impl Design {
                 write_control(f, " en", io_buffer.enable)?;
             }
             Cell::Other(instance) => {
-                self.write_string(f, instance.kind.as_str())?;
+                Design::write_string(f, instance.kind.as_str())?;
                 write_metadata(f)?;
                 write!(f, " {{{newline}")?;
                 for (name, value) in instance.params.iter() {
                     write_cell_argument(f, "param", name)?;
-                    self.write_param_value(f, value)?;
-                    write!(f, "{newline}")?;
+                    write!(f, "{value}{newline}")?;
                 }
                 for (name, value) in instance.inputs.iter() {
                     write_cell_argument(f, "input", name)?;
@@ -551,7 +541,7 @@ impl Design {
                 }
                 for (name, range) in instance.outputs.iter() {
                     write!(f, "  %{}:{} = output ", index + range.start, range.len())?;
-                    self.write_string(f, &name)?;
+                    Design::write_string(f, &name)?;
                     write!(f, "{newline}")?;
                 }
                 for (name, value) in instance.ios.iter() {
@@ -564,13 +554,12 @@ impl Design {
             Cell::Target(target_cell) => {
                 write!(f, "target ")?;
                 let prototype = self.target_prototype(target_cell);
-                self.write_string(f, &target_cell.kind)?;
+                Design::write_string(f, &target_cell.kind)?;
                 write_metadata(f)?;
                 write!(f, " {{{newline}")?;
                 for (param, value) in prototype.params.iter().zip(target_cell.params.iter()) {
                     write_cell_argument(f, "param", &param.name)?;
-                    self.write_param_value(f, value)?;
-                    write!(f, "{newline}")?;
+                    write!(f, "{value}{newline}")?;
                 }
                 for target_input in &prototype.inputs {
                     write_cell_argument(f, "input", &target_input.name)?;
@@ -580,7 +569,7 @@ impl Design {
                 if prototype.outputs.len() > 1 {
                     for target_output in &prototype.outputs {
                         write!(f, "  %{}:{} = output ", index + target_output.range.start, target_output.range.len())?;
-                        self.write_string(f, &target_output.name)?;
+                        Design::write_string(f, &target_output.name)?;
                         write!(f, "{newline}")?;
                     }
                 }
@@ -594,23 +583,23 @@ impl Design {
 
             Cell::Input(name, _size) => {
                 write!(f, "input ")?;
-                self.write_string(f, name)?;
+                Design::write_string(f, name)?;
             }
             Cell::Output(name, value) => {
                 write!(f, "output ")?;
-                self.write_string(f, name)?;
+                Design::write_string(f, name)?;
                 write!(f, " ")?;
                 self.write_value(f, value)?;
             }
             Cell::Name(name, value) => {
                 write!(f, "name ")?;
-                self.write_string(f, name)?;
+                Design::write_string(f, name)?;
                 write!(f, " ")?;
                 self.write_value(f, value)?;
             }
             Cell::Debug(name, value) => {
                 write!(f, "debug ")?;
-                self.write_string(f, name)?;
+                Design::write_string(f, name)?;
                 write!(f, " ")?;
                 self.write_value(f, value)?;
             }
