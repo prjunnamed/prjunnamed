@@ -3,8 +3,6 @@ use std::fmt::Write;
 use std::io;
 use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, Value};
 
-const FANOUT_THRESHOLD: usize = 10;
-
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Edge<'a> {
     from_cell: CellRef<'a>,
@@ -116,7 +114,13 @@ impl<'a> Context<'a> {
 
     fn high_fanout(&self, cell: CellRef<'_>) -> Option<usize> {
         let fanout = self.fanout.get(&cell).map(BTreeSet::len).unwrap_or(0);
-        if fanout >= FANOUT_THRESHOLD {
+        let threshold = if self.best_name.contains_key(&cell) {
+            5
+        } else {
+            10
+        };
+
+        if fanout >= threshold {
             Some(fanout)
         } else {
             None
