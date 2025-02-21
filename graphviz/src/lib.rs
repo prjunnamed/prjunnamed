@@ -159,7 +159,9 @@ impl<'a> Context<'a> {
                 for input in iter {
                     write!(&mut label, ", {:?}", input).unwrap();
                 }
-                write!(&mut label, ")").unwrap();
+                writeln!(&mut label, ")").unwrap();
+            } else if !arg.ends_with('\n') {
+                writeln!(&mut label).unwrap();
             }
         }
 
