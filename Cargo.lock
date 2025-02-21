@@ -170,6 +170,7 @@ dependencies = [
  "argparse",
  "env_logger",
  "prjunnamed-generic",
+ "prjunnamed-graphviz",
  "prjunnamed-netlist",
  "prjunnamed-pattern",
  "prjunnamed-siliconblue",
@@ -183,6 +184,13 @@ dependencies = [
  "prjunnamed-netlist",
  "prjunnamed-pattern",
  "union-find-rs",
+]
+
+[[package]]
+name = "prjunnamed-graphviz"
+version = "0.1.0"
+dependencies = [
+ "prjunnamed-netlist",
 ]
 
 [[package]]
