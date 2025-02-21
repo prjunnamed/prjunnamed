@@ -634,7 +634,6 @@ impl Design {
 
     pub fn display_cell<'a>(&'a self, cell_ref: CellRef<'a>) -> impl Display + 'a {
         DisplayFn(self, move |design: &Design, f| {
-            write!(f, "%{}:{} = ", cell_ref.debug_index(), cell_ref.output_len())?;
             design.write_cell(f, "", cell_ref.debug_index(), &*cell_ref.get(), cell_ref.metadata().index())
         })
     }
