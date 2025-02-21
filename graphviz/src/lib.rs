@@ -1,7 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt::{self, Write};
+use std::fmt::Write;
 use std::io;
 use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, Value};
+
+const FANOUT_THRESHOLD: usize = 10;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Edge<'a> {
@@ -19,41 +21,16 @@ impl<'a> From<CellRef<'a>> for Edge<'a> {
 }
 
 struct Node<'a> {
-    design: &'a Design,
-    index: usize,
+    cell: CellRef<'a>,
     label: String,
     args: Vec<String>,
     inputs: BTreeSet<Edge<'a>>,
 }
 
-impl fmt::Display for Node<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut label = format!("<out> {}", self.label);
-        for (i, arg) in self.args.iter().enumerate() {
-            write!(&mut label, " | <arg{i}> {arg}")?;
-        }
-
-        let label = label.escape_default().to_string().replace("\\n", "\\l");
-        writeln!(f, "  node_{} [shape=record label=\"{}\"];", self.index, label)?;
-
-        for input in &self.inputs {
-            let input_index = input.from_cell.debug_index();
-            let port = match input.to_arg {
-                Some(n) => format!("arg{n}"),
-                None => format!("out"),
-            };
-            writeln!(f, "  node_{}:out -> node_{}:{};", input_index, self.index, port)?;
-        }
-
-        Ok(())
-    }
-}
-
 impl<'a> Node<'a> {
-    fn new(design: &'a Design, index: usize, label: String) -> Self {
+    fn new(cell: CellRef<'a>, label: String) -> Self {
         Self {
-            design,
-            index,
+            cell,
             label,
             args: Vec::new(),
             inputs: BTreeSet::new(),
@@ -64,7 +41,7 @@ impl<'a> Node<'a> {
         let index = cell.debug_index();
         let width = cell.output_len();
         let label = format!("%{index}:{width} = {name}");
-        Self::new(cell.design(), index, label)
+        Self::new(cell, label)
     }
 
     fn add_input(&mut self, input: impl Into<Edge<'a>>) {
@@ -78,21 +55,21 @@ impl<'a> Node<'a> {
 
     fn net(mut self, input: &Net) -> Self {
         let to_arg = Some(self.args.len());
-        if let Ok((cell, _)) = self.design.find_cell(*input) {
+        if let Ok((cell, _)) = self.cell.design().find_cell(*input) {
             self.add_input(Edge {
                 from_cell: cell,
                 to_arg,
             });
         }
 
-        let s = self.design.display_net(input).to_string();
+        let s = self.cell.design().display_net(input).to_string();
         self.arg(s)
     }
 
     fn value(mut self, input: &Value) -> Self {
         let to_arg = Some(self.args.len());
         input.visit(|net| {
-            if let Ok((cell, _)) = self.design.find_cell(net) {
+            if let Ok((cell, _)) = self.cell.design().find_cell(net) {
                 self.add_input(Edge {
                     from_cell: cell,
                     to_arg,
@@ -100,20 +77,20 @@ impl<'a> Node<'a> {
             }
         });
 
-        let s = self.design.display_value(input).to_string();
+        let s = self.cell.design().display_value(input).to_string();
         self.arg(s)
     }
 
     fn control(mut self, name: &str, input: ControlNet, extra: Option<String>) -> Self {
         let to_arg = Some(self.args.len());
-        if let Ok((cell, _)) = self.design.find_cell(input.net()) {
+        if let Ok((cell, _)) = self.cell.design().find_cell(input.net()) {
             self.add_input(Edge {
                 from_cell: cell,
                 to_arg,
             });
         }
 
-        let mut s = format!("{name}={}", self.design.display_control_net(input));
+        let mut s = format!("{name}={}", self.cell.design().display_control_net(input));
         if let Some(extra) = extra {
             write!(&mut s, ",{extra}").unwrap();
         }
@@ -121,26 +98,124 @@ impl<'a> Node<'a> {
     }
 }
 
-pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> {
+struct Context<'a> {
+    /// Name that will be used to refer to high-fanout cells
+    best_name: BTreeMap<CellRef<'a>, String>,
+    fanout: BTreeMap<CellRef<'a>, BTreeSet<CellRef<'a>>>,
+    nodes: Vec<Node<'a>>,
+}
+
+impl<'a> Context<'a> {
+    fn add_node(&mut self, node: Node<'a>) {
+        for input in &node.inputs {
+            self.fanout.entry(input.from_cell).or_default().insert(node.cell);
+        }
+
+        self.nodes.push(node);
+    }
+
+    fn high_fanout(&self, cell: CellRef<'_>) -> Option<usize> {
+        let fanout = self.fanout.get(&cell).map(BTreeSet::len).unwrap_or(0);
+        if fanout >= FANOUT_THRESHOLD {
+            Some(fanout)
+        } else {
+            None
+        }
+    }
+
+    fn print(&self, writer: &mut impl io::Write) -> io::Result<()> {
+        writeln!(writer, "digraph {{")?;
+        writeln!(writer, "  rankdir=LR;")?;
+        writeln!(writer, "  node [fontname=\"monospace\"];")?;
+        for node in &self.nodes {
+            self.print_node(writer, node)?;
+        }
+        writeln!(writer, "}}")
+    }
+
+    fn print_node(&self, writer: &mut impl io::Write, node: &Node<'_>) -> io::Result<()> {
+        let mut label = format!("<out> {}", node.label);
+        for (i, arg) in node.args.iter().enumerate() {
+            write!(&mut label, " | <arg{i}> {arg}").unwrap();
+        }
+
+        let index = node.cell.debug_index();
+        let label = label.escape_default().to_string().replace("\\n", "\\l");
+        writeln!(writer, "  node_{index} [shape=record label=\"{label}\"];")?;
+
+        for input in &node.inputs {
+            let input_index = input.from_cell.debug_index();
+            let port = match input.to_arg {
+                Some(n) => format!("arg{n}"),
+                None => format!("out"),
+            };
+
+            let driver = if self.high_fanout(input.from_cell).is_some() {
+                let label = match self.best_name.get(&input.from_cell) {
+                    Some(name) => format!("{name:?}"),
+                    None => {
+                        let output = input.from_cell.output();
+                        format!("{}", node.cell.design().display_value(output))
+                    }
+                };
+
+                let label = label.escape_default();
+                let stub_name = format!("stub_{index}_{input_index}");
+                writeln!(writer, "  {stub_name} [label=\"{label}\"];")?;
+                stub_name
+            } else {
+                format!("node_{input_index}:out")
+            };
+
+            writeln!(writer, "  {driver} -> node_{index}:{port};")?;
+        }
+
+        Ok(())
+    }
+}
+
+pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Result<()> {
     // for each cell, a list of name/debug cells that reference it
     let mut names: BTreeMap<CellRef<'_>, BTreeSet<CellRef<'_>>> = BTreeMap::new();
+    // for each cell, the shortest name that refers to it
+    let mut best_name: BTreeMap<CellRef<'a>, String> = BTreeMap::new();
+
+    let mut consider_name = |cell: CellRef<'a>, name: &str| {
+        best_name.entry(cell)
+            .and_modify(|prev| {
+                if prev.len() > name.len() {
+                    *prev = name.to_string();
+                }
+            })
+            .or_insert(name.to_string());
+    };
+
     for cell in design.iter_cells() {
         match &*cell.get() {
-            Cell::Name(_, value) | Cell::Debug(_, value) => {
+            Cell::Name(name, value) | Cell::Debug(name, value) => {
                 for net in value.iter() {
                     if let Ok((target, _)) = design.find_cell(net) {
                         names.entry(target).or_default().insert(cell);
+
+                        if target.output() == *value {
+                            consider_name(target, name);
+                        }
                     }
                 }
+            }
+            Cell::Input(name, _) => {
+                consider_name(cell, name);
             }
             _ => {}
         }
     }
 
+    let mut ctx = Context {
+        best_name,
+        fanout: BTreeMap::new(),
+        nodes: vec![],
+    };
 
-    writeln!(writer, "digraph {{")?;
-    writeln!(writer, "  rankdir=LR;")?;
-    writeln!(writer, "  node [fontname=\"monospace\"];")?;
     for cell in design.iter_cells_topo() {
         let mut node = match &*cell.get() {
             Cell::Name(_, _) | Cell::Debug(_, _) => continue,
@@ -199,12 +274,11 @@ pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> 
                 node
             }
             _ => {
-                let index = cell.debug_index();
                 let label = design.display_cell(cell).to_string();
-                let mut node = Node::new(design, index, label);
+                let mut node = Node::new(cell, label);
 
                 cell.visit(|net| {
-                    if let Ok((cell, _index)) = design.find_cell(net) {
+                    if let Ok((cell, _)) = design.find_cell(net) {
                         node.add_input(cell);
                     }
                 });
@@ -237,8 +311,8 @@ pub fn describe(writer: &mut impl io::Write, design: &Design) -> io::Result<()> 
             }
         }
 
-        writeln!(writer, "  {node}")?;
+        ctx.add_node(node);
     }
 
-    writeln!(writer, "}}")
+    ctx.print(writer)
 }
