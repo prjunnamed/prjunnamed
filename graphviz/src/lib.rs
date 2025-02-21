@@ -380,6 +380,9 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             }
             _ => {
                 let label = design.display_cell(cell).to_string();
+                // this sucks but braces are special to Graphviz.
+                // yes, even in strings
+                let label = label.replace("{", "(").replace("}", ")");
                 let mut node = Node::new(cell, label);
 
                 cell.visit(|net| {
