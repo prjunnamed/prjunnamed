@@ -5,7 +5,8 @@ use std::{
 
 use prjunnamed_netlist::{
     Const, ControlNet, Design, FlipFlop, Instance, IoBuffer, IoNet, IoValue, Net, ParamValue, Target, Trit, Value,
-    Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation,
+    Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation, WithMetadataGuard, Position,
+    MetaItem, MetaItemRef,
 };
 
 use crate::yosys;
@@ -66,7 +67,7 @@ struct ModuleImporter<'a> {
     driven_nets: BTreeSet<usize>,
     nets: BTreeMap<usize, Net>,
     init: BTreeMap<usize, Trit>,
-    design: Design,
+    design: &'a Design,
 }
 
 impl ModuleImporter<'_> {
@@ -264,7 +265,42 @@ impl ModuleImporter<'_> {
         Ok(())
     }
 
+    fn use_attribute_metadata<'a>(design: &'a Design, attributes: &yosys::Metadata) -> WithMetadataGuard<'a> {
+        fn parse_position(text: &str) -> Option<Position> {
+            if let Some((line, column)) = text.split_once(".") {
+                Some(Position { line: line.parse::<u32>().ok()?, column: column.parse::<u32>().ok()? })
+            } else {
+                Some(Position { line: text.parse::<u32>().ok()?, column: 0 })
+            }
+        }
+
+        let mut items: Vec<MetaItemRef> = Vec::new();
+
+        // TODO: add a counter for failed src parsing, and emit warning if nonzero at the end of import
+        if let Some(yosys::MetadataValue::String(string)) = attributes.get("src") {
+            for piece in string.split("|") {
+                let Some((filename, loc_text)) = piece.rsplit_once(":") else {
+                    continue;
+                };
+                let (start_text, end_text) = loc_text.split_once("-").unwrap_or((loc_text, loc_text));
+                let Some(start) = parse_position(start_text) else {
+                    continue;
+                };
+                let Some(end) = parse_position(end_text) else {
+                    continue;
+                };
+
+                let meta_filename = design.add_metadata_string(filename);
+                items.push(design.add_metadata_item(&MetaItem::Source { file: meta_filename, start, end }));
+            }
+        }
+
+        design.use_metadata(MetaItemRef::from_iter(design, items))
+    }
+
     fn handle_cell(&mut self, cell: &yosys::CellDetails) -> Result<(), Error> {
+        let _guard = ModuleImporter::use_attribute_metadata(&self.design, &cell.attributes);
+
         match &cell.type_[..] {
             "$not" | "$pos" | "$neg" => {
                 let width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
@@ -741,10 +777,6 @@ impl ModuleImporter<'_> {
             self.design.replace_net(net, Net::UNDEF);
         }
     }
-
-    fn finalize(&mut self) {
-        self.design.compact();
-    }
 }
 
 fn import_module(
@@ -758,6 +790,8 @@ fn import_module(
         }
     }
 
+    let mut design = Design::with_target(target);
+
     let mut importer = ModuleImporter {
         module,
         design_io_ports,
@@ -765,7 +799,7 @@ fn import_module(
         driven_nets: BTreeSet::new(),
         nets: BTreeMap::new(),
         init: BTreeMap::new(),
-        design: Design::with_target(target),
+        design: &design,
     };
 
     importer.handle_init()?;
@@ -775,9 +809,9 @@ fn import_module(
         importer.handle_cell(cell)?;
     }
     importer.handle_undriven_nets();
-    importer.finalize();
+    design.compact();
 
-    Ok(Some(importer.design))
+    Ok(Some(design))
 }
 
 fn index_io_ports(design: &yosys::Design) -> Result<BTreeSet<(&str, &str)>, Error> {

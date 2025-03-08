@@ -375,7 +375,7 @@ fn parse_target(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Optio
 
 fn parse_metadata_string(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MetaStringIndex> {
     let string = parse_string(t)?;
-    Some(t.context_mut().design.add_metadata_string(&string))
+    Some(t.context_mut().design.add_metadata_string(&string).index())
 }
 
 fn parse_metadata_set(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MetaItemIndex> {
@@ -390,7 +390,7 @@ fn parse_metadata_set(t: &mut WithContext<impl Tokens<Item = char>, Context>) ->
     parse_symbol(t, '}')?;
     let ctx = t.context_mut();
     let items = indices.into_iter().map(|index| ctx.design.ref_metadata_item(ctx.get_meta(index))).collect();
-    Some(ctx.design.add_metadata_item(&MetaItem::Set(items)))
+    Some(ctx.design.add_metadata_item(&MetaItem::Set(items)).index())
 }
 
 fn parse_metadata_position(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Position> {
@@ -414,7 +414,7 @@ fn parse_metadata_source(t: &mut WithContext<impl Tokens<Item = char>, Context>)
     let end = parse_metadata_position(t)?;
     let ctx = t.context_mut();
     let file = ctx.design.ref_metadata_string(file);
-    Some(ctx.design.add_metadata_item(&MetaItem::Source { file, start, end }))
+    Some(ctx.design.add_metadata_item(&MetaItem::Source { file, start, end }).index())
 }
 
 fn parse_metadata_scope(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MetaItemIndex> {
@@ -447,9 +447,11 @@ fn parse_metadata_scope(t: &mut WithContext<impl Tokens<Item = char>, Context>) 
     match scope {
         Scope::Named(name_index) => {
             let name = ctx.design.ref_metadata_string(name_index);
-            Some(ctx.design.add_metadata_item(&MetaItem::NamedScope { name, parent, source }))
+            Some(ctx.design.add_metadata_item(&MetaItem::NamedScope { name, parent, source }).index())
         }
-        Scope::Indexed(index) => Some(ctx.design.add_metadata_item(&MetaItem::IndexedScope { index, parent, source })),
+        Scope::Indexed(index) => {
+            Some(ctx.design.add_metadata_item(&MetaItem::IndexedScope { index, parent, source }).index())
+        }
     }
 }
 
@@ -463,7 +465,7 @@ fn parse_metadata_ident(t: &mut WithContext<impl Tokens<Item = char>, Context>) 
     let ctx = t.context_mut();
     let name = ctx.design.ref_metadata_string(name);
     let scope = ctx.design.ref_metadata_item(ctx.get_meta(scope_index));
-    Some(ctx.design.add_metadata_item(&MetaItem::Ident { name, scope }))
+    Some(ctx.design.add_metadata_item(&MetaItem::Ident { name, scope }).index())
 }
 
 fn parse_metadata_attr(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MetaItemIndex> {
@@ -474,7 +476,7 @@ fn parse_metadata_attr(t: &mut WithContext<impl Tokens<Item = char>, Context>) -
     let value = parse_param_value(t)?;
     let ctx = t.context_mut();
     let name = ctx.design.ref_metadata_string(name);
-    Some(ctx.design.add_metadata_item(&MetaItem::Attr { name, value }))
+    Some(ctx.design.add_metadata_item(&MetaItem::Attr { name, value }).index())
 }
 
 fn parse_metadata(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<()> {

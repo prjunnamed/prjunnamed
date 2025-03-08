@@ -27,8 +27,8 @@ pub use cell::{
     Cell, MatchCell, AssignCell, FlipFlop, IoBuffer, Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop,
     MemoryPortRelation, TargetCell, Instance,
 };
-pub use metadata::{MetaStringRef, MetaItem, MetaItemRef};
-pub use design::{Design, CellRef};
+pub use metadata::{MetaStringRef, MetaItem, MetaItemRef, Position};
+pub use design::{Design, CellRef, WithMetadataGuard};
 pub use parse::{parse, ParseError};
 pub use target::{
     Target, TargetParamKind, TargetParam, TargetInput, TargetOutput, TargetIo, TargetCellPurity, TargetPrototype,
