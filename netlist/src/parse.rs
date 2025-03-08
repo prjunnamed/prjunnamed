@@ -7,7 +7,7 @@ use crate::{
     MatchCell, Memory, MemoryPortRelation, MemoryReadFlipFlop, MemoryReadPort, MemoryWritePort, MetaItem, Net,
     ParamValue, Target, TargetCell, Value,
 };
-use crate::metadata::{MetaStringIndex, MetaItemIndex, Position};
+use crate::metadata::{MetaStringIndex, MetaItemIndex, SourcePosition};
 
 #[derive(Debug)]
 struct Context {
@@ -393,7 +393,7 @@ fn parse_metadata_set(t: &mut WithContext<impl Tokens<Item = char>, Context>) ->
     Some(ctx.design.add_metadata_item(&MetaItem::Set(items)).index())
 }
 
-fn parse_metadata_position(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Position> {
+fn parse_metadata_position(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<SourcePosition> {
     parse_symbol(t, '(')?;
     parse_blank(t);
     let line = parse_integer(t)?;
@@ -401,7 +401,7 @@ fn parse_metadata_position(t: &mut WithContext<impl Tokens<Item = char>, Context
     let column = parse_integer(t)?;
     parse_blank(t);
     parse_symbol(t, ')')?;
-    Some(Position { line, column })
+    Some(SourcePosition { line, column })
 }
 
 fn parse_metadata_source(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<MetaItemIndex> {

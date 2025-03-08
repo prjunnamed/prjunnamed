@@ -17,7 +17,7 @@ use crate::{Design, ParamValue};
 
 /// Position within a source file.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Position {
+pub struct SourcePosition {
     /// Zero-based line number.
     pub line: u32,
     /// Zero-based column number.
@@ -43,9 +43,9 @@ pub enum MetaItem<'a> {
         /// Filename.  Must not be empty.
         file: MetaStringRef<'a>,
         /// Start of the range (inclusive).
-        start: Position,
+        start: SourcePosition,
         /// End of the range (exclusive).
-        end: Position,
+        end: SourcePosition,
     },
     /// Scope identified by a name.
     /// A top-level named scope could be a module declaration. A named scope with a parent could be a block within
@@ -100,8 +100,8 @@ enum MetaItemRepr {
     Set(Vec<MetaItemIndex>),
     Source {
         file: MetaStringIndex,
-        start: Position,
-        end: Position,
+        start: SourcePosition,
+        end: SourcePosition,
     },
     NamedScope {
         name: MetaStringIndex,
