@@ -5,7 +5,7 @@ use std::{
 
 use prjunnamed_netlist::{
     Const, ControlNet, Design, FlipFlop, Instance, IoBuffer, IoNet, IoValue, Net, ParamValue, Target, Trit, Value,
-    Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation, WithMetadataGuard, Position,
+    Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation, WithMetadataGuard, SourcePosition,
     MetaItem, MetaItemRef,
 };
 
@@ -266,11 +266,11 @@ impl ModuleImporter<'_> {
     }
 
     fn use_attribute_metadata<'a>(design: &'a Design, attributes: &yosys::Metadata) -> WithMetadataGuard<'a> {
-        fn parse_position(text: &str) -> Option<Position> {
+        fn parse_position(text: &str) -> Option<SourcePosition> {
             if let Some((line, column)) = text.split_once(".") {
-                Some(Position { line: line.parse::<u32>().ok()?, column: column.parse::<u32>().ok()? })
+                Some(SourcePosition { line: line.parse::<u32>().ok()?, column: column.parse::<u32>().ok()? })
             } else {
-                Some(Position { line: text.parse::<u32>().ok()?, column: 0 })
+                Some(SourcePosition { line: text.parse::<u32>().ok()?, column: 0 })
             }
         }
 
