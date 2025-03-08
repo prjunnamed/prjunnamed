@@ -258,6 +258,10 @@ impl MetadataStore {
 }
 
 impl<'a> MetaStringRef<'a> {
+    pub(crate) fn index(&self) -> MetaStringIndex {
+        self.index
+    }
+
     pub fn is_empty(&self) -> bool {
         self.index == MetaStringIndex::EMPTY
     }
@@ -325,7 +329,7 @@ impl<'a> MetaItemRef<'a> {
         } else if items.len() == 1 {
             *items.first().unwrap()
         } else {
-            MetaItemRef { design, index: design.add_metadata_item(&MetaItem::Set(items)) }
+            MetaItemRef { design, index: design.add_metadata_item(&MetaItem::Set(items)).index() }
         }
     }
 

@@ -121,11 +121,16 @@ impl Design {
         self.add_cell_with_metadata_index(cell, metadata)
     }
 
-    pub fn use_metadata_from(&self, cell_refs: &[CellRef]) -> WithMetadataGuard {
+    pub fn use_metadata(&self, item: MetaItemRef) -> WithMetadataGuard {
         let mut changes = self.changes.borrow_mut();
         let guard = WithMetadataGuard { design: self, restore: changes.cell_metadata };
-        changes.cell_metadata = MetaItemRef::from_merge(self, cell_refs.iter().map(CellRef::metadata)).index();
+        changes.cell_metadata = item.index();
         guard
+    }
+
+    pub fn use_metadata_from(&self, cell_refs: &[CellRef]) -> WithMetadataGuard {
+        let item = MetaItemRef::from_merge(self, cell_refs.iter().map(CellRef::metadata));
+        self.use_metadata(item)
     }
 
     pub fn add_cell(&self, cell: Cell) -> Value {
@@ -164,17 +169,19 @@ impl Design {
         self.metadata.borrow()
     }
 
-    pub(crate) fn add_metadata_string(&self, string: &str) -> MetaStringIndex {
-        self.metadata.borrow_mut().add_string(string)
+    pub fn add_metadata_string(&self, string: &str) -> MetaStringRef {
+        let index = self.metadata.borrow_mut().add_string(string);
+        self.metadata.borrow().ref_string(self, index)
     }
 
     pub(crate) fn ref_metadata_string(&self, index: MetaStringIndex) -> MetaStringRef {
         self.metadata.borrow().ref_string(self, index)
     }
 
-    pub(crate) fn add_metadata_item(&self, item: &MetaItem) -> MetaItemIndex {
+    pub fn add_metadata_item(&self, item: &MetaItem) -> MetaItemRef {
         item.validate();
-        self.metadata.borrow_mut().add_item(item)
+        let index = self.metadata.borrow_mut().add_item(item);
+        self.metadata.borrow().ref_item(self, index)
     }
 
     pub(crate) fn ref_metadata_item(&self, index: MetaItemIndex) -> MetaItemRef {
