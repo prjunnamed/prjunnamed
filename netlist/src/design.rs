@@ -366,6 +366,26 @@ impl Design {
             .prototype(&target_cell.kind)
             .expect("target prototype not defined")
     }
+
+    pub fn find_output(&self, name: &str) -> Option<CellRef> {
+        for cell in self.iter_cells() {
+            match &*cell.get() {
+                Cell::Output(x, _) if x == name => return Some(cell),
+                _ => {}
+            }
+        }
+        None
+    }
+
+    pub fn find_input(&self, name: &str) -> Option<CellRef> {
+        for cell in self.iter_cells() {
+            match &*cell.get() {
+                Cell::Input(x, _) if x == name => return Some(cell),
+                _ => {}
+            }
+        }
+        None
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -453,6 +473,14 @@ impl<'a> CellRef<'a> {
 
     pub fn visit(&self, f: impl FnMut(Net)) {
         self.design.cells[self.index].visit(f)
+    }
+
+    pub fn all_inputs(&self) -> Value {
+        let mut ret = Value::new();
+        self.visit(|net| {
+            ret.push(net);
+        });
+        ret
     }
 
     pub fn replace(&self, to_cell: Cell) {
