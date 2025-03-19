@@ -268,9 +268,18 @@ impl ModuleImporter<'_> {
     fn use_attribute_metadata<'a>(design: &'a Design, attributes: &yosys::Metadata) -> WithMetadataGuard<'a> {
         fn parse_position(text: &str) -> Option<SourcePosition> {
             if let Some((line, column)) = text.split_once(".") {
-                Some(SourcePosition { line: line.parse::<u32>().ok()?, column: column.parse::<u32>().ok()? })
+                let line = line.parse::<u32>().ok()?;
+                let column = column.parse::<u32>().ok()?;
+                if line < 1 || column < 1 {
+                    return None;
+                }
+                Some(SourcePosition { line: line - 1, column: column - 1 })
             } else {
-                Some(SourcePosition { line: text.parse::<u32>().ok()?, column: 0 })
+                let line = text.parse::<u32>().ok()?;
+                if line < 1 {
+                    return None;
+                }
+                Some(SourcePosition { line: line - 1, column: 0 })
             }
         }
 
