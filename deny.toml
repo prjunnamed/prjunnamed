@@ -7,6 +7,9 @@ allow = [
     "Apache-2.0",
 ]
 
+[advisories]
+unmaintained = "none"
+
 [bans]
 # q="?user_id=3618&per_page=100"; while [[ "$q" != null ]]; do curl -s "https://crates.io/api/v1/crates$q" > crates.json; jq '.crates.[].id' crates.json; q="$(jq -r .meta.next_page crates.json)"; done
 deny = [
