@@ -268,13 +268,13 @@ impl MatchMatrix {
 }
 
 impl Decision {
-    /// Register the branches within [`MutuallyExclusive`]
-    fn register_branches(&self, mex: &mut MutuallyExclusive) {
+    /// Call `f` on the contents of each `Decision::Result` in this tree.
+    fn each_leaf(&self, f: &mut impl FnMut(&BTreeSet<Net>)) {
         match self {
-            Decision::Result { rules } => mex.add_branch(rules),
+            Decision::Result { rules } => f(rules),
             Decision::Branch { if0, if1, .. } => {
-                if0.register_branches(mex);
-                if1.register_branches(mex);
+                if0.each_leaf(f);
+                if1.each_leaf(f);
             }
         }
     }
@@ -314,76 +314,6 @@ impl Decision {
                 design.add_mux(*test, if1.emit_one_hot_mux(design, nets), if0.emit_one_hot_mux(design, nets))
             }
         }
-    }
-}
-
-/// Keeps track of whether two outputs can occur in the same branch of a
-/// decision tree
-#[derive(Debug, Clone)]
-struct MutuallyExclusive {
-    /// For each `Net`, list of branches it occurs in
-    occurs: BTreeMap<Net, Vec<u32>>,
-    next_branch: u32,
-}
-
-/// A set of mutually-exclusive `Net`s that knows whether it can be extended.
-#[derive(Debug, Clone)]
-struct DisjointSet<'a> {
-    mex: &'a MutuallyExclusive,
-    /// Set of branches that drive a `Net` within this set.
-    branches: BTreeSet<u32>,
-}
-
-impl MutuallyExclusive {
-    fn new() -> Self {
-        Self {
-            occurs: BTreeMap::new(),
-            next_branch: 0,
-        }
-    }
-
-    /// Take note of a branch that drives `outputs`.
-    fn add_branch(&mut self, outputs: &BTreeSet<Net>) {
-        let branch = self.next_branch;
-        self.next_branch += 1;
-
-        for &output in outputs {
-            self.occurs.entry(output).or_default().push(branch);
-        }
-    }
-
-    /// Create an empty [`DisjointSet`] linked to this `MutuallyExclusive`.
-    fn make_disjoint(&self) -> DisjointSet<'_> {
-        DisjointSet {
-            mex: self,
-            branches: BTreeSet::new(),
-        }
-    }
-}
-
-impl DisjointSet<'_> {
-    /// Checks whether this set can be extended with `net`, and does so if it
-    /// is.
-    ///
-    /// Note that the intended usecase assumes that a result of `false` will
-    /// lead to the `DisjointSet` not being used anymore, and as a result,
-    /// a failed extend can leave the set with the new net already partly
-    /// inserted.
-    fn try_extend(&mut self, net: Net) -> bool {
-        let Some(occurs) = self.mex.occurs.get(&net) else {
-            // net is not driven by any branches in this decision tree.
-            // this can happen if a pattern turns out to be impossible
-            // (e.g. due to constant propagation)
-            return true;
-        };
-
-        for &occurrence in occurs {
-            if !self.branches.insert(occurrence) {
-                return false;
-            }
-        }
-
-        true
     }
 }
 
@@ -527,7 +457,7 @@ impl<'a> AssignChains<'a> {
     fn iter_disjoint<'b>(
         &'b self,
         decisions: &'a BTreeMap<Net, Rc<Decision>>,
-        mex: &'b MutuallyExclusive,
+        occurrences: &BTreeMap<Net, Vec<u32>>,
     ) -> impl Iterator<Item = (Rc<Decision>, &'b [CellRef<'a>])> {
         fn enable_of(cell_ref: CellRef) -> Net {
             let Cell::Assign(AssignCell { enable, .. }) = &*cell_ref.get() else { unreachable!() };
@@ -535,17 +465,37 @@ impl<'a> AssignChains<'a> {
         }
 
         self.chains.iter().filter_map(|chain| {
+            let mut used_branches = BTreeSet::new();
+            // Add all branches driving `net` to `used_branches`. Returns
+            // `false` if this is a conflict (i.e. the nets aren't mutually
+            // exclusive).
+            let mut consume_branches = |net: Net| -> bool {
+                let Some(occurs) = occurrences.get(&net) else {
+                    // net is not driven by any branches in this decision tree.
+                    // this can happen if a pattern turns out to be impossible
+                    // (e.g. due to constant propagation)
+                    return true;
+                };
+
+                for &occurrence in occurs {
+                    if !used_branches.insert(occurrence) {
+                        return false;
+                    }
+                }
+
+                true
+            };
+
             // Check if the enables belong to disjoint branches within the same decision tree
             // (like in a SystemVerilog "unique" or "unique0" statement).
             let enable = enable_of(chain[0]);
             let decision = decisions.get(&enable)?;
-            let mut disjoint = mex.make_disjoint();
-            assert!(disjoint.try_extend(enable));
+            assert!(consume_branches(enable));
             let mut end_index = chain.len();
             'chain: for (index, &other_cell) in chain.iter().enumerate().skip(1) {
                 let enable = enable_of(other_cell);
                 let other_decision = decisions.get(&enable)?;
-                if !Rc::ptr_eq(decision, other_decision) || !disjoint.try_extend(enable) {
+                if !Rc::ptr_eq(decision, other_decision) || !consume_branches(enable) {
                     end_index = index;
                     break 'chain;
                 }
@@ -568,7 +518,9 @@ pub fn decision(design: &mut Design) {
     // Then build a decision tree for it and use it to drive the output.
     let mut decisions: BTreeMap<Net, Rc<Decision>> = BTreeMap::new();
 
-    let mut mex = MutuallyExclusive::new();
+    let mut next_branch: u32 = 0;
+    let mut occurrences: BTreeMap<Net, Vec<u32>> = BTreeMap::new();
+
     for (matrix, matches) in match_trees.iter_matrices() {
         let all_outputs = BTreeSet::from_iter(matrix.iter_outputs());
         if cfg!(feature = "trace") {
@@ -580,7 +532,15 @@ pub fn decision(design: &mut Design) {
             eprint!(">decision tree:\n{decision}")
         }
 
-        decision.register_branches(&mut mex);
+        decision.each_leaf(&mut |outputs| {
+            let branch = next_branch;
+            next_branch += 1;
+
+            for &output in outputs {
+                occurrences.entry(output).or_default().push(branch);
+            }
+        });
+
         for &output in &all_outputs {
             decisions.insert(output, decision.clone());
         }
@@ -593,7 +553,7 @@ pub fn decision(design: &mut Design) {
     // Find chains of `assign` cells that are order-independent.
     // Then lower these cells to a `mux` tree without `eq` cells.
     let mut used_assigns = BTreeSet::new();
-    for (decision, chain) in assign_chains.iter_disjoint(&decisions, &mex) {
+    for (decision, chain) in assign_chains.iter_disjoint(&decisions, &occurrences) {
         let (first_assign, last_assign) = (chain.first().unwrap(), chain.last().unwrap());
         if cfg!(feature = "trace") {
             eprintln!(">disjoint:");
