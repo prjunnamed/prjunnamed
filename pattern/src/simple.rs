@@ -2,6 +2,7 @@ use prjunnamed_netlist::{Cell, Const, Net, Trit, Value};
 
 use crate::{DesignDyn, NetOrValue, Pattern};
 
+/// Matches anything. Captures the value being matched.
 pub struct PAny;
 
 impl PAny {
@@ -19,6 +20,10 @@ impl<T: Clone> Pattern<T> for PAny {
     }
 }
 
+/// Captures the value being matched, even if the child pattern captures
+/// something else.
+///
+/// For example, `[PBind@v [PPow2@e]]`.
 pub struct PBind<P>(P);
 
 impl<P> PBind<P> {
@@ -36,6 +41,8 @@ impl<T: Clone, P: Pattern<T>> Pattern<T> for PBind<P> {
     }
 }
 
+/// Matches `Net`s and `Value`s that do not refer to cells (consist entirely of
+/// zero, one, and undef nets).
 pub struct PConst;
 
 impl PConst {
@@ -157,6 +164,8 @@ impl<T: NetOrValue> Pattern<T> for PHasX {
     }
 }
 
+/// Matches constants that are powers of two (have exactly one bit set).
+/// Captures the exponent, i.e. log2 of the value.
 pub struct PPow2;
 
 impl PPow2 {
