@@ -14,7 +14,7 @@ struct EasySmtState {
 
 impl EasySmtEngine {
     pub fn z3() -> Result<Self, std::io::Error> {
-        Ok(Self::new(easy_smt::ContextBuilder::new().solver("z3", ["-smt2", "-in"]).build()?))
+        Ok(Self::new(easy_smt::ContextBuilder::new().solver("z3").solver_args(["-smt2", "-in"]).build()?))
     }
 
     pub fn new(context: easy_smt::Context) -> Self {
