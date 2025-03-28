@@ -3,6 +3,8 @@ use std::collections::BTreeSet;
 use prjunnamed_netlist::{Cell, Const, Design, FlipFlop, Net, Value};
 
 pub fn split(design: &mut Design) -> bool {
+    let _span = tracing::debug_span!("split").entered();
+
     let mut live_nets = BTreeSet::<Net>::new();
     let mut queue = BTreeSet::<Net>::new();
 
@@ -172,9 +174,7 @@ pub fn split(design: &mut Design) -> bool {
             ),
             _ => continue,
         };
-        if cfg!(feature = "trace") {
-            eprintln!(">split {} => {}", design.display_value(&from_live_nets), design.display_value(&to_live_nets));
-        }
+        tracing::trace!("{} => {}", design.display_value(&from_live_nets), design.display_value(&to_live_nets));
         design.replace_value(from_live_nets, to_live_nets);
     }
 

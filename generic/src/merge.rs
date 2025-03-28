@@ -60,7 +60,15 @@ impl Numberer {
     }
 }
 
+macro_rules! blah {
+    ($($args:tt),*) => {
+        let _span = tracing::debug_span!($($args),*).entered();
+    };
+}
+
 pub fn merge(design: &mut Design) -> bool {
+    blah!("merge");
+
     let mut numberer = Numberer::new();
     for cell_ref in design.iter_cells_topo().filter(|cell_ref| !cell_ref.get().has_effects(design)) {
         let mut cell = cell_ref.get().into_owned();
@@ -82,10 +90,8 @@ pub fn merge(design: &mut Design) -> bool {
             Cell::Mul(arg1, arg2) => numberer.commutative_binary(Cell::Mul, arg1, arg2, &output),
             _ => numberer.find_or_insert(cell, output.clone()),
         };
-        if cfg!(feature = "trace") {
-            if output != canon {
-                eprintln!(">merge {} => {}", design.display_value(&output), design.display_value(&canon));
-            }
+        if output != canon {
+            tracing::trace!("{} => {}", design.display_value(&output), design.display_value(&canon));
         }
         for canon_net in canon.iter() {
             let Ok((canon_cell_ref, _offset)) = design.find_cell(canon_net) else { unreachable!() };

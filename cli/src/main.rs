@@ -151,8 +151,14 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn main() {
-    env_logger::init();
+    use tracing_subscriber::prelude::*;
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .with(tracing_tree::HierarchicalLayer::default().with_indent_amount(2))
+        .init();
+
     prjunnamed_siliconblue::register();
+
     if let Err(error) = run() {
         eprintln!("error: {}", error);
         std::process::exit(1)

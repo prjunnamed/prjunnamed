@@ -32,12 +32,10 @@ macro_rules! netlist_match {
                     Some($crate::netlist_match!( @PAT@ [ $($pat)+ ] )) => {
                         let _guard = $design.inner().use_metadata_from(&$design.cells());
                         $( if $gexpr )? {
-                            if cfg!(feature = "trace") {
-                                eprintln!(">match {} => {}",
-                                    stringify!([ $($pat)* ] $( if $gexpr )?).replace("\n", " "),
-                                    $design.inner().display_value(&*$target)
-                                );
-                            }
+                            tracing::trace!("match {} => {}",
+                                stringify!([ $($pat)* ] $( if $gexpr )?).replace("\n", " "),
+                                $design.inner().display_value(&*$target)
+                            );
                             break 'block Some($result.into())
                         }
                     }
@@ -56,12 +54,10 @@ macro_rules! netlist_match {
                     Some($crate::netlist_match!( @PAT@ [ $($pat)+ ] )) => {
                         let _guard = $design.inner().use_metadata_from(&$design.cells());
                         if let $gpat = $gexpr {
-                            if cfg!(feature = "trace") {
-                                eprintln!(">match {} => {}",
-                                    stringify!([ $($pat)* ] if let $gpat = $gexpr).replace("\n", " "),
-                                    $design.inner().display_value(&*$target)
-                                );
-                            }
+                            tracing::trace!("match {} => {}",
+                                stringify!([ $($pat)* ] if let $gpat = $gexpr).replace("\n", " "),
+                                $design.inner().display_value(&*$target)
+                            );
                             break 'block Some($result.into())
                         }
                     }
@@ -92,12 +88,9 @@ macro_rules! netlist_replace {
     { @TOP@ $design:ident $target:ident $($rest:tt)* } => {
         let result: Option<Value> = $crate::netlist_match! { @TOP@ $design $target $($rest)* };
         if let Some(replace) = result {
-            #[allow(unexpected_cfgs)]
-            if cfg!(feature = "trace") {
-                eprintln!(">replace => {}",
-                    $design.inner().display_value(&prjunnamed_netlist::Value::from(replace.clone()))
-                );
-            }
+            tracing::trace!("replace => {}",
+                $design.inner().display_value(&prjunnamed_netlist::Value::from(replace.clone()))
+            );
             $design.inner().replace_value($target, &replace);
             true
         } else {

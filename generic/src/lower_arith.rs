@@ -39,6 +39,8 @@ fn lower_shift(
 }
 
 pub fn lower_arith(design: &mut Design) {
+    let _span = tracing::debug_span!("lower_arith").entered();
+
     for cell_ref in design.iter_cells() {
         let _guard = design.use_metadata_from(&[cell_ref]);
         let new_cell = match &*cell_ref.get() {
@@ -98,9 +100,7 @@ pub fn lower_arith(design: &mut Design) {
             }
             _ => continue,
         };
-        if cfg!(feature = "trace") {
-            eprintln!(">lower {}", design.display_cell(cell_ref));
-        }
+        tracing::trace!("{}", design.display_cell(cell_ref));
         cell_ref.replace(new_cell);
     }
     design.compact();
