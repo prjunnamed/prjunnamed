@@ -75,8 +75,9 @@ checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 
 [[package]]
 name = "easy-smt"
-version = "0.2.7"
-source = "git+https://github.com/whitequark/easy-smt?branch=buf-writer#b6bba80f57391d940466952fc67c2895072d79b0"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3969faa1171a9350c7b8b1c82fd0540ce6f4a457b0a02199285149142aa6d27"
 dependencies = [
  "log",
  "unicode-segmentation",
