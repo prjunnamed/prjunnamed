@@ -12,6 +12,7 @@ doctest = false
 [dependencies]
 prjunnamed-netlist.workspace = true
 prjunnamed-pattern.workspace = true
+tracing.workspace = true
 
 [features]
 trace = []

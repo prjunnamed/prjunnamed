@@ -25,6 +25,9 @@ indexmap = "2.7.1"
 yap = "0.12.0"
 # easy-smt = "0.2.7"
 easy-smt = { git = "https://github.com/whitequark/easy-smt", branch = "buf-writer" }
+tracing = { version = "0.1.41", default-features = false, features = ["std", "release_max_level_debug"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-tree = { version = "0.4" }
 env_logger = "0.11"
 argparse = "0.2"
 jzon = "0.12.5"

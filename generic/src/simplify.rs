@@ -2,6 +2,8 @@ use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, FlipFlop, IoBuffer, 
 use prjunnamed_pattern::{netlist_replace, patterns::*};
 
 pub fn simplify(design: &mut Design) -> bool {
+    let _span = tracing::debug_span!("simplify").entered();
+
     let rules = netlist_replace! {
         [PBuf [PAny@a]]                 => a;
 
