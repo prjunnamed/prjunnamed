@@ -99,18 +99,50 @@ impl SiliconBlueTarget {
                 .add_param_bits("NEG_TRIGGER", Const::zero(1))
                 .add_param_bool("IS_GB", false) // synthetic
                 .add_param_string_enum("IO_STANDARD", &[
+                    // the situation with IO standards is a bit of a mess.
+                    //
+                    // all banks of iCE40, all banks of iCE65L01, and banks 0-2 (+ SPI) of other iCE65
+                    // can only do two IO standards:
+                    //
+                    // - SB_LVCMOS: LVCMOS of whatever VCC the device is given; no configurable parameters whatsoever
+                    // - SB_LVDS_INPUT (only iCE40, and only on some banks): input-only, using differential comparator
+                    //
+                    // iCE65L04, iCE65P04, and iCE65L08 bank 3 actually has more interesting IO standards:
+                    //
+                    // - SB_LVCMOS{12,18,25,33}_*: LVCMOS with several selectable drive strengths
+                    // - SB_MDDR*: another name for SB_LVCMOS18_*
+                    // - SB_SSTL2_* and SB_SSTL18_*: VREF-based input buffer
+                    // - SB_SUBLVDS_INPUT: input-only, differential comparator, 1.8V
+                    // - SB_LVDS_INPUT: input-only, differential comparator, 2.5V
+                    //
+                    // icecube allows the fancy IO standards on all banks of all iCE65 devices, but downcasts
+                    // them to SB_LVCMOS or an error when used on bank other than bank 3, or on iCE65L01.
+                    // on iCE40, it accepts only SB_LVCMOS and SB_LVDS_INPUT.
+                    //
+                    // we also add a fake OPEN_DRAIN standard to mark the special open-drain IO (SB_IO_OD) in our
+                    // unified model.
                     "SB_LVCMOS",
+                    "SB_LVCMOS15_2",
+                    "SB_LVCMOS15_4",
+                    "SB_LVCMOS18_2",
+                    "SB_LVCMOS18_4",
+                    "SB_LVCMOS18_8",
+                    "SB_LVCMOS18_10",
+                    "SB_LVCMOS25_4",
+                    "SB_LVCMOS25_8",
+                    "SB_LVCMOS25_12",
+                    "SB_LVCMOS25_16",
+                    "SB_LVCMOS33_8",
                     "SB_SSTL2_CLASS_1",
                     "SB_SSTL2_CLASS_2",
                     "SB_SSTL18_FULL",
                     "SB_SSTL18_HALF",
-                    "SB_MDDR10",
-                    "SB_MDDR8",
-                    "SB_MDDR4",
                     "SB_MDDR2",
+                    "SB_MDDR4",
+                    "SB_MDDR8",
+                    "SB_MDDR10",
+                    "SB_SUBLVDS_INPUT",
                     "SB_LVDS_INPUT",
-                    "SB_LVDS_OUTPUT",
-                    "SB_LVDS_IO",
                     "OPEN_DRAIN", // synthetic; used to mark SB_IO_OD
                 ])
                 // synthetic for SB_IO_OD cell (it has all of these without underscores for some unhinged reason),
