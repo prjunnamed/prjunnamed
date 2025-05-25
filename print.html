@@ -32,21 +32,33 @@
         <!-- Custom theme stylesheets -->
 
 
-        <!-- Provide site root to javascript -->
+        <!-- Provide site root and default themes to javascript -->
         <script>
-            var path_to_root = "";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc.js"></script>
     </head>
     <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
     <div id="body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
             try {
-                var theme = localStorage.getItem('mdbook-theme');
-                var sidebar = localStorage.getItem('mdbook-sidebar');
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
 
                 if (theme.startsWith('"') && theme.endsWith('"')) {
                     localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
@@ -60,7 +72,8 @@
 
         <!-- Set the theme before any content is loaded, prevents flash -->
         <script>
-            var theme;
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             const html = document.documentElement;
@@ -73,8 +86,8 @@
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var sidebar = null;
-            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
@@ -110,13 +123,14 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
                             <i class="fa fa-search"></i>
                         </button>
                     </div>
@@ -160,14 +174,15 @@
 <p><a href="https://github.com/prjunnamed/prjunnamed">Project Unnamed</a> aims to deliver a comprehensive end-to-end FPGA synthesis, placement, routing, and bitstream generation tools targeting multiple FPGA families and integrating with <a href="https://github.com/prjunnamed/prjcombine">Project Combine</a>.</p>
 <p>The project is currently in the early stage of research and prototyping, and is not suitable for general use.</p>
 <h2 id="community"><a class="header" href="#community">Community</a></h2>
-<p>Project Unnamed has a dedicated IRC channel, <a href="https://web.libera.chat/#prjunnamed">#prjunnamed at libera.chat</a>, which is <em>bridged</em><sup class="footnote-reference"><a href="#1">1</a></sup> to Matrix at <a href="https://matrix.to/#/#prjunnamed:catircservices.org">#prjunnamed:catircservices.org</a>. Feel free to join to discuss ongoing development of Project Unnamed and its related projects.</p>
-<div class="footnote-definition" id="1"><sup class="footnote-definition-label">1</sup>
-<p>The same messages appear on IRC and on Matrix, and one can participate in the discussion equally using either communication system.</p>
-</div>
+<p>Project Unnamed has a dedicated IRC channel, <a href="https://web.libera.chat/#prjunnamed">#prjunnamed at libera.chat</a>, which is <em>bridged</em><sup class="footnote-reference" id="fr-1-1"><a href="#footnote-1">1</a></sup> to Matrix at <a href="https://matrix.to/#/#prjunnamed:catircservices.org">#prjunnamed:catircservices.org</a>. Feel free to join to discuss ongoing development of Project Unnamed and its related projects.</p>
 <h2 id="license"><a class="header" href="#license">License</a></h2>
 <p>Project Unnamed is distributed under the terms of the <a href="LICENSE-0BSD.txt">0-clause BSD license</a> and the <a href="LICENSE-Apache-2.0.txt">Apache License (Version 2.0)</a>.</p>
 <p>By submitting your contribution you agree to be bound by all provisions of both of these licenses, including the clause 3 (Grant of Patent License) of the Apache License (Version 2.0).</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h1>
+<hr>
+<ol class="footnote-definition"><li id="footnote-1">
+<p>The same messages appear on IRC and on Matrix, and one can participate in the discussion equally using either communication system. <a href="#fr-1-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h1>
 <p>In order to build Project Unnamed and run its testsuite, you will need <a href="https://rust-lang.org/">Rust</a> (latest stable release) and <a href="https://github.com/Z3Prover/z3">Z3</a>. We recommend using <a href="https://rustup.rs/">rustup</a> or installing Rust from the software repository of your Linux distribution. Once you have these tools, run:</p>
 <pre><code class="language-console">$ cargo test
 </code></pre>
