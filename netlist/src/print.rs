@@ -257,11 +257,7 @@ impl Design {
         let newline = &format!("\n{prefix}");
 
         let write_metadata = |f: &mut std::fmt::Formatter| -> std::fmt::Result {
-            if metadata != MetaItemIndex::NONE {
-                write!(f, " {metadata}")
-            } else {
-                Ok(())
-            }
+            if metadata != MetaItemIndex::NONE { write!(f, " {metadata}") } else { Ok(()) }
         };
 
         let write_control = |f: &mut std::fmt::Formatter, name: &str, control_net: ControlNet| -> std::fmt::Result {
@@ -327,6 +323,12 @@ impl Design {
                 self.write_value(f, arg2)?;
                 write!(f, " ")?;
                 self.write_net(f, *arg3)?;
+            }
+            Cell::Aig(arg1, arg2) => {
+                write!(f, "aig ")?;
+                self.write_control_net(f, *arg1)?;
+                write!(f, " ")?;
+                self.write_control_net(f, *arg2)?;
             }
 
             Cell::Eq(arg1, arg2) => write_common(f, "eq", &[arg1, arg2])?,

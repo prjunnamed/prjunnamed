@@ -252,6 +252,21 @@ fn export_module(mut design: Design) -> yosys::Module {
                     }
                 }
             }
+            Cell::Aig(arg1, arg2) => {
+                let arg1 = ys_control_net_pos(&mut ys_module, &format!("${}$not1", cell_index), *arg1);
+                let arg2 = ys_control_net_pos(&mut ys_module, &format!("${}$not2", cell_index), *arg2);
+                CellDetails::new("$and")
+                    .param("A_SIGNED", 0)
+                    .param("A_WIDTH", 1)
+                    .param("B_SIGNED", 0)
+                    .param("B_WIDTH", 1)
+                    .param("Y_WIDTH", 1)
+                    .input("A", arg1)
+                    .input("B", arg2)
+                    .output("Y", indexer.value(&output))
+                    .attrs(map_metadata(cell_ref.metadata()))
+                    .add_to(&format!("${}", cell_index), &mut ys_module)
+            }
 
             Cell::Eq(arg1, arg2) => ys_cell_binary(&mut ys_module, "$eq", arg1, arg2, false),
             Cell::ULt(arg1, arg2) => ys_cell_binary(&mut ys_module, "$lt", arg1, arg2, false),

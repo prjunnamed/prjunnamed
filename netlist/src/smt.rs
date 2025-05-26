@@ -400,6 +400,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
                     }
                 }
             }
+            Cell::Aig(a, b) => self.tv_and(self.control_net(*a)?, self.control_net(*b)?, 1)?,
             Cell::Eq(a, b) => {
                 let (tv_a, tv_b) = (self.value(a)?, self.value(b)?);
                 let bv_a_xor_b = self.engine.build_bvxor(tv_a.y.clone(), tv_b.y.clone());

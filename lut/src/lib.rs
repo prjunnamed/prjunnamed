@@ -3,7 +3,7 @@ use std::{
     collections::{hash_map, HashMap},
 };
 
-use prjunnamed_netlist::{Cell, Const, Net, Trit, Value};
+use prjunnamed_netlist::{Cell, Const, ControlNet, Net, Trit, Value};
 
 #[derive(Debug, Clone)]
 enum SwizzleInput {
@@ -105,6 +105,16 @@ impl Lut {
             Cell::Or(arg1, arg2) => Self::lut2(arg1[0], arg2[0], Const::lit("1110")),
             Cell::Xor(arg1, arg2) => Self::lut2(arg1[0], arg2[0], Const::lit("0110")),
             Cell::Mux(arg1, arg2, arg3) => Self::lut3(arg3[0], arg2[0], *arg1, Const::lit("11001010")),
+            Cell::Aig(arg1, arg2) => Self::lut2(
+                arg1.net(),
+                arg2.net(),
+                Const::lit(match (arg1, arg2) {
+                    (ControlNet::Neg(_), ControlNet::Neg(_)) => "0001",
+                    (ControlNet::Neg(_), ControlNet::Pos(_)) => "0010",
+                    (ControlNet::Pos(_), ControlNet::Neg(_)) => "0100",
+                    (ControlNet::Pos(_), ControlNet::Pos(_)) => "1000",
+                }),
+            ),
             _ => return None,
         })
     }

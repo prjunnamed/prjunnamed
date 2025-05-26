@@ -164,6 +164,13 @@ pub fn isomorphic(lft: &Design, rgt: &Design) -> Result<(), NotIsomorphic> {
                 queue_vals(&mut queue, arg2_l, arg2_r)?;
                 queue.insert((*arg3_l, *arg3_r));
             }
+            (Cell::Aig(arg1_l, arg2_l), Cell::Aig(arg1_r, arg2_r)) => {
+                queue.insert((arg1_l.net(), arg1_r.net()));
+                queue.insert((arg2_l.net(), arg2_r.net()));
+                if arg1_l.is_positive() != arg1_r.is_positive() || arg2_l.is_positive() != arg2_r.is_positive() {
+                    return Err(NotIsomorphic::NetMismatch(net_l, net_r));
+                }
+            }
             (Cell::Shl(arg1_l, arg2_l, stride_l), Cell::Shl(arg1_r, arg2_r, stride_r))
             | (Cell::UShr(arg1_l, arg2_l, stride_l), Cell::UShr(arg1_r, arg2_r, stride_r))
             | (Cell::SShr(arg1_l, arg2_l, stride_l), Cell::SShr(arg1_r, arg2_r, stride_r))

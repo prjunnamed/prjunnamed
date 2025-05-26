@@ -557,6 +557,8 @@ impl Design {
             Xor(arg1.into().into(), arg2.into().into());
         add_adc(arg1: impl Into<Value>, arg2: impl Into<Value>, arg3: impl Into<Net>) -> Value :
             Adc(arg1.into(), arg2.into(), arg3.into());
+        add_aig(arg1: impl Into<ControlNet>, arg2: impl Into<ControlNet>) -> Net :
+            Aig(arg1.into(), arg2.into());
 
         add_eq(arg1: impl Into<Value>, arg2: impl Into<Value>) -> Net :
             Eq(arg1.into(), arg2.into());
@@ -778,6 +780,9 @@ impl Design {
     pub fn statistics(&self) -> BTreeMap<String, usize> {
         let result = RefCell::new(BTreeMap::<String, usize>::new());
         for cell_ref in self.iter_cells() {
+            let simple = |name: &str| {
+                *result.borrow_mut().entry(format!("{name}")).or_default() += 1;
+            };
             let bitwise = |name: &str, amount: usize| {
                 *result.borrow_mut().entry(format!("{name}")).or_default() += amount;
             };
@@ -795,6 +800,7 @@ impl Design {
                 Cell::Xor(arg, _) => bitwise("xor", arg.len()),
                 Cell::Mux(_, arg, _) => bitwise("mux", arg.len()),
                 Cell::Adc(arg, _, _) => wide("adc", arg.len()),
+                Cell::Aig(_, _) => simple("aig"),
                 Cell::Eq(arg, _) => wide("eq", arg.len()),
                 Cell::ULt(arg, _) => wide("ult", arg.len()),
                 Cell::SLt(arg, _) => wide("slt", arg.len()),

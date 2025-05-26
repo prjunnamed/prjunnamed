@@ -1,6 +1,6 @@
 use std::{borrow::Cow, hash::Hash};
 
-use crate::{Design, Net, TargetCellPurity, Value};
+use crate::{ControlNet, Design, Net, TargetCellPurity, Value};
 
 mod decision;
 mod flip_flop;
@@ -41,6 +41,7 @@ pub(crate) enum CellRepr {
     Xor(Net, Net),
     Mux(Net, Net, Net), // a ? b : c
     Adc(Net, Net, Net), // a + b + ci
+    Aig(Net, bool, Net, bool),
 
     Boxed(Box<Cell>),
 }
@@ -83,6 +84,10 @@ pub enum Cell {
     /// `X`s in the input propagate only to the more significant bits, and
     /// do not affect the less significant bits.
     Adc(Value, Value, Net), // a + b + ci
+    /// `a & b`, single-bit wide, both inputs freely invertible.
+    ///
+    /// A variant of the `And` cell meant for fine logic optimization.
+    Aig(ControlNet, ControlNet),
 
     Eq(Value, Value),
     ULt(Value, Value),
@@ -179,6 +184,7 @@ impl Cell {
         match self {
             Cell::Buf(_) => (),
             Cell::Not(_) => (),
+            Cell::Aig(..) => (),
             Cell::And(arg1, arg2)
             | Cell::Or(arg1, arg2)
             | Cell::Xor(arg1, arg2)
@@ -320,6 +326,9 @@ impl CellRepr {
             CellRepr::Xor(arg1, arg2) => Cow::Owned(Cell::Xor(Value::from(arg1), Value::from(arg2))),
             CellRepr::Mux(arg1, arg2, arg3) => Cow::Owned(Cell::Mux(arg1, Value::from(arg2), Value::from(arg3))),
             CellRepr::Adc(arg1, arg2, arg3) => Cow::Owned(Cell::Adc(Value::from(arg1), Value::from(arg2), arg3)),
+            CellRepr::Aig(arg1, inv1, arg2, inv2) => {
+                Cow::Owned(Cell::Aig(ControlNet::from_net_invert(arg1, inv1), ControlNet::from_net_invert(arg2, inv2)))
+            }
 
             CellRepr::Boxed(ref cell) => Cow::Borrowed(cell),
         }
@@ -336,6 +345,7 @@ impl From<Cell> for CellRepr {
             Cell::Xor(arg1, arg2) if arg1.len() == 1 && arg2.len() == 1 => CellRepr::Xor(arg1[0], arg2[0]),
             Cell::Mux(arg1, arg2, arg3) if arg2.len() == 1 && arg3.len() == 1 => CellRepr::Mux(arg1, arg2[0], arg3[0]),
             Cell::Adc(arg1, arg2, arg3) if arg1.len() == 1 && arg2.len() == 1 => CellRepr::Adc(arg1[0], arg2[0], arg3),
+            Cell::Aig(arg1, arg2) => CellRepr::Aig(arg1.net(), arg1.is_negative(), arg2.net(), arg2.is_negative()),
 
             cell => CellRepr::Boxed(Box::new(cell)),
         }
@@ -353,7 +363,8 @@ impl CellRepr {
             | CellRepr::And(..)
             | CellRepr::Or(..)
             | CellRepr::Xor(..)
-            | CellRepr::Mux(..) => 1,
+            | CellRepr::Mux(..)
+            | CellRepr::Aig(..) => 1,
             CellRepr::Adc(..) => 2,
 
             CellRepr::Boxed(cell) => cell.output_len(),
@@ -366,7 +377,10 @@ impl CellRepr {
             CellRepr::Skip(_) => unreachable!("skip cell"),
 
             CellRepr::Buf(arg) | CellRepr::Not(arg) => arg.visit(&mut f),
-            CellRepr::And(arg1, arg2) | CellRepr::Or(arg1, arg2) | CellRepr::Xor(arg1, arg2) => {
+            CellRepr::And(arg1, arg2)
+            | CellRepr::Or(arg1, arg2)
+            | CellRepr::Xor(arg1, arg2)
+            | CellRepr::Aig(arg1, _, arg2, _) => {
                 arg1.visit(&mut f);
                 arg2.visit(&mut f);
             }
@@ -386,7 +400,10 @@ impl CellRepr {
             CellRepr::Skip(_) => unreachable!("skip cell"),
 
             CellRepr::Buf(arg) | CellRepr::Not(arg) => arg.visit_mut(&mut f),
-            CellRepr::And(arg1, arg2) | CellRepr::Or(arg1, arg2) | CellRepr::Xor(arg1, arg2) => {
+            CellRepr::And(arg1, arg2)
+            | CellRepr::Or(arg1, arg2)
+            | CellRepr::Xor(arg1, arg2)
+            | CellRepr::Aig(arg1, _, arg2, _) => {
                 arg1.visit_mut(&mut f);
                 arg2.visit_mut(&mut f);
             }
@@ -413,6 +430,7 @@ impl Cell {
                 debug_assert_eq!(arg1.len(), arg2.len());
                 arg1.len() + 1
             }
+            Cell::Aig(..) => 1,
 
             Cell::Eq(..) | Cell::ULt(..) | Cell::SLt(..) => 1,
 
@@ -482,6 +500,10 @@ impl Cell {
                 arg1.visit(&mut f);
                 arg2.visit(&mut f);
             }
+            Cell::Aig(arg1, arg2) => {
+                arg1.visit(&mut f);
+                arg2.visit(&mut f);
+            }
             Cell::Mux(net, value1, value2) | Cell::Adc(value1, value2, net) => {
                 value1.visit(&mut f);
                 value2.visit(&mut f);
@@ -520,6 +542,10 @@ impl Cell {
             | Cell::UShr(arg1, arg2, _)
             | Cell::SShr(arg1, arg2, _)
             | Cell::XShr(arg1, arg2, _) => {
+                arg1.visit_mut(&mut f);
+                arg2.visit_mut(&mut f);
+            }
+            Cell::Aig(arg1, arg2) => {
                 arg1.visit_mut(&mut f);
                 arg2.visit_mut(&mut f);
             }

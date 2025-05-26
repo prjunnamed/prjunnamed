@@ -281,11 +281,7 @@ impl Value {
     }
 
     pub fn as_net(&self) -> Option<Net> {
-        if self.len() == 1 {
-            Some(self[0])
-        } else {
-            None
-        }
+        if self.len() == 1 { Some(self[0]) } else { None }
     }
 
     pub fn unwrap_net(&self) -> Net {
@@ -599,6 +595,13 @@ impl ControlNet {
     pub const ZERO: ControlNet = ControlNet::Pos(Net::ZERO);
     pub const ONE: ControlNet = ControlNet::Pos(Net::ONE);
 
+    pub fn from_net_invert(net: Net, invert: bool) -> Self {
+        match invert {
+            false => ControlNet::Pos(net),
+            true => ControlNet::Neg(net),
+        }
+    }
+
     pub fn net(self) -> Net {
         match self {
             Self::Pos(net) => net,
@@ -690,6 +693,7 @@ impl std::ops::Not for ControlNet {
             ControlNet::Pos(net) => ControlNet::Neg(net),
             ControlNet::Neg(net) => ControlNet::Pos(net),
         }
+        .canonicalize()
     }
 }
 

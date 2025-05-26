@@ -818,11 +818,20 @@ impl SiliconBlueTarget {
         let mut net_dispositions: BTreeMap<Net, (NetDisposition, MetaItemRef)> = BTreeMap::new();
         for cell in design.iter_cells_topo() {
             match &*cell.get() {
-                Cell::Buf(..) | Cell::Not(..) | Cell::And(..) | Cell::Or(..) | Cell::Xor(..) | Cell::Mux(..) => {
+                Cell::Buf(..)
+                | Cell::Not(..)
+                | Cell::And(..)
+                | Cell::Or(..)
+                | Cell::Xor(..)
+                | Cell::Mux(..)
+                | Cell::Aig(..) => {
                     let output = cell.output();
                     'cell_bits: for index in 0..output.len() {
-                        let slice = cell.get().slice(index..index + 1).unwrap();
-                        let mut lut = Lut::from_cell(slice).unwrap();
+                        let mut lut = if matches!(&*cell.get(), Cell::Aig(..)) {
+                            Lut::from_cell(cell.get()).unwrap()
+                        } else {
+                            Lut::from_cell(cell.get().slice(index..index + 1).unwrap()).unwrap()
+                        };
                         let mut meta = cell.metadata();
                         let mut full_merge_lut = lut.clone();
                         let mut full_merge_meta = meta;
