@@ -164,13 +164,10 @@ fn parse_string(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Optio
 }
 
 fn parse_const(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<Const> {
-    t.take_while(|c| *c == 'X' || *c == '0' || *c == '1').parse::<Const, String>().ok().and_then(|value| {
-        if !value.is_empty() {
-            Some(value)
-        } else {
-            None
-        }
-    })
+    t.take_while(|c| *c == 'X' || *c == '0' || *c == '1')
+        .parse::<Const, String>()
+        .ok()
+        .and_then(|value| if !value.is_empty() { Some(value) } else { None })
 }
 
 fn parse_keyword(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<String> {
@@ -536,11 +533,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_blank(t);
         let negated = parse_symbol(t, '!').is_some();
         let net = parse_net_arg(t)?;
-        if negated {
-            Some(ControlNet::Neg(net))
-        } else {
-            Some(ControlNet::Pos(net))
-        }
+        if negated { Some(ControlNet::Neg(net)) } else { Some(ControlNet::Pos(net)) }
     }
 
     fn parse_control_arg(t: &mut WithContext<impl Tokens<Item = char>, Context>, name: &str) -> Option<ControlNet> {
@@ -692,6 +685,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
             "xor" => Cell::Xor(parse_value_arg(t)?, parse_value_arg(t)?),
             "mux" => Cell::Mux(parse_net_arg(t)?, parse_value_arg(t)?, parse_value_arg(t)?),
             "adc" => Cell::Adc(parse_value_arg(t)?, parse_value_arg(t)?, parse_net_arg(t)?),
+            "aig" => Cell::Aig(parse_control_net_arg(t)?, parse_control_net_arg(t)?),
             "eq" => Cell::Eq(parse_value_arg(t)?, parse_value_arg(t)?),
             "ult" => Cell::ULt(parse_value_arg(t)?, parse_value_arg(t)?),
             "slt" => Cell::SLt(parse_value_arg(t)?, parse_value_arg(t)?),
@@ -829,10 +823,12 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
         parse_keyword_expect(t, "init")?;
         parse_blank(t);
         let value = parse_const(t)?;
-        let repeats = t.optional(|t| {
-            parse_symbol(t, '*')?;
-            parse_decimal(t)
-        }).unwrap_or(1);
+        let repeats = t
+            .optional(|t| {
+                parse_symbol(t, '*')?;
+                parse_decimal(t)
+            })
+            .unwrap_or(1);
         Some(value.repeat(repeats))
     }
 

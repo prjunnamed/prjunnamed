@@ -11,10 +11,7 @@ struct Edge<'a> {
 
 impl<'a> From<CellRef<'a>> for Edge<'a> {
     fn from(cell: CellRef<'a>) -> Self {
-        Self {
-            from_cell: cell,
-            to_arg: None,
-        }
+        Self { from_cell: cell, to_arg: None }
     }
 }
 
@@ -27,12 +24,7 @@ struct Node<'a> {
 
 impl<'a> Node<'a> {
     fn new(cell: CellRef<'a>, label: String) -> Self {
-        Self {
-            cell,
-            label,
-            args: Vec::new(),
-            inputs: BTreeSet::new(),
-        }
+        Self { cell, label, args: Vec::new(), inputs: BTreeSet::new() }
     }
 
     fn from_name(cell: CellRef<'a>, name: &str) -> Self {
@@ -53,10 +45,7 @@ impl<'a> Node<'a> {
 
     fn net_input(&mut self, net: Net, to_arg: Option<usize>) {
         if let Ok((cell, _)) = self.cell.design().find_cell(net) {
-            self.add_input(Edge {
-                from_cell: cell,
-                to_arg,
-            });
+            self.add_input(Edge { from_cell: cell, to_arg });
         }
     }
 
@@ -85,6 +74,14 @@ impl<'a> Node<'a> {
         }
 
         let s = format!("{prefix}{}", self.cell.design().display_value(input));
+        self.arg(s)
+    }
+
+    fn control_net(mut self, input: ControlNet) -> Self {
+        let to_arg = Some(self.args.len());
+        self.net_input(input.net(), to_arg);
+
+        let s = self.cell.design().display_control_net(input);
         self.arg(s)
     }
 
@@ -118,17 +115,9 @@ impl<'a> Context<'a> {
 
     fn high_fanout(&self, cell: CellRef<'_>) -> Option<usize> {
         let fanout = self.fanout.get(&cell).map(BTreeSet::len).unwrap_or(0);
-        let threshold = if self.best_name.contains_key(&cell) {
-            5
-        } else {
-            10
-        };
+        let threshold = if self.best_name.contains_key(&cell) { 5 } else { 10 };
 
-        if fanout >= threshold {
-            Some(fanout)
-        } else {
-            None
-        }
+        if fanout >= threshold { Some(fanout) } else { None }
     }
 
     fn print(&self, writer: &mut impl io::Write) -> io::Result<()> {
@@ -207,7 +196,8 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
     let mut best_name: BTreeMap<CellRef<'a>, String> = BTreeMap::new();
 
     let mut consider_name = |cell: CellRef<'a>, name: &str| {
-        best_name.entry(cell)
+        best_name
+            .entry(cell)
             .and_modify(|prev| {
                 if prev.len() > name.len() {
                     *prev = name.to_string();
@@ -221,7 +211,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             Cell::Name(name, value) | Cell::Debug(name, value) => {
                 let mut prev = None;
                 for net in value.iter() {
-                    let Ok((target, _)) = design.find_cell(net) else { continue 'outer};
+                    let Ok((target, _)) = design.find_cell(net) else { continue 'outer };
                     if let Some(prev) = prev {
                         if prev != target {
                             continue 'outer;
@@ -249,11 +239,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
         }
     }
 
-    let mut ctx = Context {
-        best_name,
-        fanout: BTreeMap::new(),
-        nodes: vec![],
-    };
+    let mut ctx = Context { best_name, fanout: BTreeMap::new(), nodes: vec![] };
 
     for cell in design.iter_cells_topo() {
         let mut node = match &*cell.get() {
@@ -265,6 +251,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             Cell::Xor(a, b) => Node::from_name(cell, "xor").value(a).value(b),
             Cell::Mux(a, b, c) => Node::from_name(cell, "mux").net(a).value(b).value(c),
             Cell::Adc(a, b, c) => Node::from_name(cell, "adc").value(a).value(b).net(c),
+            Cell::Aig(arg1, arg2) => Node::from_name(cell, "aig").control_net(*arg1).control_net(*arg2),
             Cell::Eq(a, b) => Node::from_name(cell, "eq").value(a).value(b),
             Cell::ULt(a, b) => Node::from_name(cell, "ult").value(a).value(b),
             Cell::SLt(a, b) => Node::from_name(cell, "slt").value(a).value(b),
@@ -282,9 +269,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             Cell::Output(name, value) => Node::from_name(cell, &format!("output {name:?}")).value(value),
 
             Cell::Dff(flop) => {
-                let mut node = Node::from_name(cell, "dff")
-                    .value(&flop.data)
-                    .control("clk", flop.clock, None);
+                let mut node = Node::from_name(cell, "dff").value(&flop.data).control("clk", flop.clock, None);
 
                 if flop.has_clear() {
                     let has_value = flop.clear_value != flop.init_value;
@@ -337,8 +322,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
                 let header = format!("memory depth=#{} width=#{}", memory.depth, memory.width);
                 let mut node = Node::from_name(cell, &header);
                 for port in &memory.write_ports {
-                    node = node.prefix_value("write addr=", &port.addr)
-                        .prefix_value(". data=", &port.data);
+                    node = node.prefix_value("write addr=", &port.addr).prefix_value(". data=", &port.data);
                     if !port.mask.is_ones() {
                         node = node.prefix_value(". mask=", &port.mask);
                     }
@@ -399,9 +383,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
             let mut exact_names = String::new();
             let mut approx_names = String::new();
             for name in names.iter() {
-                let (Cell::Name(s, v) | Cell::Debug(s, v)) = &*name.get() else {
-                    unreachable!()
-                };
+                let (Cell::Name(s, v) | Cell::Debug(s, v)) = &*name.get() else { unreachable!() };
 
                 if cell.output() == *v {
                     writeln!(&mut exact_names, "{s:?}").unwrap();

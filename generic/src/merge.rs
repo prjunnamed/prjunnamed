@@ -80,7 +80,12 @@ pub fn merge(design: &mut Design) -> bool {
             }
             Cell::Eq(arg1, arg2) => numberer.commutative_binary(Cell::Eq, arg1, arg2, &output),
             Cell::Mul(arg1, arg2) => numberer.commutative_binary(Cell::Mul, arg1, arg2, &output),
-            _ => numberer.find_or_insert(cell, output.clone()),
+            Cell::Aig(arg1, arg2) => {
+                let (arg1, arg2) = if arg1 <= arg2 { (arg1, arg2) } else { (arg2, arg1) };
+                let cell = Cell::Aig(arg1, arg2);
+                numberer.find_or_insert(cell, &output)
+            }
+            _ => numberer.find_or_insert(cell, &output),
         };
         if cfg!(feature = "trace") {
             if output != canon {
