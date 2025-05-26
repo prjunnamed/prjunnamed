@@ -252,320 +252,335 @@
 <a href=#252 id=252 data-nosnippet>252</a>                    }
 <a href=#253 id=253 data-nosnippet>253</a>                }
 <a href=#254 id=254 data-nosnippet>254</a>            }
-<a href=#255 id=255 data-nosnippet>255</a>
-<a href=#256 id=256 data-nosnippet>256</a>            Cell::Eq(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$eq"</span>, arg1, arg2, <span class="bool-val">false</span>),
-<a href=#257 id=257 data-nosnippet>257</a>            Cell::ULt(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$lt"</span>, arg1, arg2, <span class="bool-val">false</span>),
-<a href=#258 id=258 data-nosnippet>258</a>            Cell::SLt(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$lt"</span>, arg1, arg2, <span class="bool-val">true</span>),
-<a href=#259 id=259 data-nosnippet>259</a>
-<a href=#260 id=260 data-nosnippet>260</a>            Cell::Shl(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$shl"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">false</span>),
-<a href=#261 id=261 data-nosnippet>261</a>            Cell::UShr(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$shr"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">false</span>),
-<a href=#262 id=262 data-nosnippet>262</a>            Cell::SShr(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$sshr"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">true</span>),
-<a href=#263 id=263 data-nosnippet>263</a>            Cell::XShr(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$shiftx"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">false</span>),
-<a href=#264 id=264 data-nosnippet>264</a>
-<a href=#265 id=265 data-nosnippet>265</a>            Cell::Mul(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$mul"</span>, arg1, arg2, <span class="bool-val">false</span>),
-<a href=#266 id=266 data-nosnippet>266</a>            Cell::UDiv(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$div"</span>, arg1, arg2, <span class="bool-val">false</span>),
-<a href=#267 id=267 data-nosnippet>267</a>            Cell::UMod(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$mod"</span>, arg1, arg2, <span class="bool-val">false</span>),
-<a href=#268 id=268 data-nosnippet>268</a>            Cell::SDivTrunc(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$div"</span>, arg1, arg2, <span class="bool-val">true</span>),
-<a href=#269 id=269 data-nosnippet>269</a>            Cell::SDivFloor(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$divfloor"</span>, arg1, arg2, <span class="bool-val">true</span>),
-<a href=#270 id=270 data-nosnippet>270</a>            Cell::SModTrunc(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$mod"</span>, arg1, arg2, <span class="bool-val">true</span>),
-<a href=#271 id=271 data-nosnippet>271</a>            Cell::SModFloor(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$modfloor"</span>, arg1, arg2, <span class="bool-val">true</span>),
-<a href=#272 id=272 data-nosnippet>272</a>
-<a href=#273 id=273 data-nosnippet>273</a>            Cell::Match { .. } =&gt; <span class="macro">unimplemented!</span>(<span class="string">"match cells must be lowered first for Yosys JSON export"</span>),
-<a href=#274 id=274 data-nosnippet>274</a>            Cell::Assign { .. } =&gt; <span class="macro">unimplemented!</span>(<span class="string">"assign cells must be lowered first for Yosys JSON export"</span>),
-<a href=#275 id=275 data-nosnippet>275</a>
-<a href=#276 id=276 data-nosnippet>276</a>            Cell::Dff(flip_flop) =&gt; {
-<a href=#277 id=277 data-nosnippet>277</a>                <span class="kw">let </span>ys_cell_type = <span class="kw">match </span>(
-<a href=#278 id=278 data-nosnippet>278</a>                    flip_flop.has_clear(),
-<a href=#279 id=279 data-nosnippet>279</a>                    flip_flop.has_reset(),
-<a href=#280 id=280 data-nosnippet>280</a>                    flip_flop.has_enable(),
-<a href=#281 id=281 data-nosnippet>281</a>                    flip_flop.reset_over_enable,
-<a href=#282 id=282 data-nosnippet>282</a>                ) {
-<a href=#283 id=283 data-nosnippet>283</a>                    (<span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
-<a href=#284 id=284 data-nosnippet>284</a>                    (<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; <span class="string">"$adff"</span>,
-<a href=#285 id=285 data-nosnippet>285</a>                    (<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="kw">_</span>) =&gt; <span class="string">"$adffe"</span>,
-<a href=#286 id=286 data-nosnippet>286</a>                    (<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; <span class="string">"$sdff"</span>,
-<a href=#287 id=287 data-nosnippet>287</a>                    (<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; <span class="string">"$sdffce"</span>,
-<a href=#288 id=288 data-nosnippet>288</a>                    (<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; <span class="string">"$sdffe"</span>,
-<a href=#289 id=289 data-nosnippet>289</a>                    (<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; <span class="string">"$dff"</span>,
-<a href=#290 id=290 data-nosnippet>290</a>                    (<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="kw">_</span>) =&gt; <span class="string">"$dffe"</span>,
-<a href=#291 id=291 data-nosnippet>291</a>                };
-<a href=#292 id=292 data-nosnippet>292</a>                <span class="kw">let </span><span class="kw-2">mut </span>ys_cell = CellDetails::new(ys_cell_type);
-<a href=#293 id=293 data-nosnippet>293</a>                <span class="kw">if </span>flip_flop.has_clear() {
-<a href=#294 id=294 data-nosnippet>294</a>                    ys_cell = ys_cell
-<a href=#295 id=295 data-nosnippet>295</a>                        .param(<span class="string">"ARST_POLARITY"</span>, flip_flop.clear.is_positive())
-<a href=#296 id=296 data-nosnippet>296</a>                        .param(<span class="string">"ARST_VALUE"</span>, flip_flop.clear_value.clone())
-<a href=#297 id=297 data-nosnippet>297</a>                        .input(<span class="string">"ARST"</span>, indexer.net(flip_flop.clear.net()));
-<a href=#298 id=298 data-nosnippet>298</a>                }
-<a href=#299 id=299 data-nosnippet>299</a>                <span class="kw">if </span>flip_flop.has_reset() {
-<a href=#300 id=300 data-nosnippet>300</a>                    ys_cell = ys_cell
-<a href=#301 id=301 data-nosnippet>301</a>                        .param(<span class="string">"SRST_POLARITY"</span>, flip_flop.reset.is_positive())
-<a href=#302 id=302 data-nosnippet>302</a>                        .param(<span class="string">"SRST_VALUE"</span>, flip_flop.reset_value.clone())
-<a href=#303 id=303 data-nosnippet>303</a>                        .input(<span class="string">"SRST"</span>, indexer.net(flip_flop.reset.net()));
-<a href=#304 id=304 data-nosnippet>304</a>                }
-<a href=#305 id=305 data-nosnippet>305</a>                <span class="kw">if </span>flip_flop.has_enable() {
-<a href=#306 id=306 data-nosnippet>306</a>                    ys_cell = ys_cell
-<a href=#307 id=307 data-nosnippet>307</a>                        .param(<span class="string">"EN_POLARITY"</span>, flip_flop.enable.is_positive())
-<a href=#308 id=308 data-nosnippet>308</a>                        .input(<span class="string">"EN"</span>, indexer.net(flip_flop.enable.net()));
-<a href=#309 id=309 data-nosnippet>309</a>                }
-<a href=#310 id=310 data-nosnippet>310</a>                ys_cell
-<a href=#311 id=311 data-nosnippet>311</a>                    .param(<span class="string">"CLK_POLARITY"</span>, flip_flop.clock.is_positive())
-<a href=#312 id=312 data-nosnippet>312</a>                    .input(<span class="string">"CLK"</span>, indexer.net(flip_flop.clock.net()))
-<a href=#313 id=313 data-nosnippet>313</a>                    .param(<span class="string">"WIDTH"</span>, output.len())
-<a href=#314 id=314 data-nosnippet>314</a>                    .input(<span class="string">"D"</span>, indexer.value(<span class="kw-2">&amp;</span>flip_flop.data))
-<a href=#315 id=315 data-nosnippet>315</a>                    .output(<span class="string">"Q"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
-<a href=#316 id=316 data-nosnippet>316</a>                    .attrs(map_metadata(cell_ref.metadata()))
-<a href=#317 id=317 data-nosnippet>317</a>                    .add_to(<span class="kw-2">&amp;</span>ys_cell_name, <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#318 id=318 data-nosnippet>318</a>                NetDetails::new(indexer.value(<span class="kw-2">&amp;</span>output))
-<a href=#319 id=319 data-nosnippet>319</a>                    .attr(<span class="string">"init"</span>, flip_flop.init_value.clone())
-<a href=#320 id=320 data-nosnippet>320</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}$ff"</span>, ys_cell_name), <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#321 id=321 data-nosnippet>321</a>                <span class="kw">continue</span>; <span class="comment">// skip default $out wire (init-less) creation
-<a href=#322 id=322 data-nosnippet>322</a>            </span>}
-<a href=#323 id=323 data-nosnippet>323</a>
-<a href=#324 id=324 data-nosnippet>324</a>            Cell::Memory(memory) =&gt; {
-<a href=#325 id=325 data-nosnippet>325</a>                <span class="kw">let </span>abits = memory
-<a href=#326 id=326 data-nosnippet>326</a>                    .write_ports
-<a href=#327 id=327 data-nosnippet>327</a>                    .iter()
-<a href=#328 id=328 data-nosnippet>328</a>                    .map(|port| port.addr.len() + port.wide_log2(memory))
-<a href=#329 id=329 data-nosnippet>329</a>                    .max()
-<a href=#330 id=330 data-nosnippet>330</a>                    .unwrap_or(<span class="number">0</span>)
-<a href=#331 id=331 data-nosnippet>331</a>                    .max(
-<a href=#332 id=332 data-nosnippet>332</a>                        memory
-<a href=#333 id=333 data-nosnippet>333</a>                            .read_ports
-<a href=#334 id=334 data-nosnippet>334</a>                            .iter()
-<a href=#335 id=335 data-nosnippet>335</a>                            .map(|port| port.addr.len() + port.wide_log2(memory))
-<a href=#336 id=336 data-nosnippet>336</a>                            .max()
-<a href=#337 id=337 data-nosnippet>337</a>                            .unwrap_or(<span class="number">0</span>),
-<a href=#338 id=338 data-nosnippet>338</a>                    );
-<a href=#339 id=339 data-nosnippet>339</a>
-<a href=#340 id=340 data-nosnippet>340</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_ports = <span class="number">0</span>;
-<a href=#341 id=341 data-nosnippet>341</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_clk_polarity = Const::new();
-<a href=#342 id=342 data-nosnippet>342</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_wide_continuation = Const::new();
-<a href=#343 id=343 data-nosnippet>343</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_addr = Value::new();
-<a href=#344 id=344 data-nosnippet>344</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_data = Value::new();
-<a href=#345 id=345 data-nosnippet>345</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_clk = Value::new();
-<a href=#346 id=346 data-nosnippet>346</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_en = Value::new();
-<a href=#347 id=347 data-nosnippet>347</a>                <span class="kw">let </span><span class="kw-2">mut </span>write_port_indices = <span class="macro">vec!</span>[];
-<a href=#348 id=348 data-nosnippet>348</a>                <span class="kw">for </span>(port_index, port) <span class="kw">in </span>memory.write_ports.iter().enumerate() {
-<a href=#349 id=349 data-nosnippet>349</a>                    <span class="kw">let </span>wide_log2 = port.wide_log2(memory);
-<a href=#350 id=350 data-nosnippet>350</a>                    <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..(<span class="number">1 </span>&lt;&lt; wide_log2) {
-<a href=#351 id=351 data-nosnippet>351</a>                        <span class="kw">let </span>addr = Value::from(Const::from_uint(index, wide_log2)).concat(<span class="kw-2">&amp;</span>port.addr).zext(abits);
-<a href=#352 id=352 data-nosnippet>352</a>                        wr_clk.extend([port.clock.net()]);
-<a href=#353 id=353 data-nosnippet>353</a>                        wr_addr.extend(<span class="kw-2">&amp;</span>addr);
-<a href=#354 id=354 data-nosnippet>354</a>                        wr_clk_polarity.push(port.clock.is_positive());
-<a href=#355 id=355 data-nosnippet>355</a>                        wr_wide_continuation.push(index != <span class="number">0</span>);
-<a href=#356 id=356 data-nosnippet>356</a>                        write_port_indices.push(port_index);
-<a href=#357 id=357 data-nosnippet>357</a>                    }
-<a href=#358 id=358 data-nosnippet>358</a>                    wr_data.extend(<span class="kw-2">&amp;</span>port.data);
-<a href=#359 id=359 data-nosnippet>359</a>                    wr_en.extend(<span class="kw-2">&amp;</span>port.mask);
-<a href=#360 id=360 data-nosnippet>360</a>                    wr_ports += <span class="number">1 </span>&lt;&lt; wide_log2;
-<a href=#361 id=361 data-nosnippet>361</a>                }
-<a href=#362 id=362 data-nosnippet>362</a>                <span class="kw">if </span>wr_ports == <span class="number">0 </span>{
-<a href=#363 id=363 data-nosnippet>363</a>                    wr_clk_polarity.push(<span class="bool-val">false</span>);
-<a href=#364 id=364 data-nosnippet>364</a>                    wr_wide_continuation.push(<span class="bool-val">false</span>);
-<a href=#365 id=365 data-nosnippet>365</a>                }
-<a href=#366 id=366 data-nosnippet>366</a>
-<a href=#367 id=367 data-nosnippet>367</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_ports = <span class="number">0</span>;
-<a href=#368 id=368 data-nosnippet>368</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_clk_enable = Const::new();
-<a href=#369 id=369 data-nosnippet>369</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_clk_polarity = Const::new();
-<a href=#370 id=370 data-nosnippet>370</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_transparency_mask = Const::new();
-<a href=#371 id=371 data-nosnippet>371</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_collision_x_mask = Const::new();
-<a href=#372 id=372 data-nosnippet>372</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_wide_continuation = Const::new();
-<a href=#373 id=373 data-nosnippet>373</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_ce_over_srst = Const::new();
-<a href=#374 id=374 data-nosnippet>374</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_arst_value = Const::new();
-<a href=#375 id=375 data-nosnippet>375</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_srst_value = Const::new();
-<a href=#376 id=376 data-nosnippet>376</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_init_value = Const::new();
-<a href=#377 id=377 data-nosnippet>377</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_clk = Value::new();
-<a href=#378 id=378 data-nosnippet>378</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_en = yosys::BitVector(<span class="macro">vec!</span>[]);
-<a href=#379 id=379 data-nosnippet>379</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_arst = yosys::BitVector(<span class="macro">vec!</span>[]);
-<a href=#380 id=380 data-nosnippet>380</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_srst = yosys::BitVector(<span class="macro">vec!</span>[]);
-<a href=#381 id=381 data-nosnippet>381</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_addr = Value::new();
-<a href=#382 id=382 data-nosnippet>382</a>                <span class="kw">for </span>(port_index, port) <span class="kw">in </span>memory.read_ports.iter().enumerate() {
-<a href=#383 id=383 data-nosnippet>383</a>                    <span class="kw">let </span>wide_log2 = port.wide_log2(memory);
-<a href=#384 id=384 data-nosnippet>384</a>                    <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..(<span class="number">1 </span>&lt;&lt; wide_log2) {
-<a href=#385 id=385 data-nosnippet>385</a>                        <span class="kw">let </span>addr = Value::from(Const::from_uint(index, wide_log2)).concat(<span class="kw-2">&amp;</span>port.addr).zext(abits);
-<a href=#386 id=386 data-nosnippet>386</a>                        rd_addr.extend(<span class="kw-2">&amp;</span>addr);
-<a href=#387 id=387 data-nosnippet>387</a>                        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>flip_flop) = port.flip_flop {
-<a href=#388 id=388 data-nosnippet>388</a>                            rd_clk.extend([flip_flop.clock.net()]);
-<a href=#389 id=389 data-nosnippet>389</a>                            rd_clk_enable.push(<span class="bool-val">true</span>);
-<a href=#390 id=390 data-nosnippet>390</a>                            rd_clk_polarity.push(flip_flop.clock.is_positive());
-<a href=#391 id=391 data-nosnippet>391</a>                            rd_ce_over_srst.push(!flip_flop.reset_over_enable);
-<a href=#392 id=392 data-nosnippet>392</a>                            <span class="kw">for </span><span class="kw-2">&amp;</span>write_port_index <span class="kw">in </span><span class="kw-2">&amp;</span>write_port_indices {
-<a href=#393 id=393 data-nosnippet>393</a>                                <span class="kw">let </span>(trans, col_x) = <span class="kw">if </span>flip_flop.clock == memory.write_ports[write_port_index].clock {
-<a href=#394 id=394 data-nosnippet>394</a>                                    <span class="kw">match </span>flip_flop.relations[write_port_index] {
-<a href=#395 id=395 data-nosnippet>395</a>                                        MemoryPortRelation::Undefined =&gt; (<span class="bool-val">false</span>, <span class="bool-val">true</span>),
-<a href=#396 id=396 data-nosnippet>396</a>                                        MemoryPortRelation::ReadBeforeWrite =&gt; (<span class="bool-val">false</span>, <span class="bool-val">false</span>),
-<a href=#397 id=397 data-nosnippet>397</a>                                        MemoryPortRelation::Transparent =&gt; (<span class="bool-val">true</span>, <span class="bool-val">false</span>),
-<a href=#398 id=398 data-nosnippet>398</a>                                    }
-<a href=#399 id=399 data-nosnippet>399</a>                                } <span class="kw">else </span>{
-<a href=#400 id=400 data-nosnippet>400</a>                                    (<span class="bool-val">false</span>, <span class="bool-val">false</span>)
-<a href=#401 id=401 data-nosnippet>401</a>                                };
-<a href=#402 id=402 data-nosnippet>402</a>                                rd_transparency_mask.push(trans);
-<a href=#403 id=403 data-nosnippet>403</a>                                rd_collision_x_mask.push(col_x);
-<a href=#404 id=404 data-nosnippet>404</a>                            }
-<a href=#405 id=405 data-nosnippet>405</a>                        } <span class="kw">else </span>{
-<a href=#406 id=406 data-nosnippet>406</a>                            rd_clk.extend([Net::UNDEF]);
-<a href=#407 id=407 data-nosnippet>407</a>                            rd_clk_enable.push(<span class="bool-val">false</span>);
-<a href=#408 id=408 data-nosnippet>408</a>                            rd_clk_polarity.push(Trit::Undef);
-<a href=#409 id=409 data-nosnippet>409</a>                            rd_ce_over_srst.push(Trit::Undef);
-<a href=#410 id=410 data-nosnippet>410</a>                            rd_transparency_mask.extend(Const::undef(wr_ports));
-<a href=#411 id=411 data-nosnippet>411</a>                            rd_collision_x_mask.extend(Const::undef(wr_ports));
-<a href=#412 id=412 data-nosnippet>412</a>                        }
-<a href=#413 id=413 data-nosnippet>413</a>                        rd_wide_continuation.push(index != <span class="number">0</span>);
-<a href=#414 id=414 data-nosnippet>414</a>                    }
-<a href=#415 id=415 data-nosnippet>415</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>flip_flop) = port.flip_flop {
-<a href=#416 id=416 data-nosnippet>416</a>                        rd_arst_value.extend(<span class="kw-2">&amp;</span>flip_flop.clear_value);
-<a href=#417 id=417 data-nosnippet>417</a>                        rd_srst_value.extend(<span class="kw-2">&amp;</span>flip_flop.reset_value);
-<a href=#418 id=418 data-nosnippet>418</a>                        rd_init_value.extend(<span class="kw-2">&amp;</span>flip_flop.init_value);
-<a href=#419 id=419 data-nosnippet>419</a>                        <span class="kw">let </span>enable = ys_control_net_pos(
-<a href=#420 id=420 data-nosnippet>420</a>                            <span class="kw-2">&amp;mut </span>ys_module,
-<a href=#421 id=421 data-nosnippet>421</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${cell_index}$rd{port_index}$en$not"</span>),
-<a href=#422 id=422 data-nosnippet>422</a>                            flip_flop.enable,
-<a href=#423 id=423 data-nosnippet>423</a>                        );
-<a href=#424 id=424 data-nosnippet>424</a>                        <span class="kw">let </span>clear = ys_control_net_pos(
-<a href=#425 id=425 data-nosnippet>425</a>                            <span class="kw-2">&amp;mut </span>ys_module,
-<a href=#426 id=426 data-nosnippet>426</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${cell_index}$rd{port_index}$arst$not"</span>),
-<a href=#427 id=427 data-nosnippet>427</a>                            flip_flop.clear,
-<a href=#428 id=428 data-nosnippet>428</a>                        );
-<a href=#429 id=429 data-nosnippet>429</a>                        <span class="kw">let </span>reset = ys_control_net_pos(
-<a href=#430 id=430 data-nosnippet>430</a>                            <span class="kw-2">&amp;mut </span>ys_module,
-<a href=#431 id=431 data-nosnippet>431</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${cell_index}$rd{port_index}$srst$not"</span>),
-<a href=#432 id=432 data-nosnippet>432</a>                            flip_flop.reset,
-<a href=#433 id=433 data-nosnippet>433</a>                        );
-<a href=#434 id=434 data-nosnippet>434</a>                        rd_en = rd_en.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[enable; <span class="number">1 </span>&lt;&lt; wide_log2]));
-<a href=#435 id=435 data-nosnippet>435</a>                        rd_srst = rd_srst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[reset; <span class="number">1 </span>&lt;&lt; wide_log2]));
-<a href=#436 id=436 data-nosnippet>436</a>                        rd_arst = rd_arst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[clear; <span class="number">1 </span>&lt;&lt; wide_log2]));
-<a href=#437 id=437 data-nosnippet>437</a>                    } <span class="kw">else </span>{
-<a href=#438 id=438 data-nosnippet>438</a>                        rd_arst_value.extend(Const::undef(port.data_len));
-<a href=#439 id=439 data-nosnippet>439</a>                        rd_srst_value.extend(Const::undef(port.data_len));
-<a href=#440 id=440 data-nosnippet>440</a>                        rd_init_value.extend(Const::undef(port.data_len));
-<a href=#441 id=441 data-nosnippet>441</a>                        rd_en = rd_en.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[yosys::Bit::One; <span class="number">1 </span>&lt;&lt; wide_log2]));
-<a href=#442 id=442 data-nosnippet>442</a>                        rd_srst = rd_srst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[yosys::Bit::Zero; <span class="number">1 </span>&lt;&lt; wide_log2]));
-<a href=#443 id=443 data-nosnippet>443</a>                        rd_arst = rd_arst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[yosys::Bit::Zero; <span class="number">1 </span>&lt;&lt; wide_log2]));
-<a href=#444 id=444 data-nosnippet>444</a>                    }
-<a href=#445 id=445 data-nosnippet>445</a>                    rd_ports += <span class="number">1 </span>&lt;&lt; wide_log2;
-<a href=#446 id=446 data-nosnippet>446</a>                }
-<a href=#447 id=447 data-nosnippet>447</a>                <span class="kw">if </span>rd_ports == <span class="number">0 </span>{
-<a href=#448 id=448 data-nosnippet>448</a>                    rd_clk_enable.push(<span class="bool-val">false</span>);
-<a href=#449 id=449 data-nosnippet>449</a>                    rd_clk_polarity.push(<span class="bool-val">false</span>);
-<a href=#450 id=450 data-nosnippet>450</a>                    rd_wide_continuation.push(<span class="bool-val">false</span>);
-<a href=#451 id=451 data-nosnippet>451</a>                    rd_ce_over_srst.push(<span class="bool-val">false</span>);
-<a href=#452 id=452 data-nosnippet>452</a>                    rd_arst_value.push(<span class="bool-val">false</span>);
-<a href=#453 id=453 data-nosnippet>453</a>                    rd_srst_value.push(<span class="bool-val">false</span>);
-<a href=#454 id=454 data-nosnippet>454</a>                    rd_init_value.push(<span class="bool-val">false</span>);
-<a href=#455 id=455 data-nosnippet>455</a>                }
-<a href=#456 id=456 data-nosnippet>456</a>                <span class="kw">if </span>rd_ports == <span class="number">0 </span>|| wr_ports == <span class="number">0 </span>{
-<a href=#457 id=457 data-nosnippet>457</a>                    rd_transparency_mask.push(<span class="bool-val">false</span>);
-<a href=#458 id=458 data-nosnippet>458</a>                    rd_collision_x_mask.push(<span class="bool-val">false</span>);
-<a href=#459 id=459 data-nosnippet>459</a>                }
-<a href=#460 id=460 data-nosnippet>460</a>
-<a href=#461 id=461 data-nosnippet>461</a>                CellDetails::new(<span class="string">"$mem_v2"</span>)
-<a href=#462 id=462 data-nosnippet>462</a>                    .param(<span class="string">"MEMID"</span>, <span class="macro">format!</span>(<span class="string">"${}$mem"</span>, cell_index))
-<a href=#463 id=463 data-nosnippet>463</a>                    .param(<span class="string">"OFFSET"</span>, <span class="number">0</span>)
-<a href=#464 id=464 data-nosnippet>464</a>                    .param(<span class="string">"SIZE"</span>, memory.depth)
-<a href=#465 id=465 data-nosnippet>465</a>                    .param(<span class="string">"WIDTH"</span>, memory.width)
-<a href=#466 id=466 data-nosnippet>466</a>                    .param(<span class="string">"ABITS"</span>, abits)
-<a href=#467 id=467 data-nosnippet>467</a>                    .param(<span class="string">"INIT"</span>, memory.init_value.clone())
-<a href=#468 id=468 data-nosnippet>468</a>                    .param(<span class="string">"WR_PORTS"</span>, wr_ports)
-<a href=#469 id=469 data-nosnippet>469</a>                    .param(<span class="string">"WR_CLK_ENABLE"</span>, Const::ones(wr_ports.max(<span class="number">1</span>)))
-<a href=#470 id=470 data-nosnippet>470</a>                    .param(<span class="string">"WR_CLK_POLARITY"</span>, wr_clk_polarity)
-<a href=#471 id=471 data-nosnippet>471</a>                    .param(<span class="string">"WR_PRIORITY_MASK"</span>, Const::zero(wr_ports.max(<span class="number">1</span>)))
-<a href=#472 id=472 data-nosnippet>472</a>                    .param(<span class="string">"WR_WIDE_CONTINUATION"</span>, wr_wide_continuation)
-<a href=#473 id=473 data-nosnippet>473</a>                    .input(<span class="string">"WR_ADDR"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_addr))
-<a href=#474 id=474 data-nosnippet>474</a>                    .input(<span class="string">"WR_DATA"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_data))
-<a href=#475 id=475 data-nosnippet>475</a>                    .input(<span class="string">"WR_CLK"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_clk))
-<a href=#476 id=476 data-nosnippet>476</a>                    .input(<span class="string">"WR_EN"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_en))
-<a href=#477 id=477 data-nosnippet>477</a>                    .param(<span class="string">"RD_PORTS"</span>, rd_ports)
-<a href=#478 id=478 data-nosnippet>478</a>                    .param(<span class="string">"RD_CLK_ENABLE"</span>, rd_clk_enable)
-<a href=#479 id=479 data-nosnippet>479</a>                    .param(<span class="string">"RD_CLK_POLARITY"</span>, rd_clk_polarity)
-<a href=#480 id=480 data-nosnippet>480</a>                    .param(<span class="string">"RD_TRANSPARENCY_MASK"</span>, rd_transparency_mask)
-<a href=#481 id=481 data-nosnippet>481</a>                    .param(<span class="string">"RD_COLLISION_X_MASK"</span>, rd_collision_x_mask)
-<a href=#482 id=482 data-nosnippet>482</a>                    .param(<span class="string">"RD_WIDE_CONTINUATION"</span>, rd_wide_continuation)
-<a href=#483 id=483 data-nosnippet>483</a>                    .param(<span class="string">"RD_CE_OVER_SRST"</span>, rd_ce_over_srst)
-<a href=#484 id=484 data-nosnippet>484</a>                    .param(<span class="string">"RD_ARST_VALUE"</span>, rd_arst_value)
-<a href=#485 id=485 data-nosnippet>485</a>                    .param(<span class="string">"RD_SRST_VALUE"</span>, rd_srst_value)
-<a href=#486 id=486 data-nosnippet>486</a>                    .param(<span class="string">"RD_INIT_VALUE"</span>, rd_init_value)
-<a href=#487 id=487 data-nosnippet>487</a>                    .input(<span class="string">"RD_CLK"</span>, indexer.value(<span class="kw-2">&amp;</span>rd_clk))
-<a href=#488 id=488 data-nosnippet>488</a>                    .input(<span class="string">"RD_EN"</span>, rd_en)
-<a href=#489 id=489 data-nosnippet>489</a>                    .input(<span class="string">"RD_ARST"</span>, rd_arst)
-<a href=#490 id=490 data-nosnippet>490</a>                    .input(<span class="string">"RD_SRST"</span>, rd_srst)
-<a href=#491 id=491 data-nosnippet>491</a>                    .input(<span class="string">"RD_ADDR"</span>, indexer.value(<span class="kw-2">&amp;</span>rd_addr))
-<a href=#492 id=492 data-nosnippet>492</a>                    .output(<span class="string">"RD_DATA"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
-<a href=#493 id=493 data-nosnippet>493</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#494 id=494 data-nosnippet>494</a>            }
-<a href=#495 id=495 data-nosnippet>495</a>
-<a href=#496 id=496 data-nosnippet>496</a>            Cell::IoBuf(io_buffer) =&gt; {
-<a href=#497 id=497 data-nosnippet>497</a>                <span class="kw">let </span>ys_enable =
-<a href=#498 id=498 data-nosnippet>498</a>                    ys_control_net_pos(<span class="kw-2">&amp;mut </span>ys_module, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}$en$not"</span>, cell_index), io_buffer.enable);
-<a href=#499 id=499 data-nosnippet>499</a>                <span class="kw">let </span>ys_attrs = map_metadata(cell_ref.metadata());
-<a href=#500 id=500 data-nosnippet>500</a>                CellDetails::new(<span class="string">"$tribuf"</span>)
-<a href=#501 id=501 data-nosnippet>501</a>                    .param(<span class="string">"WIDTH"</span>, output.len())
-<a href=#502 id=502 data-nosnippet>502</a>                    .input(<span class="string">"A"</span>, indexer.value(<span class="kw-2">&amp;</span>io_buffer.output))
-<a href=#503 id=503 data-nosnippet>503</a>                    .input(<span class="string">"EN"</span>, ys_enable)
-<a href=#504 id=504 data-nosnippet>504</a>                    .output(<span class="string">"Y"</span>, indexer.io_value(<span class="kw-2">&amp;</span>io_buffer.io))
-<a href=#505 id=505 data-nosnippet>505</a>                    .attrs(ys_attrs.clone())
-<a href=#506 id=506 data-nosnippet>506</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#507 id=507 data-nosnippet>507</a>                CellDetails::new(<span class="string">"$pos"</span>)
-<a href=#508 id=508 data-nosnippet>508</a>                    .param(<span class="string">"A_SIGNED"</span>, <span class="number">0</span>)
-<a href=#509 id=509 data-nosnippet>509</a>                    .param(<span class="string">"A_WIDTH"</span>, io_buffer.io.len())
-<a href=#510 id=510 data-nosnippet>510</a>                    .param(<span class="string">"Y_WIDTH"</span>, output.len())
-<a href=#511 id=511 data-nosnippet>511</a>                    .input(<span class="string">"A"</span>, indexer.io_value(<span class="kw-2">&amp;</span>io_buffer.io))
-<a href=#512 id=512 data-nosnippet>512</a>                    .output(<span class="string">"Y"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
-<a href=#513 id=513 data-nosnippet>513</a>                    .attrs(ys_attrs)
-<a href=#514 id=514 data-nosnippet>514</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}$pos"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#515 id=515 data-nosnippet>515</a>            }
-<a href=#516 id=516 data-nosnippet>516</a>
-<a href=#517 id=517 data-nosnippet>517</a>            Cell::Other(instance) =&gt; {
-<a href=#518 id=518 data-nosnippet>518</a>                <span class="kw">let </span><span class="kw-2">mut </span>ys_cell = CellDetails::new(<span class="kw-2">&amp;</span>instance.kind);
-<a href=#519 id=519 data-nosnippet>519</a>                <span class="kw">for </span>(name, value) <span class="kw">in </span>instance.params.iter() {
-<a href=#520 id=520 data-nosnippet>520</a>                    ys_cell = ys_cell.param(name, value);
-<a href=#521 id=521 data-nosnippet>521</a>                }
-<a href=#522 id=522 data-nosnippet>522</a>                <span class="kw">for </span>(name, value) <span class="kw">in </span>instance.inputs.iter() {
-<a href=#523 id=523 data-nosnippet>523</a>                    ys_cell = ys_cell.input(name, indexer.value(value));
-<a href=#524 id=524 data-nosnippet>524</a>                }
-<a href=#525 id=525 data-nosnippet>525</a>                <span class="kw">for </span>(name, value_range) <span class="kw">in </span>instance.outputs.iter() {
-<a href=#526 id=526 data-nosnippet>526</a>                    ys_cell = ys_cell.output(name, indexer.value(<span class="kw-2">&amp;</span>Value::from(<span class="kw-2">&amp;</span>output[value_range.clone()])));
-<a href=#527 id=527 data-nosnippet>527</a>                }
-<a href=#528 id=528 data-nosnippet>528</a>                <span class="kw">for </span>(name, io_value) <span class="kw">in </span>instance.ios.iter() {
-<a href=#529 id=529 data-nosnippet>529</a>                    ys_cell = ys_cell.inout(name, indexer.io_value(io_value));
-<a href=#530 id=530 data-nosnippet>530</a>                }
-<a href=#531 id=531 data-nosnippet>531</a>                ys_cell.attrs(map_metadata(cell_ref.metadata())).add_to(<span class="kw-2">&amp;</span>ys_cell_name, <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#532 id=532 data-nosnippet>532</a>            }
-<a href=#533 id=533 data-nosnippet>533</a>            Cell::Target(_target_cell) =&gt; {
-<a href=#534 id=534 data-nosnippet>534</a>                <span class="macro">unimplemented!</span>(<span class="string">"target cells must be converted to instances first for Yosys JSON export"</span>)
-<a href=#535 id=535 data-nosnippet>535</a>            }
-<a href=#536 id=536 data-nosnippet>536</a>
-<a href=#537 id=537 data-nosnippet>537</a>            Cell::Input(port_name, _size) =&gt; {
-<a href=#538 id=538 data-nosnippet>538</a>                ys_module.ports.add(port_name, PortDetails::new(yosys::PortDirection::Input, indexer.value(<span class="kw-2">&amp;</span>output)))
-<a href=#539 id=539 data-nosnippet>539</a>            }
-<a href=#540 id=540 data-nosnippet>540</a>            Cell::Output(port_name, value) =&gt; {
-<a href=#541 id=541 data-nosnippet>541</a>                ys_module.ports.add(port_name, PortDetails::new(yosys::PortDirection::Output, indexer.value(value)))
-<a href=#542 id=542 data-nosnippet>542</a>            }
-<a href=#543 id=543 data-nosnippet>543</a>            Cell::Name(name, value) | Cell::Debug(name, value) =&gt; ys_module.netnames.add(
-<a href=#544 id=544 data-nosnippet>544</a>                <span class="kw-2">&amp;</span>name.replace(<span class="string">" "</span>, <span class="string">"."</span>),
-<a href=#545 id=545 data-nosnippet>545</a>                NetDetails::new(indexer.value(value)).attrs(map_metadata(cell_ref.metadata())).attr(<span class="string">"hdlname"</span>, name),
-<a href=#546 id=546 data-nosnippet>546</a>            ),
-<a href=#547 id=547 data-nosnippet>547</a>        };
-<a href=#548 id=548 data-nosnippet>548</a>
-<a href=#549 id=549 data-nosnippet>549</a>        <span class="kw">if </span>output.len() &gt; <span class="number">0 </span>{
-<a href=#550 id=550 data-nosnippet>550</a>            <span class="comment">// Duplicating the cell metadata on the cell output net is the only way to get source locations
-<a href=#551 id=551 data-nosnippet>551</a>            // to show up in nextpnr's timing reports.
-<a href=#552 id=552 data-nosnippet>552</a>            </span>NetDetails::new(indexer.value(<span class="kw-2">&amp;</span>output))
-<a href=#553 id=553 data-nosnippet>553</a>                .attrs(map_metadata(cell_ref.metadata()))
-<a href=#554 id=554 data-nosnippet>554</a>                .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}$out"</span>, ys_cell_name), <span class="kw-2">&amp;mut </span>ys_module);
-<a href=#555 id=555 data-nosnippet>555</a>        }
-<a href=#556 id=556 data-nosnippet>556</a>    }
-<a href=#557 id=557 data-nosnippet>557</a>
-<a href=#558 id=558 data-nosnippet>558</a>    ys_module
-<a href=#559 id=559 data-nosnippet>559</a>}
-<a href=#560 id=560 data-nosnippet>560</a>
-<a href=#561 id=561 data-nosnippet>561</a><span class="comment">// Exporting a design to Yosys JSON can require modifying it if it has target cells that must be mapped to instances.
-<a href=#562 id=562 data-nosnippet>562</a></span><span class="kw">pub fn </span>export(writer: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Write, designs: BTreeMap&lt;String, Design&gt;) -&gt; std::io::Result&lt;()&gt; {
-<a href=#563 id=563 data-nosnippet>563</a>    <span class="kw">let </span><span class="kw-2">mut </span>ys_modules = BTreeMap::new();
-<a href=#564 id=564 data-nosnippet>564</a>    <span class="kw">for </span>(name, design) <span class="kw">in </span>designs {
-<a href=#565 id=565 data-nosnippet>565</a>        ys_modules.insert(name, export_module(design));
-<a href=#566 id=566 data-nosnippet>566</a>    }
-<a href=#567 id=567 data-nosnippet>567</a>    <span class="kw">let </span>ys_design = yosys::Design { creator: <span class="string">"prjunnamed"</span>.into(), modules: ys_modules.into() };
-<a href=#568 id=568 data-nosnippet>568</a>
-<a href=#569 id=569 data-nosnippet>569</a>    <span class="kw">let </span>json = JsonValue::from(ys_design);
-<a href=#570 id=570 data-nosnippet>570</a>    json.write_pretty(writer, <span class="comment">/*spaces=*/ </span><span class="number">4</span>)
-<a href=#571 id=571 data-nosnippet>571</a>}</code></pre></div></section></main></body></html>
+<a href=#255 id=255 data-nosnippet>255</a>            Cell::Aig(arg1, arg2) =&gt; {
+<a href=#256 id=256 data-nosnippet>256</a>                <span class="kw">let </span>arg1 = ys_control_net_pos(<span class="kw-2">&amp;mut </span>ys_module, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}$not1"</span>, cell_index), <span class="kw-2">*</span>arg1);
+<a href=#257 id=257 data-nosnippet>257</a>                <span class="kw">let </span>arg2 = ys_control_net_pos(<span class="kw-2">&amp;mut </span>ys_module, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}$not2"</span>, cell_index), <span class="kw-2">*</span>arg2);
+<a href=#258 id=258 data-nosnippet>258</a>                CellDetails::new(<span class="string">"$and"</span>)
+<a href=#259 id=259 data-nosnippet>259</a>                    .param(<span class="string">"A_SIGNED"</span>, <span class="number">0</span>)
+<a href=#260 id=260 data-nosnippet>260</a>                    .param(<span class="string">"A_WIDTH"</span>, <span class="number">1</span>)
+<a href=#261 id=261 data-nosnippet>261</a>                    .param(<span class="string">"B_SIGNED"</span>, <span class="number">0</span>)
+<a href=#262 id=262 data-nosnippet>262</a>                    .param(<span class="string">"B_WIDTH"</span>, <span class="number">1</span>)
+<a href=#263 id=263 data-nosnippet>263</a>                    .param(<span class="string">"Y_WIDTH"</span>, <span class="number">1</span>)
+<a href=#264 id=264 data-nosnippet>264</a>                    .input(<span class="string">"A"</span>, arg1)
+<a href=#265 id=265 data-nosnippet>265</a>                    .input(<span class="string">"B"</span>, arg2)
+<a href=#266 id=266 data-nosnippet>266</a>                    .output(<span class="string">"Y"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
+<a href=#267 id=267 data-nosnippet>267</a>                    .attrs(map_metadata(cell_ref.metadata()))
+<a href=#268 id=268 data-nosnippet>268</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module)
+<a href=#269 id=269 data-nosnippet>269</a>            }
+<a href=#270 id=270 data-nosnippet>270</a>
+<a href=#271 id=271 data-nosnippet>271</a>            Cell::Eq(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$eq"</span>, arg1, arg2, <span class="bool-val">false</span>),
+<a href=#272 id=272 data-nosnippet>272</a>            Cell::ULt(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$lt"</span>, arg1, arg2, <span class="bool-val">false</span>),
+<a href=#273 id=273 data-nosnippet>273</a>            Cell::SLt(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$lt"</span>, arg1, arg2, <span class="bool-val">true</span>),
+<a href=#274 id=274 data-nosnippet>274</a>
+<a href=#275 id=275 data-nosnippet>275</a>            Cell::Shl(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$shl"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">false</span>),
+<a href=#276 id=276 data-nosnippet>276</a>            Cell::UShr(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$shr"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">false</span>),
+<a href=#277 id=277 data-nosnippet>277</a>            Cell::SShr(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$sshr"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">true</span>),
+<a href=#278 id=278 data-nosnippet>278</a>            Cell::XShr(arg1, arg2, stride) =&gt; ys_cell_shift(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$shiftx"</span>, arg1, arg2, <span class="kw-2">*</span>stride, <span class="bool-val">false</span>),
+<a href=#279 id=279 data-nosnippet>279</a>
+<a href=#280 id=280 data-nosnippet>280</a>            Cell::Mul(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$mul"</span>, arg1, arg2, <span class="bool-val">false</span>),
+<a href=#281 id=281 data-nosnippet>281</a>            Cell::UDiv(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$div"</span>, arg1, arg2, <span class="bool-val">false</span>),
+<a href=#282 id=282 data-nosnippet>282</a>            Cell::UMod(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$mod"</span>, arg1, arg2, <span class="bool-val">false</span>),
+<a href=#283 id=283 data-nosnippet>283</a>            Cell::SDivTrunc(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$div"</span>, arg1, arg2, <span class="bool-val">true</span>),
+<a href=#284 id=284 data-nosnippet>284</a>            Cell::SDivFloor(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$divfloor"</span>, arg1, arg2, <span class="bool-val">true</span>),
+<a href=#285 id=285 data-nosnippet>285</a>            Cell::SModTrunc(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$mod"</span>, arg1, arg2, <span class="bool-val">true</span>),
+<a href=#286 id=286 data-nosnippet>286</a>            Cell::SModFloor(arg1, arg2) =&gt; ys_cell_binary(<span class="kw-2">&amp;mut </span>ys_module, <span class="string">"$modfloor"</span>, arg1, arg2, <span class="bool-val">true</span>),
+<a href=#287 id=287 data-nosnippet>287</a>
+<a href=#288 id=288 data-nosnippet>288</a>            Cell::Match { .. } =&gt; <span class="macro">unimplemented!</span>(<span class="string">"match cells must be lowered first for Yosys JSON export"</span>),
+<a href=#289 id=289 data-nosnippet>289</a>            Cell::Assign { .. } =&gt; <span class="macro">unimplemented!</span>(<span class="string">"assign cells must be lowered first for Yosys JSON export"</span>),
+<a href=#290 id=290 data-nosnippet>290</a>
+<a href=#291 id=291 data-nosnippet>291</a>            Cell::Dff(flip_flop) =&gt; {
+<a href=#292 id=292 data-nosnippet>292</a>                <span class="kw">let </span>ys_cell_type = <span class="kw">match </span>(
+<a href=#293 id=293 data-nosnippet>293</a>                    flip_flop.has_clear(),
+<a href=#294 id=294 data-nosnippet>294</a>                    flip_flop.has_reset(),
+<a href=#295 id=295 data-nosnippet>295</a>                    flip_flop.has_enable(),
+<a href=#296 id=296 data-nosnippet>296</a>                    flip_flop.reset_over_enable,
+<a href=#297 id=297 data-nosnippet>297</a>                ) {
+<a href=#298 id=298 data-nosnippet>298</a>                    (<span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+<a href=#299 id=299 data-nosnippet>299</a>                    (<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; <span class="string">"$adff"</span>,
+<a href=#300 id=300 data-nosnippet>300</a>                    (<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="kw">_</span>) =&gt; <span class="string">"$adffe"</span>,
+<a href=#301 id=301 data-nosnippet>301</a>                    (<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; <span class="string">"$sdff"</span>,
+<a href=#302 id=302 data-nosnippet>302</a>                    (<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; <span class="string">"$sdffce"</span>,
+<a href=#303 id=303 data-nosnippet>303</a>                    (<span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; <span class="string">"$sdffe"</span>,
+<a href=#304 id=304 data-nosnippet>304</a>                    (<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; <span class="string">"$dff"</span>,
+<a href=#305 id=305 data-nosnippet>305</a>                    (<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="kw">_</span>) =&gt; <span class="string">"$dffe"</span>,
+<a href=#306 id=306 data-nosnippet>306</a>                };
+<a href=#307 id=307 data-nosnippet>307</a>                <span class="kw">let </span><span class="kw-2">mut </span>ys_cell = CellDetails::new(ys_cell_type);
+<a href=#308 id=308 data-nosnippet>308</a>                <span class="kw">if </span>flip_flop.has_clear() {
+<a href=#309 id=309 data-nosnippet>309</a>                    ys_cell = ys_cell
+<a href=#310 id=310 data-nosnippet>310</a>                        .param(<span class="string">"ARST_POLARITY"</span>, flip_flop.clear.is_positive())
+<a href=#311 id=311 data-nosnippet>311</a>                        .param(<span class="string">"ARST_VALUE"</span>, flip_flop.clear_value.clone())
+<a href=#312 id=312 data-nosnippet>312</a>                        .input(<span class="string">"ARST"</span>, indexer.net(flip_flop.clear.net()));
+<a href=#313 id=313 data-nosnippet>313</a>                }
+<a href=#314 id=314 data-nosnippet>314</a>                <span class="kw">if </span>flip_flop.has_reset() {
+<a href=#315 id=315 data-nosnippet>315</a>                    ys_cell = ys_cell
+<a href=#316 id=316 data-nosnippet>316</a>                        .param(<span class="string">"SRST_POLARITY"</span>, flip_flop.reset.is_positive())
+<a href=#317 id=317 data-nosnippet>317</a>                        .param(<span class="string">"SRST_VALUE"</span>, flip_flop.reset_value.clone())
+<a href=#318 id=318 data-nosnippet>318</a>                        .input(<span class="string">"SRST"</span>, indexer.net(flip_flop.reset.net()));
+<a href=#319 id=319 data-nosnippet>319</a>                }
+<a href=#320 id=320 data-nosnippet>320</a>                <span class="kw">if </span>flip_flop.has_enable() {
+<a href=#321 id=321 data-nosnippet>321</a>                    ys_cell = ys_cell
+<a href=#322 id=322 data-nosnippet>322</a>                        .param(<span class="string">"EN_POLARITY"</span>, flip_flop.enable.is_positive())
+<a href=#323 id=323 data-nosnippet>323</a>                        .input(<span class="string">"EN"</span>, indexer.net(flip_flop.enable.net()));
+<a href=#324 id=324 data-nosnippet>324</a>                }
+<a href=#325 id=325 data-nosnippet>325</a>                ys_cell
+<a href=#326 id=326 data-nosnippet>326</a>                    .param(<span class="string">"CLK_POLARITY"</span>, flip_flop.clock.is_positive())
+<a href=#327 id=327 data-nosnippet>327</a>                    .input(<span class="string">"CLK"</span>, indexer.net(flip_flop.clock.net()))
+<a href=#328 id=328 data-nosnippet>328</a>                    .param(<span class="string">"WIDTH"</span>, output.len())
+<a href=#329 id=329 data-nosnippet>329</a>                    .input(<span class="string">"D"</span>, indexer.value(<span class="kw-2">&amp;</span>flip_flop.data))
+<a href=#330 id=330 data-nosnippet>330</a>                    .output(<span class="string">"Q"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
+<a href=#331 id=331 data-nosnippet>331</a>                    .attrs(map_metadata(cell_ref.metadata()))
+<a href=#332 id=332 data-nosnippet>332</a>                    .add_to(<span class="kw-2">&amp;</span>ys_cell_name, <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#333 id=333 data-nosnippet>333</a>                NetDetails::new(indexer.value(<span class="kw-2">&amp;</span>output))
+<a href=#334 id=334 data-nosnippet>334</a>                    .attr(<span class="string">"init"</span>, flip_flop.init_value.clone())
+<a href=#335 id=335 data-nosnippet>335</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}$ff"</span>, ys_cell_name), <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#336 id=336 data-nosnippet>336</a>                <span class="kw">continue</span>; <span class="comment">// skip default $out wire (init-less) creation
+<a href=#337 id=337 data-nosnippet>337</a>            </span>}
+<a href=#338 id=338 data-nosnippet>338</a>
+<a href=#339 id=339 data-nosnippet>339</a>            Cell::Memory(memory) =&gt; {
+<a href=#340 id=340 data-nosnippet>340</a>                <span class="kw">let </span>abits = memory
+<a href=#341 id=341 data-nosnippet>341</a>                    .write_ports
+<a href=#342 id=342 data-nosnippet>342</a>                    .iter()
+<a href=#343 id=343 data-nosnippet>343</a>                    .map(|port| port.addr.len() + port.wide_log2(memory))
+<a href=#344 id=344 data-nosnippet>344</a>                    .max()
+<a href=#345 id=345 data-nosnippet>345</a>                    .unwrap_or(<span class="number">0</span>)
+<a href=#346 id=346 data-nosnippet>346</a>                    .max(
+<a href=#347 id=347 data-nosnippet>347</a>                        memory
+<a href=#348 id=348 data-nosnippet>348</a>                            .read_ports
+<a href=#349 id=349 data-nosnippet>349</a>                            .iter()
+<a href=#350 id=350 data-nosnippet>350</a>                            .map(|port| port.addr.len() + port.wide_log2(memory))
+<a href=#351 id=351 data-nosnippet>351</a>                            .max()
+<a href=#352 id=352 data-nosnippet>352</a>                            .unwrap_or(<span class="number">0</span>),
+<a href=#353 id=353 data-nosnippet>353</a>                    );
+<a href=#354 id=354 data-nosnippet>354</a>
+<a href=#355 id=355 data-nosnippet>355</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_ports = <span class="number">0</span>;
+<a href=#356 id=356 data-nosnippet>356</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_clk_polarity = Const::new();
+<a href=#357 id=357 data-nosnippet>357</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_wide_continuation = Const::new();
+<a href=#358 id=358 data-nosnippet>358</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_addr = Value::new();
+<a href=#359 id=359 data-nosnippet>359</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_data = Value::new();
+<a href=#360 id=360 data-nosnippet>360</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_clk = Value::new();
+<a href=#361 id=361 data-nosnippet>361</a>                <span class="kw">let </span><span class="kw-2">mut </span>wr_en = Value::new();
+<a href=#362 id=362 data-nosnippet>362</a>                <span class="kw">let </span><span class="kw-2">mut </span>write_port_indices = <span class="macro">vec!</span>[];
+<a href=#363 id=363 data-nosnippet>363</a>                <span class="kw">for </span>(port_index, port) <span class="kw">in </span>memory.write_ports.iter().enumerate() {
+<a href=#364 id=364 data-nosnippet>364</a>                    <span class="kw">let </span>wide_log2 = port.wide_log2(memory);
+<a href=#365 id=365 data-nosnippet>365</a>                    <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..(<span class="number">1 </span>&lt;&lt; wide_log2) {
+<a href=#366 id=366 data-nosnippet>366</a>                        <span class="kw">let </span>addr = Value::from(Const::from_uint(index, wide_log2)).concat(<span class="kw-2">&amp;</span>port.addr).zext(abits);
+<a href=#367 id=367 data-nosnippet>367</a>                        wr_clk.extend([port.clock.net()]);
+<a href=#368 id=368 data-nosnippet>368</a>                        wr_addr.extend(<span class="kw-2">&amp;</span>addr);
+<a href=#369 id=369 data-nosnippet>369</a>                        wr_clk_polarity.push(port.clock.is_positive());
+<a href=#370 id=370 data-nosnippet>370</a>                        wr_wide_continuation.push(index != <span class="number">0</span>);
+<a href=#371 id=371 data-nosnippet>371</a>                        write_port_indices.push(port_index);
+<a href=#372 id=372 data-nosnippet>372</a>                    }
+<a href=#373 id=373 data-nosnippet>373</a>                    wr_data.extend(<span class="kw-2">&amp;</span>port.data);
+<a href=#374 id=374 data-nosnippet>374</a>                    wr_en.extend(<span class="kw-2">&amp;</span>port.mask);
+<a href=#375 id=375 data-nosnippet>375</a>                    wr_ports += <span class="number">1 </span>&lt;&lt; wide_log2;
+<a href=#376 id=376 data-nosnippet>376</a>                }
+<a href=#377 id=377 data-nosnippet>377</a>                <span class="kw">if </span>wr_ports == <span class="number">0 </span>{
+<a href=#378 id=378 data-nosnippet>378</a>                    wr_clk_polarity.push(<span class="bool-val">false</span>);
+<a href=#379 id=379 data-nosnippet>379</a>                    wr_wide_continuation.push(<span class="bool-val">false</span>);
+<a href=#380 id=380 data-nosnippet>380</a>                }
+<a href=#381 id=381 data-nosnippet>381</a>
+<a href=#382 id=382 data-nosnippet>382</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_ports = <span class="number">0</span>;
+<a href=#383 id=383 data-nosnippet>383</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_clk_enable = Const::new();
+<a href=#384 id=384 data-nosnippet>384</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_clk_polarity = Const::new();
+<a href=#385 id=385 data-nosnippet>385</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_transparency_mask = Const::new();
+<a href=#386 id=386 data-nosnippet>386</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_collision_x_mask = Const::new();
+<a href=#387 id=387 data-nosnippet>387</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_wide_continuation = Const::new();
+<a href=#388 id=388 data-nosnippet>388</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_ce_over_srst = Const::new();
+<a href=#389 id=389 data-nosnippet>389</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_arst_value = Const::new();
+<a href=#390 id=390 data-nosnippet>390</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_srst_value = Const::new();
+<a href=#391 id=391 data-nosnippet>391</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_init_value = Const::new();
+<a href=#392 id=392 data-nosnippet>392</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_clk = Value::new();
+<a href=#393 id=393 data-nosnippet>393</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_en = yosys::BitVector(<span class="macro">vec!</span>[]);
+<a href=#394 id=394 data-nosnippet>394</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_arst = yosys::BitVector(<span class="macro">vec!</span>[]);
+<a href=#395 id=395 data-nosnippet>395</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_srst = yosys::BitVector(<span class="macro">vec!</span>[]);
+<a href=#396 id=396 data-nosnippet>396</a>                <span class="kw">let </span><span class="kw-2">mut </span>rd_addr = Value::new();
+<a href=#397 id=397 data-nosnippet>397</a>                <span class="kw">for </span>(port_index, port) <span class="kw">in </span>memory.read_ports.iter().enumerate() {
+<a href=#398 id=398 data-nosnippet>398</a>                    <span class="kw">let </span>wide_log2 = port.wide_log2(memory);
+<a href=#399 id=399 data-nosnippet>399</a>                    <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..(<span class="number">1 </span>&lt;&lt; wide_log2) {
+<a href=#400 id=400 data-nosnippet>400</a>                        <span class="kw">let </span>addr = Value::from(Const::from_uint(index, wide_log2)).concat(<span class="kw-2">&amp;</span>port.addr).zext(abits);
+<a href=#401 id=401 data-nosnippet>401</a>                        rd_addr.extend(<span class="kw-2">&amp;</span>addr);
+<a href=#402 id=402 data-nosnippet>402</a>                        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>flip_flop) = port.flip_flop {
+<a href=#403 id=403 data-nosnippet>403</a>                            rd_clk.extend([flip_flop.clock.net()]);
+<a href=#404 id=404 data-nosnippet>404</a>                            rd_clk_enable.push(<span class="bool-val">true</span>);
+<a href=#405 id=405 data-nosnippet>405</a>                            rd_clk_polarity.push(flip_flop.clock.is_positive());
+<a href=#406 id=406 data-nosnippet>406</a>                            rd_ce_over_srst.push(!flip_flop.reset_over_enable);
+<a href=#407 id=407 data-nosnippet>407</a>                            <span class="kw">for </span><span class="kw-2">&amp;</span>write_port_index <span class="kw">in </span><span class="kw-2">&amp;</span>write_port_indices {
+<a href=#408 id=408 data-nosnippet>408</a>                                <span class="kw">let </span>(trans, col_x) = <span class="kw">if </span>flip_flop.clock == memory.write_ports[write_port_index].clock {
+<a href=#409 id=409 data-nosnippet>409</a>                                    <span class="kw">match </span>flip_flop.relations[write_port_index] {
+<a href=#410 id=410 data-nosnippet>410</a>                                        MemoryPortRelation::Undefined =&gt; (<span class="bool-val">false</span>, <span class="bool-val">true</span>),
+<a href=#411 id=411 data-nosnippet>411</a>                                        MemoryPortRelation::ReadBeforeWrite =&gt; (<span class="bool-val">false</span>, <span class="bool-val">false</span>),
+<a href=#412 id=412 data-nosnippet>412</a>                                        MemoryPortRelation::Transparent =&gt; (<span class="bool-val">true</span>, <span class="bool-val">false</span>),
+<a href=#413 id=413 data-nosnippet>413</a>                                    }
+<a href=#414 id=414 data-nosnippet>414</a>                                } <span class="kw">else </span>{
+<a href=#415 id=415 data-nosnippet>415</a>                                    (<span class="bool-val">false</span>, <span class="bool-val">false</span>)
+<a href=#416 id=416 data-nosnippet>416</a>                                };
+<a href=#417 id=417 data-nosnippet>417</a>                                rd_transparency_mask.push(trans);
+<a href=#418 id=418 data-nosnippet>418</a>                                rd_collision_x_mask.push(col_x);
+<a href=#419 id=419 data-nosnippet>419</a>                            }
+<a href=#420 id=420 data-nosnippet>420</a>                        } <span class="kw">else </span>{
+<a href=#421 id=421 data-nosnippet>421</a>                            rd_clk.extend([Net::UNDEF]);
+<a href=#422 id=422 data-nosnippet>422</a>                            rd_clk_enable.push(<span class="bool-val">false</span>);
+<a href=#423 id=423 data-nosnippet>423</a>                            rd_clk_polarity.push(Trit::Undef);
+<a href=#424 id=424 data-nosnippet>424</a>                            rd_ce_over_srst.push(Trit::Undef);
+<a href=#425 id=425 data-nosnippet>425</a>                            rd_transparency_mask.extend(Const::undef(wr_ports));
+<a href=#426 id=426 data-nosnippet>426</a>                            rd_collision_x_mask.extend(Const::undef(wr_ports));
+<a href=#427 id=427 data-nosnippet>427</a>                        }
+<a href=#428 id=428 data-nosnippet>428</a>                        rd_wide_continuation.push(index != <span class="number">0</span>);
+<a href=#429 id=429 data-nosnippet>429</a>                    }
+<a href=#430 id=430 data-nosnippet>430</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>flip_flop) = port.flip_flop {
+<a href=#431 id=431 data-nosnippet>431</a>                        rd_arst_value.extend(<span class="kw-2">&amp;</span>flip_flop.clear_value);
+<a href=#432 id=432 data-nosnippet>432</a>                        rd_srst_value.extend(<span class="kw-2">&amp;</span>flip_flop.reset_value);
+<a href=#433 id=433 data-nosnippet>433</a>                        rd_init_value.extend(<span class="kw-2">&amp;</span>flip_flop.init_value);
+<a href=#434 id=434 data-nosnippet>434</a>                        <span class="kw">let </span>enable = ys_control_net_pos(
+<a href=#435 id=435 data-nosnippet>435</a>                            <span class="kw-2">&amp;mut </span>ys_module,
+<a href=#436 id=436 data-nosnippet>436</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${cell_index}$rd{port_index}$en$not"</span>),
+<a href=#437 id=437 data-nosnippet>437</a>                            flip_flop.enable,
+<a href=#438 id=438 data-nosnippet>438</a>                        );
+<a href=#439 id=439 data-nosnippet>439</a>                        <span class="kw">let </span>clear = ys_control_net_pos(
+<a href=#440 id=440 data-nosnippet>440</a>                            <span class="kw-2">&amp;mut </span>ys_module,
+<a href=#441 id=441 data-nosnippet>441</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${cell_index}$rd{port_index}$arst$not"</span>),
+<a href=#442 id=442 data-nosnippet>442</a>                            flip_flop.clear,
+<a href=#443 id=443 data-nosnippet>443</a>                        );
+<a href=#444 id=444 data-nosnippet>444</a>                        <span class="kw">let </span>reset = ys_control_net_pos(
+<a href=#445 id=445 data-nosnippet>445</a>                            <span class="kw-2">&amp;mut </span>ys_module,
+<a href=#446 id=446 data-nosnippet>446</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${cell_index}$rd{port_index}$srst$not"</span>),
+<a href=#447 id=447 data-nosnippet>447</a>                            flip_flop.reset,
+<a href=#448 id=448 data-nosnippet>448</a>                        );
+<a href=#449 id=449 data-nosnippet>449</a>                        rd_en = rd_en.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[enable; <span class="number">1 </span>&lt;&lt; wide_log2]));
+<a href=#450 id=450 data-nosnippet>450</a>                        rd_srst = rd_srst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[reset; <span class="number">1 </span>&lt;&lt; wide_log2]));
+<a href=#451 id=451 data-nosnippet>451</a>                        rd_arst = rd_arst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[clear; <span class="number">1 </span>&lt;&lt; wide_log2]));
+<a href=#452 id=452 data-nosnippet>452</a>                    } <span class="kw">else </span>{
+<a href=#453 id=453 data-nosnippet>453</a>                        rd_arst_value.extend(Const::undef(port.data_len));
+<a href=#454 id=454 data-nosnippet>454</a>                        rd_srst_value.extend(Const::undef(port.data_len));
+<a href=#455 id=455 data-nosnippet>455</a>                        rd_init_value.extend(Const::undef(port.data_len));
+<a href=#456 id=456 data-nosnippet>456</a>                        rd_en = rd_en.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[yosys::Bit::One; <span class="number">1 </span>&lt;&lt; wide_log2]));
+<a href=#457 id=457 data-nosnippet>457</a>                        rd_srst = rd_srst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[yosys::Bit::Zero; <span class="number">1 </span>&lt;&lt; wide_log2]));
+<a href=#458 id=458 data-nosnippet>458</a>                        rd_arst = rd_arst.concat(<span class="kw-2">&amp;</span>yosys::BitVector(<span class="macro">vec!</span>[yosys::Bit::Zero; <span class="number">1 </span>&lt;&lt; wide_log2]));
+<a href=#459 id=459 data-nosnippet>459</a>                    }
+<a href=#460 id=460 data-nosnippet>460</a>                    rd_ports += <span class="number">1 </span>&lt;&lt; wide_log2;
+<a href=#461 id=461 data-nosnippet>461</a>                }
+<a href=#462 id=462 data-nosnippet>462</a>                <span class="kw">if </span>rd_ports == <span class="number">0 </span>{
+<a href=#463 id=463 data-nosnippet>463</a>                    rd_clk_enable.push(<span class="bool-val">false</span>);
+<a href=#464 id=464 data-nosnippet>464</a>                    rd_clk_polarity.push(<span class="bool-val">false</span>);
+<a href=#465 id=465 data-nosnippet>465</a>                    rd_wide_continuation.push(<span class="bool-val">false</span>);
+<a href=#466 id=466 data-nosnippet>466</a>                    rd_ce_over_srst.push(<span class="bool-val">false</span>);
+<a href=#467 id=467 data-nosnippet>467</a>                    rd_arst_value.push(<span class="bool-val">false</span>);
+<a href=#468 id=468 data-nosnippet>468</a>                    rd_srst_value.push(<span class="bool-val">false</span>);
+<a href=#469 id=469 data-nosnippet>469</a>                    rd_init_value.push(<span class="bool-val">false</span>);
+<a href=#470 id=470 data-nosnippet>470</a>                }
+<a href=#471 id=471 data-nosnippet>471</a>                <span class="kw">if </span>rd_ports == <span class="number">0 </span>|| wr_ports == <span class="number">0 </span>{
+<a href=#472 id=472 data-nosnippet>472</a>                    rd_transparency_mask.push(<span class="bool-val">false</span>);
+<a href=#473 id=473 data-nosnippet>473</a>                    rd_collision_x_mask.push(<span class="bool-val">false</span>);
+<a href=#474 id=474 data-nosnippet>474</a>                }
+<a href=#475 id=475 data-nosnippet>475</a>
+<a href=#476 id=476 data-nosnippet>476</a>                CellDetails::new(<span class="string">"$mem_v2"</span>)
+<a href=#477 id=477 data-nosnippet>477</a>                    .param(<span class="string">"MEMID"</span>, <span class="macro">format!</span>(<span class="string">"${}$mem"</span>, cell_index))
+<a href=#478 id=478 data-nosnippet>478</a>                    .param(<span class="string">"OFFSET"</span>, <span class="number">0</span>)
+<a href=#479 id=479 data-nosnippet>479</a>                    .param(<span class="string">"SIZE"</span>, memory.depth)
+<a href=#480 id=480 data-nosnippet>480</a>                    .param(<span class="string">"WIDTH"</span>, memory.width)
+<a href=#481 id=481 data-nosnippet>481</a>                    .param(<span class="string">"ABITS"</span>, abits)
+<a href=#482 id=482 data-nosnippet>482</a>                    .param(<span class="string">"INIT"</span>, memory.init_value.clone())
+<a href=#483 id=483 data-nosnippet>483</a>                    .param(<span class="string">"WR_PORTS"</span>, wr_ports)
+<a href=#484 id=484 data-nosnippet>484</a>                    .param(<span class="string">"WR_CLK_ENABLE"</span>, Const::ones(wr_ports.max(<span class="number">1</span>)))
+<a href=#485 id=485 data-nosnippet>485</a>                    .param(<span class="string">"WR_CLK_POLARITY"</span>, wr_clk_polarity)
+<a href=#486 id=486 data-nosnippet>486</a>                    .param(<span class="string">"WR_PRIORITY_MASK"</span>, Const::zero(wr_ports.max(<span class="number">1</span>)))
+<a href=#487 id=487 data-nosnippet>487</a>                    .param(<span class="string">"WR_WIDE_CONTINUATION"</span>, wr_wide_continuation)
+<a href=#488 id=488 data-nosnippet>488</a>                    .input(<span class="string">"WR_ADDR"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_addr))
+<a href=#489 id=489 data-nosnippet>489</a>                    .input(<span class="string">"WR_DATA"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_data))
+<a href=#490 id=490 data-nosnippet>490</a>                    .input(<span class="string">"WR_CLK"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_clk))
+<a href=#491 id=491 data-nosnippet>491</a>                    .input(<span class="string">"WR_EN"</span>, indexer.value(<span class="kw-2">&amp;</span>wr_en))
+<a href=#492 id=492 data-nosnippet>492</a>                    .param(<span class="string">"RD_PORTS"</span>, rd_ports)
+<a href=#493 id=493 data-nosnippet>493</a>                    .param(<span class="string">"RD_CLK_ENABLE"</span>, rd_clk_enable)
+<a href=#494 id=494 data-nosnippet>494</a>                    .param(<span class="string">"RD_CLK_POLARITY"</span>, rd_clk_polarity)
+<a href=#495 id=495 data-nosnippet>495</a>                    .param(<span class="string">"RD_TRANSPARENCY_MASK"</span>, rd_transparency_mask)
+<a href=#496 id=496 data-nosnippet>496</a>                    .param(<span class="string">"RD_COLLISION_X_MASK"</span>, rd_collision_x_mask)
+<a href=#497 id=497 data-nosnippet>497</a>                    .param(<span class="string">"RD_WIDE_CONTINUATION"</span>, rd_wide_continuation)
+<a href=#498 id=498 data-nosnippet>498</a>                    .param(<span class="string">"RD_CE_OVER_SRST"</span>, rd_ce_over_srst)
+<a href=#499 id=499 data-nosnippet>499</a>                    .param(<span class="string">"RD_ARST_VALUE"</span>, rd_arst_value)
+<a href=#500 id=500 data-nosnippet>500</a>                    .param(<span class="string">"RD_SRST_VALUE"</span>, rd_srst_value)
+<a href=#501 id=501 data-nosnippet>501</a>                    .param(<span class="string">"RD_INIT_VALUE"</span>, rd_init_value)
+<a href=#502 id=502 data-nosnippet>502</a>                    .input(<span class="string">"RD_CLK"</span>, indexer.value(<span class="kw-2">&amp;</span>rd_clk))
+<a href=#503 id=503 data-nosnippet>503</a>                    .input(<span class="string">"RD_EN"</span>, rd_en)
+<a href=#504 id=504 data-nosnippet>504</a>                    .input(<span class="string">"RD_ARST"</span>, rd_arst)
+<a href=#505 id=505 data-nosnippet>505</a>                    .input(<span class="string">"RD_SRST"</span>, rd_srst)
+<a href=#506 id=506 data-nosnippet>506</a>                    .input(<span class="string">"RD_ADDR"</span>, indexer.value(<span class="kw-2">&amp;</span>rd_addr))
+<a href=#507 id=507 data-nosnippet>507</a>                    .output(<span class="string">"RD_DATA"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
+<a href=#508 id=508 data-nosnippet>508</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#509 id=509 data-nosnippet>509</a>            }
+<a href=#510 id=510 data-nosnippet>510</a>
+<a href=#511 id=511 data-nosnippet>511</a>            Cell::IoBuf(io_buffer) =&gt; {
+<a href=#512 id=512 data-nosnippet>512</a>                <span class="kw">let </span>ys_enable =
+<a href=#513 id=513 data-nosnippet>513</a>                    ys_control_net_pos(<span class="kw-2">&amp;mut </span>ys_module, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}$en$not"</span>, cell_index), io_buffer.enable);
+<a href=#514 id=514 data-nosnippet>514</a>                <span class="kw">let </span>ys_attrs = map_metadata(cell_ref.metadata());
+<a href=#515 id=515 data-nosnippet>515</a>                CellDetails::new(<span class="string">"$tribuf"</span>)
+<a href=#516 id=516 data-nosnippet>516</a>                    .param(<span class="string">"WIDTH"</span>, output.len())
+<a href=#517 id=517 data-nosnippet>517</a>                    .input(<span class="string">"A"</span>, indexer.value(<span class="kw-2">&amp;</span>io_buffer.output))
+<a href=#518 id=518 data-nosnippet>518</a>                    .input(<span class="string">"EN"</span>, ys_enable)
+<a href=#519 id=519 data-nosnippet>519</a>                    .output(<span class="string">"Y"</span>, indexer.io_value(<span class="kw-2">&amp;</span>io_buffer.io))
+<a href=#520 id=520 data-nosnippet>520</a>                    .attrs(ys_attrs.clone())
+<a href=#521 id=521 data-nosnippet>521</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#522 id=522 data-nosnippet>522</a>                CellDetails::new(<span class="string">"$pos"</span>)
+<a href=#523 id=523 data-nosnippet>523</a>                    .param(<span class="string">"A_SIGNED"</span>, <span class="number">0</span>)
+<a href=#524 id=524 data-nosnippet>524</a>                    .param(<span class="string">"A_WIDTH"</span>, io_buffer.io.len())
+<a href=#525 id=525 data-nosnippet>525</a>                    .param(<span class="string">"Y_WIDTH"</span>, output.len())
+<a href=#526 id=526 data-nosnippet>526</a>                    .input(<span class="string">"A"</span>, indexer.io_value(<span class="kw-2">&amp;</span>io_buffer.io))
+<a href=#527 id=527 data-nosnippet>527</a>                    .output(<span class="string">"Y"</span>, indexer.value(<span class="kw-2">&amp;</span>output))
+<a href=#528 id=528 data-nosnippet>528</a>                    .attrs(ys_attrs)
+<a href=#529 id=529 data-nosnippet>529</a>                    .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"${}$pos"</span>, cell_index), <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#530 id=530 data-nosnippet>530</a>            }
+<a href=#531 id=531 data-nosnippet>531</a>
+<a href=#532 id=532 data-nosnippet>532</a>            Cell::Other(instance) =&gt; {
+<a href=#533 id=533 data-nosnippet>533</a>                <span class="kw">let </span><span class="kw-2">mut </span>ys_cell = CellDetails::new(<span class="kw-2">&amp;</span>instance.kind);
+<a href=#534 id=534 data-nosnippet>534</a>                <span class="kw">for </span>(name, value) <span class="kw">in </span>instance.params.iter() {
+<a href=#535 id=535 data-nosnippet>535</a>                    ys_cell = ys_cell.param(name, value);
+<a href=#536 id=536 data-nosnippet>536</a>                }
+<a href=#537 id=537 data-nosnippet>537</a>                <span class="kw">for </span>(name, value) <span class="kw">in </span>instance.inputs.iter() {
+<a href=#538 id=538 data-nosnippet>538</a>                    ys_cell = ys_cell.input(name, indexer.value(value));
+<a href=#539 id=539 data-nosnippet>539</a>                }
+<a href=#540 id=540 data-nosnippet>540</a>                <span class="kw">for </span>(name, value_range) <span class="kw">in </span>instance.outputs.iter() {
+<a href=#541 id=541 data-nosnippet>541</a>                    ys_cell = ys_cell.output(name, indexer.value(<span class="kw-2">&amp;</span>Value::from(<span class="kw-2">&amp;</span>output[value_range.clone()])));
+<a href=#542 id=542 data-nosnippet>542</a>                }
+<a href=#543 id=543 data-nosnippet>543</a>                <span class="kw">for </span>(name, io_value) <span class="kw">in </span>instance.ios.iter() {
+<a href=#544 id=544 data-nosnippet>544</a>                    ys_cell = ys_cell.inout(name, indexer.io_value(io_value));
+<a href=#545 id=545 data-nosnippet>545</a>                }
+<a href=#546 id=546 data-nosnippet>546</a>                ys_cell.attrs(map_metadata(cell_ref.metadata())).add_to(<span class="kw-2">&amp;</span>ys_cell_name, <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#547 id=547 data-nosnippet>547</a>            }
+<a href=#548 id=548 data-nosnippet>548</a>            Cell::Target(_target_cell) =&gt; {
+<a href=#549 id=549 data-nosnippet>549</a>                <span class="macro">unimplemented!</span>(<span class="string">"target cells must be converted to instances first for Yosys JSON export"</span>)
+<a href=#550 id=550 data-nosnippet>550</a>            }
+<a href=#551 id=551 data-nosnippet>551</a>
+<a href=#552 id=552 data-nosnippet>552</a>            Cell::Input(port_name, _size) =&gt; {
+<a href=#553 id=553 data-nosnippet>553</a>                ys_module.ports.add(port_name, PortDetails::new(yosys::PortDirection::Input, indexer.value(<span class="kw-2">&amp;</span>output)))
+<a href=#554 id=554 data-nosnippet>554</a>            }
+<a href=#555 id=555 data-nosnippet>555</a>            Cell::Output(port_name, value) =&gt; {
+<a href=#556 id=556 data-nosnippet>556</a>                ys_module.ports.add(port_name, PortDetails::new(yosys::PortDirection::Output, indexer.value(value)))
+<a href=#557 id=557 data-nosnippet>557</a>            }
+<a href=#558 id=558 data-nosnippet>558</a>            Cell::Name(name, value) | Cell::Debug(name, value) =&gt; ys_module.netnames.add(
+<a href=#559 id=559 data-nosnippet>559</a>                <span class="kw-2">&amp;</span>name.replace(<span class="string">" "</span>, <span class="string">"."</span>),
+<a href=#560 id=560 data-nosnippet>560</a>                NetDetails::new(indexer.value(value)).attrs(map_metadata(cell_ref.metadata())).attr(<span class="string">"hdlname"</span>, name),
+<a href=#561 id=561 data-nosnippet>561</a>            ),
+<a href=#562 id=562 data-nosnippet>562</a>        };
+<a href=#563 id=563 data-nosnippet>563</a>
+<a href=#564 id=564 data-nosnippet>564</a>        <span class="kw">if </span>output.len() &gt; <span class="number">0 </span>{
+<a href=#565 id=565 data-nosnippet>565</a>            <span class="comment">// Duplicating the cell metadata on the cell output net is the only way to get source locations
+<a href=#566 id=566 data-nosnippet>566</a>            // to show up in nextpnr's timing reports.
+<a href=#567 id=567 data-nosnippet>567</a>            </span>NetDetails::new(indexer.value(<span class="kw-2">&amp;</span>output))
+<a href=#568 id=568 data-nosnippet>568</a>                .attrs(map_metadata(cell_ref.metadata()))
+<a href=#569 id=569 data-nosnippet>569</a>                .add_to(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}$out"</span>, ys_cell_name), <span class="kw-2">&amp;mut </span>ys_module);
+<a href=#570 id=570 data-nosnippet>570</a>        }
+<a href=#571 id=571 data-nosnippet>571</a>    }
+<a href=#572 id=572 data-nosnippet>572</a>
+<a href=#573 id=573 data-nosnippet>573</a>    ys_module
+<a href=#574 id=574 data-nosnippet>574</a>}
+<a href=#575 id=575 data-nosnippet>575</a>
+<a href=#576 id=576 data-nosnippet>576</a><span class="comment">// Exporting a design to Yosys JSON can require modifying it if it has target cells that must be mapped to instances.
+<a href=#577 id=577 data-nosnippet>577</a></span><span class="kw">pub fn </span>export(writer: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Write, designs: BTreeMap&lt;String, Design&gt;) -&gt; std::io::Result&lt;()&gt; {
+<a href=#578 id=578 data-nosnippet>578</a>    <span class="kw">let </span><span class="kw-2">mut </span>ys_modules = BTreeMap::new();
+<a href=#579 id=579 data-nosnippet>579</a>    <span class="kw">for </span>(name, design) <span class="kw">in </span>designs {
+<a href=#580 id=580 data-nosnippet>580</a>        ys_modules.insert(name, export_module(design));
+<a href=#581 id=581 data-nosnippet>581</a>    }
+<a href=#582 id=582 data-nosnippet>582</a>    <span class="kw">let </span>ys_design = yosys::Design { creator: <span class="string">"prjunnamed"</span>.into(), modules: ys_modules.into() };
+<a href=#583 id=583 data-nosnippet>583</a>
+<a href=#584 id=584 data-nosnippet>584</a>    <span class="kw">let </span>json = JsonValue::from(ys_design);
+<a href=#585 id=585 data-nosnippet>585</a>    json.write_pretty(writer, <span class="comment">/*spaces=*/ </span><span class="number">4</span>)
+<a href=#586 id=586 data-nosnippet>586</a>}</code></pre></div></section></main></body></html>
