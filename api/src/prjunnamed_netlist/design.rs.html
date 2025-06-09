@@ -121,14 +121,14 @@
 <a href=#121 id=121 data-nosnippet>121</a>        <span class="self">self</span>.add_cell_with_metadata_index(cell, metadata)
 <a href=#122 id=122 data-nosnippet>122</a>    }
 <a href=#123 id=123 data-nosnippet>123</a>
-<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">pub fn </span>use_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, item: MetaItemRef) -&gt; WithMetadataGuard {
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">pub fn </span>use_metadata(<span class="kw-2">&amp;</span><span class="self">self</span>, item: MetaItemRef) -&gt; WithMetadataGuard&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#125 id=125 data-nosnippet>125</a>        <span class="kw">let </span><span class="kw-2">mut </span>changes = <span class="self">self</span>.changes.borrow_mut();
 <a href=#126 id=126 data-nosnippet>126</a>        <span class="kw">let </span>guard = WithMetadataGuard { design: <span class="self">self</span>, restore: changes.cell_metadata };
 <a href=#127 id=127 data-nosnippet>127</a>        changes.cell_metadata = item.index();
 <a href=#128 id=128 data-nosnippet>128</a>        guard
 <a href=#129 id=129 data-nosnippet>129</a>    }
 <a href=#130 id=130 data-nosnippet>130</a>
-<a href=#131 id=131 data-nosnippet>131</a>    <span class="kw">pub fn </span>use_metadata_from(<span class="kw-2">&amp;</span><span class="self">self</span>, cell_refs: <span class="kw-2">&amp;</span>[CellRef]) -&gt; WithMetadataGuard {
+<a href=#131 id=131 data-nosnippet>131</a>    <span class="kw">pub fn </span>use_metadata_from(<span class="kw-2">&amp;</span><span class="self">self</span>, cell_refs: <span class="kw-2">&amp;</span>[CellRef]) -&gt; WithMetadataGuard&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">let </span>item = MetaItemRef::from_merge(<span class="self">self</span>, cell_refs.iter().map(CellRef::metadata));
 <a href=#133 id=133 data-nosnippet>133</a>        <span class="self">self</span>.use_metadata(item)
 <a href=#134 id=134 data-nosnippet>134</a>    }
@@ -148,7 +148,7 @@
 <a href=#148 id=148 data-nosnippet>148</a>    }
 <a href=#149 id=149 data-nosnippet>149</a>
 <a href=#150 id=150 data-nosnippet>150</a>    <span class="attr">#[inline]
-<a href=#151 id=151 data-nosnippet>151</a>    </span><span class="kw">pub fn </span>find_cell(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;(CellRef, usize), Trit&gt; {
+<a href=#151 id=151 data-nosnippet>151</a>    </span><span class="kw">pub fn </span>find_cell(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;(CellRef&lt;<span class="lifetime">'_</span>&gt;, usize), Trit&gt; {
 <a href=#152 id=152 data-nosnippet>152</a>        <span class="kw">let </span>index = net.as_cell_index()<span class="question-mark">?</span>;
 <a href=#153 id=153 data-nosnippet>153</a>        <span class="kw">match </span><span class="self">self</span>.cells[index].repr {
 <a href=#154 id=154 data-nosnippet>154</a>            CellRepr::Void =&gt; <span class="macro">panic!</span>(<span class="string">"located a void cell %{index} in design"</span>),
@@ -157,7 +157,7 @@
 <a href=#157 id=157 data-nosnippet>157</a>        }
 <a href=#158 id=158 data-nosnippet>158</a>    }
 <a href=#159 id=159 data-nosnippet>159</a>
-<a href=#160 id=160 data-nosnippet>160</a>    <span class="kw">pub fn </span>iter_cells(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CellIter {
+<a href=#160 id=160 data-nosnippet>160</a>    <span class="kw">pub fn </span>iter_cells(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CellIter&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#161 id=161 data-nosnippet>161</a>        CellIter { design: <span class="self">self</span>, index: <span class="number">0 </span>}
 <a href=#162 id=162 data-nosnippet>162</a>    }
 <a href=#163 id=163 data-nosnippet>163</a>
@@ -165,26 +165,26 @@
 <a href=#165 id=165 data-nosnippet>165</a>        index &lt; <span class="self">self</span>.cells.len()
 <a href=#166 id=166 data-nosnippet>166</a>    }
 <a href=#167 id=167 data-nosnippet>167</a>
-<a href=#168 id=168 data-nosnippet>168</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Ref&lt;MetadataStore&gt; {
+<a href=#168 id=168 data-nosnippet>168</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Ref&lt;<span class="lifetime">'_</span>, MetadataStore&gt; {
 <a href=#169 id=169 data-nosnippet>169</a>        <span class="self">self</span>.metadata.borrow()
 <a href=#170 id=170 data-nosnippet>170</a>    }
 <a href=#171 id=171 data-nosnippet>171</a>
-<a href=#172 id=172 data-nosnippet>172</a>    <span class="kw">pub fn </span>add_metadata_string(<span class="kw-2">&amp;</span><span class="self">self</span>, string: <span class="kw-2">&amp;</span>str) -&gt; MetaStringRef {
+<a href=#172 id=172 data-nosnippet>172</a>    <span class="kw">pub fn </span>add_metadata_string(<span class="kw-2">&amp;</span><span class="self">self</span>, string: <span class="kw-2">&amp;</span>str) -&gt; MetaStringRef&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#173 id=173 data-nosnippet>173</a>        <span class="kw">let </span>index = <span class="self">self</span>.metadata.borrow_mut().add_string(string);
 <a href=#174 id=174 data-nosnippet>174</a>        <span class="self">self</span>.metadata.borrow().ref_string(<span class="self">self</span>, index)
 <a href=#175 id=175 data-nosnippet>175</a>    }
 <a href=#176 id=176 data-nosnippet>176</a>
-<a href=#177 id=177 data-nosnippet>177</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ref_metadata_string(<span class="kw-2">&amp;</span><span class="self">self</span>, index: MetaStringIndex) -&gt; MetaStringRef {
+<a href=#177 id=177 data-nosnippet>177</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ref_metadata_string(<span class="kw-2">&amp;</span><span class="self">self</span>, index: MetaStringIndex) -&gt; MetaStringRef&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#178 id=178 data-nosnippet>178</a>        <span class="self">self</span>.metadata.borrow().ref_string(<span class="self">self</span>, index)
 <a href=#179 id=179 data-nosnippet>179</a>    }
 <a href=#180 id=180 data-nosnippet>180</a>
-<a href=#181 id=181 data-nosnippet>181</a>    <span class="kw">pub fn </span>add_metadata_item(<span class="kw-2">&amp;</span><span class="self">self</span>, item: <span class="kw-2">&amp;</span>MetaItem) -&gt; MetaItemRef {
+<a href=#181 id=181 data-nosnippet>181</a>    <span class="kw">pub fn </span>add_metadata_item(<span class="kw-2">&amp;</span><span class="self">self</span>, item: <span class="kw-2">&amp;</span>MetaItem) -&gt; MetaItemRef&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#182 id=182 data-nosnippet>182</a>        item.validate();
 <a href=#183 id=183 data-nosnippet>183</a>        <span class="kw">let </span>index = <span class="self">self</span>.metadata.borrow_mut().add_item(item);
 <a href=#184 id=184 data-nosnippet>184</a>        <span class="self">self</span>.metadata.borrow().ref_item(<span class="self">self</span>, index)
 <a href=#185 id=185 data-nosnippet>185</a>    }
 <a href=#186 id=186 data-nosnippet>186</a>
-<a href=#187 id=187 data-nosnippet>187</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ref_metadata_item(<span class="kw-2">&amp;</span><span class="self">self</span>, index: MetaItemIndex) -&gt; MetaItemRef {
+<a href=#187 id=187 data-nosnippet>187</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ref_metadata_item(<span class="kw-2">&amp;</span><span class="self">self</span>, index: MetaItemIndex) -&gt; MetaItemRef&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#188 id=188 data-nosnippet>188</a>        <span class="self">self</span>.metadata.borrow().ref_item(<span class="self">self</span>, index)
 <a href=#189 id=189 data-nosnippet>189</a>    }
 <a href=#190 id=190 data-nosnippet>190</a>
@@ -435,7 +435,7 @@
 <a href=#435 id=435 data-nosnippet>435</a>}
 <a href=#436 id=436 data-nosnippet>436</a>
 <a href=#437 id=437 data-nosnippet>437</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CellRef&lt;<span class="lifetime">'a</span>&gt; {
-<a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Cell&gt; {
+<a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;<span class="lifetime">'_</span>, Cell&gt; {
 <a href=#439 id=439 data-nosnippet>439</a>        <span class="self">self</span>.design.cells[<span class="self">self</span>.index].get()
 <a href=#440 id=440 data-nosnippet>440</a>    }
 <a href=#441 id=441 data-nosnippet>441</a>

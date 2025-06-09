@@ -84,7 +84,7 @@
 <a href=#84 id=84 data-nosnippet>84</a>
 <a href=#85 id=85 data-nosnippet>85</a><span class="kw">impl </span>DesignDyn <span class="kw">for </span>Design {
 <a href=#86 id=86 data-nosnippet>86</a>    <span class="attr">#[inline]
-<a href=#87 id=87 data-nosnippet>87</a>    </span><span class="kw">fn </span>find_cell(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;(CellRef, usize), Trit&gt; {
+<a href=#87 id=87 data-nosnippet>87</a>    </span><span class="kw">fn </span>find_cell(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;(CellRef&lt;<span class="lifetime">'_</span>&gt;, usize), Trit&gt; {
 <a href=#88 id=88 data-nosnippet>88</a>        Design::find_cell(<span class="self">self</span>, net)
 <a href=#89 id=89 data-nosnippet>89</a>    }
 <a href=#90 id=90 data-nosnippet>90</a>
@@ -103,7 +103,7 @@
 <a href=#103 id=103 data-nosnippet>103</a>        <span class="self">Self </span>{ inner: design, cells: RefCell::new(Vec::new()) }
 <a href=#104 id=104 data-nosnippet>104</a>    }
 <a href=#105 id=105 data-nosnippet>105</a>
-<a href=#106 id=106 data-nosnippet>106</a>    <span class="kw">pub fn </span>cells(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Ref&lt;[CellRef&lt;<span class="lifetime">'a</span>&gt;]&gt; {
+<a href=#106 id=106 data-nosnippet>106</a>    <span class="kw">pub fn </span>cells(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Ref&lt;<span class="lifetime">'_</span>, [CellRef&lt;<span class="lifetime">'a</span>&gt;]&gt; {
 <a href=#107 id=107 data-nosnippet>107</a>        Ref::map(<span class="self">self</span>.cells.borrow(), |cells| <span class="kw-2">&amp;</span>cells[..])
 <a href=#108 id=108 data-nosnippet>108</a>    }
 <a href=#109 id=109 data-nosnippet>109</a>
@@ -114,7 +114,7 @@
 <a href=#114 id=114 data-nosnippet>114</a>
 <a href=#115 id=115 data-nosnippet>115</a><span class="kw">impl </span>DesignDyn <span class="kw">for </span>CellCollector&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#116 id=116 data-nosnippet>116</a>    <span class="attr">#[inline]
-<a href=#117 id=117 data-nosnippet>117</a>    </span><span class="kw">fn </span>find_cell(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;(CellRef, usize), Trit&gt; {
+<a href=#117 id=117 data-nosnippet>117</a>    </span><span class="kw">fn </span>find_cell(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;(CellRef&lt;<span class="lifetime">'_</span>&gt;, usize), Trit&gt; {
 <a href=#118 id=118 data-nosnippet>118</a>        <span class="kw">match </span><span class="self">self</span>.inner.find_cell(net) {
 <a href=#119 id=119 data-nosnippet>119</a>            <span class="prelude-val">Ok</span>((cell_ref, offset)) =&gt; {
 <a href=#120 id=120 data-nosnippet>120</a>                <span class="self">self</span>.cells.borrow_mut().push(cell_ref);
