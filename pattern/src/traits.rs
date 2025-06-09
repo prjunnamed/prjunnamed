@@ -84,7 +84,7 @@ pub trait DesignDyn {
 
 impl DesignDyn for Design {
     #[inline]
-    fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
+    fn find_cell(&self, net: Net) -> Result<(CellRef<'_>, usize), Trit> {
         Design::find_cell(self, net)
     }
 
@@ -103,7 +103,7 @@ impl<'a> CellCollector<'a> {
         Self { inner: design, cells: RefCell::new(Vec::new()) }
     }
 
-    pub fn cells(&self) -> Ref<[CellRef<'a>]> {
+    pub fn cells(&self) -> Ref<'_, [CellRef<'a>]> {
         Ref::map(self.cells.borrow(), |cells| &cells[..])
     }
 
@@ -114,7 +114,7 @@ impl<'a> CellCollector<'a> {
 
 impl DesignDyn for CellCollector<'_> {
     #[inline]
-    fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
+    fn find_cell(&self, net: Net) -> Result<(CellRef<'_>, usize), Trit> {
         match self.inner.find_cell(net) {
             Ok((cell_ref, offset)) => {
                 self.cells.borrow_mut().push(cell_ref);
