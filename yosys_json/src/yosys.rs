@@ -78,7 +78,7 @@ impl From<Bit> for JsonValue {
 pub struct BitVector(pub Vec<Bit>);
 
 impl BitVector {
-    pub fn iter(&self) -> std::slice::Iter<Bit> {
+    pub fn iter(&self) -> std::slice::Iter<'_, Bit> {
         self.0.iter()
     }
 
@@ -323,7 +323,7 @@ impl Metadata {
         Metadata(BTreeMap::new())
     }
 
-    pub fn iter(&self) -> btree_map::Iter<String, MetadataValue> {
+    pub fn iter(&self) -> btree_map::Iter<'_, String, MetadataValue> {
         self.0.iter()
     }
 
@@ -370,7 +370,7 @@ impl<V> Map<V> {
         Map(BTreeMap::new())
     }
 
-    pub fn iter(&self) -> btree_map::Iter<String, V> {
+    pub fn iter(&self) -> btree_map::Iter<'_, String, V> {
         self.0.iter()
     }
 

@@ -121,14 +121,14 @@ impl Design {
         self.add_cell_with_metadata_index(cell, metadata)
     }
 
-    pub fn use_metadata(&self, item: MetaItemRef) -> WithMetadataGuard {
+    pub fn use_metadata(&self, item: MetaItemRef) -> WithMetadataGuard<'_> {
         let mut changes = self.changes.borrow_mut();
         let guard = WithMetadataGuard { design: self, restore: changes.cell_metadata };
         changes.cell_metadata = item.index();
         guard
     }
 
-    pub fn use_metadata_from(&self, cell_refs: &[CellRef]) -> WithMetadataGuard {
+    pub fn use_metadata_from(&self, cell_refs: &[CellRef]) -> WithMetadataGuard<'_> {
         let item = MetaItemRef::from_merge(self, cell_refs.iter().map(CellRef::metadata));
         self.use_metadata(item)
     }
@@ -148,7 +148,7 @@ impl Design {
     }
 
     #[inline]
-    pub fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit> {
+    pub fn find_cell(&self, net: Net) -> Result<(CellRef<'_>, usize), Trit> {
         let index = net.as_cell_index()?;
         match self.cells[index].repr {
             CellRepr::Void => panic!("located a void cell %{index} in design"),
@@ -157,7 +157,7 @@ impl Design {
         }
     }
 
-    pub fn iter_cells(&self) -> CellIter {
+    pub fn iter_cells(&self) -> CellIter<'_> {
         CellIter { design: self, index: 0 }
     }
 
@@ -165,26 +165,26 @@ impl Design {
         index < self.cells.len()
     }
 
-    pub(crate) fn metadata(&self) -> Ref<MetadataStore> {
+    pub(crate) fn metadata(&self) -> Ref<'_, MetadataStore> {
         self.metadata.borrow()
     }
 
-    pub fn add_metadata_string(&self, string: &str) -> MetaStringRef {
+    pub fn add_metadata_string(&self, string: &str) -> MetaStringRef<'_> {
         let index = self.metadata.borrow_mut().add_string(string);
         self.metadata.borrow().ref_string(self, index)
     }
 
-    pub(crate) fn ref_metadata_string(&self, index: MetaStringIndex) -> MetaStringRef {
+    pub(crate) fn ref_metadata_string(&self, index: MetaStringIndex) -> MetaStringRef<'_> {
         self.metadata.borrow().ref_string(self, index)
     }
 
-    pub fn add_metadata_item(&self, item: &MetaItem) -> MetaItemRef {
+    pub fn add_metadata_item(&self, item: &MetaItem) -> MetaItemRef<'_> {
         item.validate();
         let index = self.metadata.borrow_mut().add_item(item);
         self.metadata.borrow().ref_item(self, index)
     }
 
-    pub(crate) fn ref_metadata_item(&self, index: MetaItemIndex) -> MetaItemRef {
+    pub(crate) fn ref_metadata_item(&self, index: MetaItemIndex) -> MetaItemRef<'_> {
         self.metadata.borrow().ref_item(self, index)
     }
 
@@ -435,7 +435,7 @@ impl Hash for CellRef<'_> {
 }
 
 impl<'a> CellRef<'a> {
-    pub fn get(&self) -> Cow<Cell> {
+    pub fn get(&self) -> Cow<'_, Cell> {
         self.design.cells[self.index].get()
     }
 
