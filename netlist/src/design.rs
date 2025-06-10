@@ -638,7 +638,109 @@ impl Design {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TopoSortItem<'a> {
+    Cell(CellRef<'a>),
+    CellBit(CellRef<'a>, usize),
+}
+
 impl Design {
+    pub fn topo_sort(&self) -> Vec<TopoSortItem<'_>> {
+        fn is_splittable(cell: CellRef) -> bool {
+            matches!(
+                &*cell.get(),
+                Cell::Buf(..) | Cell::Not(..) | Cell::And(..) | Cell::Or(..) | Cell::Xor(..) | Cell::Mux(..)
+            )
+        }
+
+        fn is_comb_edge(design: &Design, net: Net) -> bool {
+            if let Ok((cell, _)) = design.find_cell(net) {
+                match &*cell.get() {
+                    Cell::Input(..) | Cell::IoBuf(..) | Cell::Dff(..) | Cell::Other(..) => false,
+                    Cell::Target(target_cell) => design.target_prototype(target_cell).purity == TargetCellPurity::Pure,
+                    _ => true,
+                }
+            } else {
+                false
+            }
+        }
+
+        fn get_deps(item: TopoSortItem) -> Vec<Net> {
+            let mut result = vec![];
+            match item {
+                TopoSortItem::Cell(cell) => {
+                    cell.visit(|net| {
+                        result.push(net);
+                    });
+                }
+                TopoSortItem::CellBit(cell, bit) => match &*cell.get() {
+                    Cell::Buf(val) | Cell::Not(val) => {
+                        result.push(val[bit]);
+                    }
+                    Cell::And(val1, val2) | Cell::Or(val1, val2) | Cell::Xor(val1, val2) => {
+                        result.push(val1[bit]);
+                        result.push(val2[bit]);
+                    }
+                    Cell::Mux(net, val1, val2) => {
+                        result.push(*net);
+                        result.push(val1[bit]);
+                        result.push(val2[bit]);
+                    }
+                    _ => unreachable!(),
+                },
+            }
+            let cell = match item {
+                TopoSortItem::Cell(cell) => cell,
+                TopoSortItem::CellBit(cell, _) => cell,
+            };
+            result.retain(|net| is_comb_edge(cell.design(), *net));
+            result
+        }
+
+        fn get_item_from_net(design: &Design, net: Net) -> Option<TopoSortItem<'_>> {
+            let Ok((cell, bit)) = design.find_cell(net) else {
+                return None;
+            };
+            if is_splittable(cell) { Some(TopoSortItem::CellBit(cell, bit)) } else { Some(TopoSortItem::Cell(cell)) }
+        }
+
+        struct StackEntry<'a> {
+            item: TopoSortItem<'a>,
+            deps: Vec<Net>,
+        }
+
+        let mut result = vec![];
+        let mut visited = BTreeSet::new();
+        for cell in self.iter_cells() {
+            let roots = if is_splittable(cell) {
+                Vec::from_iter((0..cell.output_len()).map(|bit| TopoSortItem::CellBit(cell, bit)))
+            } else {
+                vec![TopoSortItem::Cell(cell)]
+            };
+            for root in roots {
+                let mut stack = vec![StackEntry { item: root, deps: get_deps(root) }];
+                if visited.contains(&root) {
+                    continue;
+                }
+                visited.insert(root);
+                while let Some(top) = stack.last_mut() {
+                    if let Some(net) = top.deps.pop() {
+                        let Some(item) = get_item_from_net(self, net) else { continue };
+                        if visited.contains(&item) {
+                            continue;
+                        }
+                        visited.insert(item);
+                        stack.push(StackEntry { item, deps: get_deps(item) });
+                    } else {
+                        result.push(top.item);
+                        stack.pop();
+                    };
+                }
+            }
+        }
+        result
+    }
+
     pub fn iter_cells_topo(&self) -> impl DoubleEndedIterator<Item = CellRef<'_>> {
         fn get_deps(design: &Design, cell: CellRef) -> BTreeSet<usize> {
             let mut result = BTreeSet::new();
