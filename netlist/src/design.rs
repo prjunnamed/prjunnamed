@@ -23,6 +23,7 @@ pub struct Design {
     changes: RefCell<ChangeQueue>,
     metadata: RefCell<MetadataStore>,
     target: Option<Arc<dyn Target>>,
+    port_index: BTreeMap<String, usize>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -50,6 +51,7 @@ impl Design {
             changes: RefCell::new(ChangeQueue::default()),
             metadata: RefCell::new(MetadataStore::new()),
             target,
+            port_index: BTreeMap::new(),
         }
     }
 
@@ -147,13 +149,17 @@ impl Design {
         Value::from_cell_range(index, width)
     }
 
+    fn ref_cell(&self, index: usize) -> CellRef {
+        CellRef { design: self, index }
+    }
+
     #[inline]
     pub fn find_cell(&self, net: Net) -> Result<(CellRef<'_>, usize), Trit> {
         let index = net.as_cell_index()?;
         match self.cells[index].repr {
             CellRepr::Void => panic!("located a void cell %{index} in design"),
-            CellRepr::Skip(start) => Ok((CellRef { design: self, index: start as usize }, index - start as usize)),
-            _ => Ok((CellRef { design: self, index }, 0)),
+            CellRepr::Skip(start) => Ok((self.ref_cell(start as usize), index - start as usize)),
+            _ => Ok((self.ref_cell(index), 0)),
         }
     }
 
@@ -323,8 +329,22 @@ impl Design {
             let new_items_iter = new_items.into_iter().flat_map(|new_item| self.ref_metadata_item(new_item).iter());
             self.cells[cell_index].meta = MetaItemRef::from_iter(self, cell_meta_iter.chain(new_items_iter)).index();
         }
+
+        let mut update_indices = |index: usize, cell: &CellRepr, removal: bool| match &*cell.get() {
+            Cell::Output(name, _) | Cell::Input(name, _) => {
+                if removal {
+                    self.port_index.remove(name);
+                } else {
+                    self.port_index.insert(name.clone(), index);
+                }
+            }
+            _ => {}
+        };
+
         for cell_index in changes.unalived_cells {
-            let output_len = self.cells[cell_index].output_len().max(1);
+            let old_cell = &self.cells[cell_index];
+            update_indices(cell_index, &old_cell.repr, true);
+            let output_len = old_cell.output_len().max(1);
             for index in cell_index..cell_index + output_len {
                 self.cells[index] = CellRepr::Void.into();
             }
@@ -332,11 +352,19 @@ impl Design {
         }
         for (index, new_cell) in changes.replaced_cells {
             assert_eq!(self.cells[index].output_len(), new_cell.output_len());
+            let old_cell = &self.cells[index];
+            update_indices(index, &old_cell.repr, true);
+            update_indices(index, &new_cell.repr, false);
             self.cells[index] = new_cell;
             // CellRef::replace() ensures the new cell is different.
             did_change = true;
         }
         self.ios.extend(changes.added_ios);
+        for (offset, new_cell) in changes.added_cells.iter().enumerate() {
+            if !matches!(new_cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
+                update_indices(self.cells.len() + offset, &new_cell.repr, false);
+            }
+        }
         self.cells.extend(changes.added_cells);
         changes.cell_cache.clear();
         if !changes.replaced_nets.is_empty() {
@@ -365,6 +393,28 @@ impl Design {
             .expect("design has no target")
             .prototype(&target_cell.kind)
             .expect("target prototype not defined")
+    }
+
+    pub fn find_output(&self, name: &str) -> Option<CellRef> {
+        let index = *self.port_index.get(name)?;
+        match &*self.cells[index].repr.get() {
+            Cell::Output(x, _) if x == name => return Some(self.ref_cell(index)),
+            Cell::Input(x, _) if x == name => return None,
+            _ => {
+                panic!("stale port index");
+            }
+        }
+    }
+
+    pub fn find_input(&self, name: &str) -> Option<CellRef> {
+        let index = *self.port_index.get(name)?;
+        match &*self.cells[index].repr.get() {
+            Cell::Input(x, _) if x == name => return Some(self.ref_cell(index)),
+            Cell::Output(x, _) if x == name => return None,
+            _ => {
+                panic!("stale port index");
+            }
+        }
     }
 }
 
@@ -453,6 +503,14 @@ impl<'a> CellRef<'a> {
 
     pub fn visit(&self, f: impl FnMut(Net)) {
         self.design.cells[self.index].visit(f)
+    }
+
+    pub fn all_inputs(&self) -> Value {
+        let mut ret = Value::new();
+        self.visit(|net| {
+            ret.push(net);
+        });
+        ret
     }
 
     pub fn replace(&self, to_cell: Cell) {
@@ -739,11 +797,18 @@ impl Design {
         }
 
         let mut net_map = BTreeMap::new();
+        let mut port_index = BTreeMap::new();
         for (old_index, cell) in std::mem::take(&mut self.cells).into_iter().enumerate() {
             if keep.contains(&old_index) {
                 let new_index = self.cells.len();
                 for offset in 0..cell.output_len() {
                     net_map.insert(Net::from_cell_index(old_index + offset), Net::from_cell_index(new_index + offset));
+                }
+                match &*cell.get() {
+                    Cell::Input(name, _) | Cell::Output(name, _) => {
+                        port_index.insert(name.clone(), new_index);
+                    }
+                    _ => {}
                 }
                 let skip_count = cell.output_len().checked_sub(1).unwrap_or(0);
                 self.cells.push(cell);
@@ -760,6 +825,7 @@ impl Design {
                 }
             });
         }
+        self.port_index = port_index;
 
         for (name, (mut value, meta)) in debug {
             value.visit_mut(|net| {
