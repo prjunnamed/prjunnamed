@@ -133,6 +133,11 @@ impl Design {
         self.use_metadata(item)
     }
 
+    pub fn get_use_metadata(&self) -> MetaItemRef<'_> {
+        let changes = self.changes.borrow();
+        self.ref_metadata_item(changes.cell_metadata)
+    }
+
     pub fn add_cell(&self, cell: Cell) -> Value {
         let metadata = self.changes.borrow().cell_metadata;
         self.add_cell_with_metadata_index(cell, metadata)
@@ -155,6 +160,72 @@ impl Design {
             CellRepr::Skip(start) => Ok((CellRef { design: self, index: start as usize }, index - start as usize)),
             _ => Ok((CellRef { design: self, index }, 0)),
         }
+    }
+
+    pub fn map_net_new(&self, net: impl Into<Net>) -> Net {
+        let changes = self.changes.borrow();
+        let mut net = net.into();
+        while let Some(new_net) = changes.replaced_nets.get(&net) {
+            net = *new_net;
+        }
+        net
+    }
+
+    pub fn find_new_cell(&self, net: Net) -> Result<(Cow<'_, Cell>, MetaItemRef<'_>, usize), Trit> {
+        let net = self.map_net_new(net);
+        let index = net.as_cell_index()?;
+        let changes = self.changes.borrow();
+        let (mut cell, mut meta, index, bit) = if index < self.cells.len() {
+            let (index, bit) = match self.cells[index].repr {
+                CellRepr::Void => panic!("located a void cell %{index} in design"),
+                CellRepr::Skip(start) => (start as usize, index - start as usize),
+                _ => (index, 0),
+            };
+            (self.cells[index].get(), self.cells[index].meta, index, bit)
+        } else {
+            let (index, bit) = match changes.added_cells[index - self.cells.len()].repr {
+                CellRepr::Void => panic!("located a void cell %{index} in change queue"),
+                CellRepr::Skip(start) => (start as usize, index - start as usize),
+                _ => (index, 0),
+            };
+            let acell = &changes.added_cells[index - self.cells.len()];
+            (Cow::Owned(acell.get().into_owned()), acell.meta, index, bit)
+        };
+        if changes.unalived_cells.contains(&index) {
+            panic!("cell %{index} has been unalived");
+        }
+        if let Some(new_cell) = changes.replaced_cells.get(&index) {
+            cell = Cow::Owned(new_cell.get().into_owned());
+            meta = new_cell.meta;
+        }
+        let mut meta = self.ref_metadata_item(meta);
+        if let Some(extra_meta) = changes.appended_metadata.get(&index) {
+            meta = MetaItemRef::from_iter(
+                self,
+                meta.iter().chain(extra_meta.iter().flat_map(|&index| self.ref_metadata_item(index).iter())),
+            );
+        }
+        Ok((cell, meta, bit))
+    }
+
+    pub fn append_metadata_by_net(&self, net: Net, metadata: MetaItemRef<'_>) {
+        let net = self.map_net_new(net);
+        let Ok(index) = net.as_cell_index() else { return };
+        let mut changes = self.changes.borrow_mut();
+        let index = if index < self.cells.len() {
+            match self.cells[index].repr {
+                CellRepr::Void => panic!("located a void cell %{index} in design"),
+                CellRepr::Skip(start) => start as usize,
+                _ => index,
+            }
+        } else {
+            match changes.added_cells[index - self.cells.len()].repr {
+                CellRepr::Void => panic!("located a void cell %{index} in change queue"),
+                CellRepr::Skip(start) => start as usize,
+                _ => index,
+            }
+        };
+        changes.appended_metadata.entry(index).or_default().push(metadata.index())
     }
 
     pub fn iter_cells(&self) -> CellIter<'_> {
@@ -318,11 +389,8 @@ impl Design {
         self.changes.get_mut().next_io = changes.next_io;
 
         let mut did_change = !changes.added_ios.is_empty() || !changes.added_cells.is_empty();
-        for (cell_index, new_items) in changes.appended_metadata {
-            let cell_meta_iter = self.ref_metadata_item(self.cells[cell_index].meta).iter();
-            let new_items_iter = new_items.into_iter().flat_map(|new_item| self.ref_metadata_item(new_item).iter());
-            self.cells[cell_index].meta = MetaItemRef::from_iter(self, cell_meta_iter.chain(new_items_iter)).index();
-        }
+        self.ios.extend(changes.added_ios);
+        self.cells.extend(changes.added_cells);
         for cell_index in changes.unalived_cells {
             let output_len = self.cells[cell_index].output_len().max(1);
             for index in cell_index..cell_index + output_len {
@@ -336,8 +404,11 @@ impl Design {
             // CellRef::replace() ensures the new cell is different.
             did_change = true;
         }
-        self.ios.extend(changes.added_ios);
-        self.cells.extend(changes.added_cells);
+        for (cell_index, new_items) in changes.appended_metadata {
+            let cell_meta_iter = self.ref_metadata_item(self.cells[cell_index].meta).iter();
+            let new_items_iter = new_items.into_iter().flat_map(|new_item| self.ref_metadata_item(new_item).iter());
+            self.cells[cell_index].meta = MetaItemRef::from_iter(self, cell_meta_iter.chain(new_items_iter)).index();
+        }
         changes.cell_cache.clear();
         if !changes.replaced_nets.is_empty() {
             for cell in self.cells.iter_mut().filter(|cell| !matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void)) {
