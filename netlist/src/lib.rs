@@ -14,6 +14,7 @@ mod metadata;
 mod design;
 mod print;
 mod parse;
+mod rewrite;
 mod target;
 
 mod isomorphic;
@@ -34,6 +35,7 @@ pub use target::{
     Target, TargetParamKind, TargetParam, TargetInput, TargetOutput, TargetIo, TargetCellPurity, TargetPrototype,
     TargetCellImportError, TargetImportError, register_target, create_target,
 };
+pub use rewrite::{Rewriter, RewriteNetSource, RewriteRuleset, RewriteResult};
 
 pub use isomorphic::{isomorphic, NotIsomorphic};
 pub use smt::{SmtEngine, SmtResponse};
