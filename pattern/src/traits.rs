@@ -77,7 +77,7 @@ impl NetOrValue for Value {
 
 // Used to interpose accesses to the design in order to track which nets were examined.
 pub trait DesignDyn {
-    fn find_cell(&self, net: Net) -> Result<(CellRef, usize), Trit>;
+    fn find_cell(&self, net: Net) -> Result<(CellRef<'_>, usize), Trit>;
 
     fn inner(&self) -> &Design;
 }
