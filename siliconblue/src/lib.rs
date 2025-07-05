@@ -712,8 +712,14 @@ impl Target for SiliconBlueTarget {
         prjunnamed_generic::canonicalize(design);
         self.lower_memories(design);
         prjunnamed_generic::canonicalize(design);
-        prjunnamed_generic::lower_arith(design);
+        design.rewrite(&[&prjunnamed_generic::LowerLt, &prjunnamed_generic::LowerMul, &prjunnamed_generic::LowerShift]);
         prjunnamed_generic::canonicalize(design);
+        design.rewrite(&[
+            &prjunnamed_generic::Normalize,
+            &prjunnamed_generic::LowerEq,
+            &prjunnamed_generic::LowerMux,
+            &prjunnamed_generic::SimpleAigOpt,
+        ]);
         self.lower_ffs(design);
         self.lower_iobufs(design);
         prjunnamed_generic::canonicalize(design);
