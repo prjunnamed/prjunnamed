@@ -1,5 +1,6 @@
 use prjunnamed_netlist::Design;
 
+mod rewrite;
 mod unname;
 mod decision;
 mod simplify;
@@ -12,6 +13,9 @@ pub use unname::unname;
 pub use decision::decision;
 pub use lower_arith::lower_arith;
 pub use iobuf_insert::iobuf_insert;
+pub use rewrite::normalize::Normalize;
+pub use rewrite::aig::SimpleAigOpt;
+pub use rewrite::lower::{LowerMux, LowerEq, LowerLt, LowerMul, LowerShift};
 
 pub fn canonicalize(design: &mut Design) {
     for iter in 1.. {

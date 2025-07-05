@@ -1,4 +1,12 @@
-use std::{collections::BTreeMap, error::Error, fs::File, io::BufWriter, io::Write, process::{Command, Stdio}, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    error::Error,
+    fs::File,
+    io::BufWriter,
+    io::Write,
+    process::{Command, Stdio},
+    sync::Arc,
+};
 
 use prjunnamed_netlist::{Design, Target};
 
@@ -7,8 +15,18 @@ fn process(design: &mut Design) {
         None => {
             prjunnamed_generic::decision(design);
             prjunnamed_generic::canonicalize(design);
-            prjunnamed_generic::lower_arith(design);
+            design.rewrite(&[
+                &prjunnamed_generic::LowerLt,
+                &prjunnamed_generic::LowerMul,
+                &prjunnamed_generic::LowerShift,
+            ]);
             prjunnamed_generic::canonicalize(design);
+            design.rewrite(&[
+                &prjunnamed_generic::LowerEq,
+                &prjunnamed_generic::LowerMux,
+                &prjunnamed_generic::SimpleAigOpt,
+                &prjunnamed_generic::Normalize,
+            ]);
         }
         Some(ref target) => {
             prjunnamed_generic::unname(design);
@@ -66,11 +84,8 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
     }
 
     let output = || -> Result<_, Box<dyn Error>> {
-        let output: Box<dyn Write> = if name.is_empty() {
-            Box::new(std::io::stdout())
-        } else {
-            Box::new(File::create(&name)?)
-        };
+        let output: Box<dyn Write> =
+            if name.is_empty() { Box::new(std::io::stdout()) } else { Box::new(File::create(&name)?) };
 
         Ok(BufWriter::new(output))
     };
@@ -85,17 +100,9 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
             prjunnamed_graphviz::describe(&mut output()?, &design)?;
         }
         OutputType::GraphvizSvg => {
-            let output: Stdio = if name.is_empty() {
-                std::io::stdout().into()
-            } else {
-                File::create(&name)?.into()
-            };
+            let output: Stdio = if name.is_empty() { std::io::stdout().into() } else { File::create(&name)?.into() };
 
-            let mut dot = Command::new("dot")
-                .arg("-Tsvg")
-                .stdin(Stdio::piped())
-                .stdout(output)
-                .spawn()?;
+            let mut dot = Command::new("dot").arg("-Tsvg").stdin(Stdio::piped()).stdout(output).spawn()?;
 
             {
                 let mut stdin = BufWriter::new(dot.stdin.take().unwrap());
