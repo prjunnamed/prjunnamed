@@ -64,6 +64,10 @@ impl Net {
     pub fn visit_mut(&mut self, mut f: impl FnMut(&mut Net)) {
         f(self)
     }
+
+    pub fn repeat(self, count: usize) -> Value {
+        Value::from_iter(std::iter::repeat_n(self, count))
+    }
 }
 
 impl From<bool> for Net {
@@ -209,17 +213,17 @@ impl Value {
 
     /// Creates an all-`0` value of given width.
     pub fn zero(width: usize) -> Self {
-        Value::from_iter(std::iter::repeat_n(Net::ZERO, width))
+        Net::ZERO.repeat(width)
     }
 
     /// Creates an all-`1` value of given width.
     pub fn ones(width: usize) -> Self {
-        Value::from_iter(std::iter::repeat_n(Net::ONE, width))
+        Net::ONE.repeat(width)
     }
 
     /// Creates an all-`X` value of given width.
     pub fn undef(width: usize) -> Self {
-        Value::from_iter(std::iter::repeat_n(Net::UNDEF, width))
+        Net::UNDEF.repeat(width)
     }
 
     /// Creates a reference to `count` outputs of cell at position `cell_index` in their natural order.
