@@ -14,28 +14,30 @@
 <a href=#14 id=14 data-nosnippet>14</a><span class="kw">mod </span>design;
 <a href=#15 id=15 data-nosnippet>15</a><span class="kw">mod </span>print;
 <a href=#16 id=16 data-nosnippet>16</a><span class="kw">mod </span>parse;
-<a href=#17 id=17 data-nosnippet>17</a><span class="kw">mod </span>target;
-<a href=#18 id=18 data-nosnippet>18</a>
-<a href=#19 id=19 data-nosnippet>19</a><span class="kw">mod </span>isomorphic;
-<a href=#20 id=20 data-nosnippet>20</a><span class="kw">mod </span>smt;
-<a href=#21 id=21 data-nosnippet>21</a>
-<a href=#22 id=22 data-nosnippet>22</a><span class="kw">pub use </span>logic::{Trit, Const};
-<a href=#23 id=23 data-nosnippet>23</a><span class="kw">pub use </span>value::{Net, ControlNet, Value};
-<a href=#24 id=24 data-nosnippet>24</a><span class="kw">pub use </span>param::ParamValue;
-<a href=#25 id=25 data-nosnippet>25</a><span class="kw">pub use </span>io::{IoNet, IoValue};
-<a href=#26 id=26 data-nosnippet>26</a><span class="kw">pub use </span>cell::{
-<a href=#27 id=27 data-nosnippet>27</a>    Cell, MatchCell, AssignCell, FlipFlop, IoBuffer, Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop,
-<a href=#28 id=28 data-nosnippet>28</a>    MemoryPortRelation, TargetCell, Instance,
-<a href=#29 id=29 data-nosnippet>29</a>};
-<a href=#30 id=30 data-nosnippet>30</a><span class="kw">pub use </span>metadata::{MetaStringRef, MetaItem, MetaItemRef, SourcePosition};
-<a href=#31 id=31 data-nosnippet>31</a><span class="kw">pub use </span>design::{Design, CellRef, WithMetadataGuard};
-<a href=#32 id=32 data-nosnippet>32</a><span class="kw">pub use </span>parse::{parse, ParseError};
-<a href=#33 id=33 data-nosnippet>33</a><span class="kw">pub use </span>target::{
-<a href=#34 id=34 data-nosnippet>34</a>    Target, TargetParamKind, TargetParam, TargetInput, TargetOutput, TargetIo, TargetCellPurity, TargetPrototype,
-<a href=#35 id=35 data-nosnippet>35</a>    TargetCellImportError, TargetImportError, register_target, create_target,
-<a href=#36 id=36 data-nosnippet>36</a>};
-<a href=#37 id=37 data-nosnippet>37</a>
-<a href=#38 id=38 data-nosnippet>38</a><span class="kw">pub use </span>isomorphic::{isomorphic, NotIsomorphic};
-<a href=#39 id=39 data-nosnippet>39</a><span class="kw">pub use </span>smt::{SmtEngine, SmtResponse};
-<a href=#40 id=40 data-nosnippet>40</a><span class="attr">#[cfg(feature = <span class="string">"easy-smt"</span>)]
-<a href=#41 id=41 data-nosnippet>41</a></span><span class="kw">pub use </span>smt::easy_smt::EasySmtEngine;</code></pre></div></section></main></body></html>
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">mod </span>rewrite;
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">mod </span>target;
+<a href=#19 id=19 data-nosnippet>19</a>
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">mod </span>isomorphic;
+<a href=#21 id=21 data-nosnippet>21</a><span class="kw">mod </span>smt;
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">pub use </span>logic::{Trit, Const};
+<a href=#24 id=24 data-nosnippet>24</a><span class="kw">pub use </span>value::{Net, ControlNet, Value};
+<a href=#25 id=25 data-nosnippet>25</a><span class="kw">pub use </span>param::ParamValue;
+<a href=#26 id=26 data-nosnippet>26</a><span class="kw">pub use </span>io::{IoNet, IoValue};
+<a href=#27 id=27 data-nosnippet>27</a><span class="kw">pub use </span>cell::{
+<a href=#28 id=28 data-nosnippet>28</a>    Cell, MatchCell, AssignCell, FlipFlop, IoBuffer, Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop,
+<a href=#29 id=29 data-nosnippet>29</a>    MemoryPortRelation, TargetCell, Instance,
+<a href=#30 id=30 data-nosnippet>30</a>};
+<a href=#31 id=31 data-nosnippet>31</a><span class="kw">pub use </span>metadata::{MetaStringRef, MetaItem, MetaItemRef, SourcePosition};
+<a href=#32 id=32 data-nosnippet>32</a><span class="kw">pub use </span>design::{Design, CellRef, WithMetadataGuard};
+<a href=#33 id=33 data-nosnippet>33</a><span class="kw">pub use </span>parse::{parse, ParseError};
+<a href=#34 id=34 data-nosnippet>34</a><span class="kw">pub use </span>target::{
+<a href=#35 id=35 data-nosnippet>35</a>    Target, TargetParamKind, TargetParam, TargetInput, TargetOutput, TargetIo, TargetCellPurity, TargetPrototype,
+<a href=#36 id=36 data-nosnippet>36</a>    TargetCellImportError, TargetImportError, register_target, create_target,
+<a href=#37 id=37 data-nosnippet>37</a>};
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">pub use </span>rewrite::{Rewriter, RewriteNetSource, RewriteRuleset, RewriteResult};
+<a href=#39 id=39 data-nosnippet>39</a>
+<a href=#40 id=40 data-nosnippet>40</a><span class="kw">pub use </span>isomorphic::{isomorphic, NotIsomorphic};
+<a href=#41 id=41 data-nosnippet>41</a><span class="kw">pub use </span>smt::{SmtEngine, SmtResponse};
+<a href=#42 id=42 data-nosnippet>42</a><span class="attr">#[cfg(feature = <span class="string">"easy-smt"</span>)]
+<a href=#43 id=43 data-nosnippet>43</a></span><span class="kw">pub use </span>smt::easy_smt::EasySmtEngine;</code></pre></div></section></main></body></html>
