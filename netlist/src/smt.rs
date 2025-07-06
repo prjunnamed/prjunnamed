@@ -488,7 +488,17 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
                 };
                 self.tv_extract(value.len() - 1, 0, tv_result)
             }
-            Cell::Mul(..) => unimplemented!("lowering of mul to SMT-LIB is not implemented"),
+            Cell::Mul(a, b) => {
+                let (tv_a, tv_b) = (self.value(a)?, self.value(b)?);
+                SmtTritVec {
+                    x: self.engine.build_bitvec_ite(
+                        self.engine.build_and(&[self.bv_is_zero(tv_a.x, a.len()), self.bv_is_zero(tv_b.x, b.len())]),
+                        self.engine.build_bitvec_lit(&Const::zero(a.len())),
+                        self.engine.build_bitvec_lit(&Const::ones(a.len())),
+                    ),
+                    y: self.engine.build_bvmul(tv_a.y, tv_b.y),
+                }
+            }
             Cell::UDiv(..) => unimplemented!("lowering of udiv to SMT-LIB is not implemented"),
             Cell::UMod(..) => unimplemented!("lowering of umod to SMT-LIB is not implemented"),
             Cell::SDivTrunc(..) => unimplemented!("lowering of sdiv_trunc to SMT-LIB is not implemented"),
