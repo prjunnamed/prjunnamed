@@ -506,7 +506,7 @@
 <a href=#506 id=506 data-nosnippet>506</a>}
 <a href=#507 id=507 data-nosnippet>507</a>
 <a href=#508 id=508 data-nosnippet>508</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CellRef&lt;<span class="lifetime">'a</span>&gt; {
-<a href=#509 id=509 data-nosnippet>509</a>    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;<span class="lifetime">'_</span>, Cell&gt; {
+<a href=#509 id=509 data-nosnippet>509</a>    <span class="kw">pub fn </span>get(<span class="self">self</span>) -&gt; Cow&lt;<span class="lifetime">'a</span>, Cell&gt; {
 <a href=#510 id=510 data-nosnippet>510</a>        <span class="self">self</span>.design.cells[<span class="self">self</span>.index].get()
 <a href=#511 id=511 data-nosnippet>511</a>    }
 <a href=#512 id=512 data-nosnippet>512</a>
