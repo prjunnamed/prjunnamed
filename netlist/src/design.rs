@@ -506,7 +506,7 @@ impl Hash for CellRef<'_> {
 }
 
 impl<'a> CellRef<'a> {
-    pub fn get(&self) -> Cow<'_, Cell> {
+    pub fn get(self) -> Cow<'a, Cell> {
         self.design.cells[self.index].get()
     }
 
