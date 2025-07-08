@@ -59,7 +59,7 @@ use prjunnamed_netlist::{
 /// be transformed into a fragment containing only Aig, single-bit Xor, and single-bit Not cells, with the single-bit
 /// Not cells only present when required by non-Aig non-Xor cell inputs.
 ///
-/// The optimizations performed here are mostly borrowed from https://fmv.jku.at/papers/BrummayerBiere-MEMICS06.pdf
+/// The optimizations performed here are mostly borrowed from <https://fmv.jku.at/papers/BrummayerBiere-MEMICS06.pdf>
 /// and have an important property described in the paper: they will never create more than one new cell (Not cells
 /// don't count), and they will not increase the logic level. Thus, they can never make the netlist "worse".
 pub struct SimpleAigOpt;
