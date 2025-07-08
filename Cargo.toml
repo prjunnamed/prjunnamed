@@ -34,3 +34,4 @@ version = "0.1.0"
 license = "0BSD OR Apache-2.0"
 repository = "https://github.com/prjunnamed/prjunnamed"
 authors = []
+rust-version = "1.88"
