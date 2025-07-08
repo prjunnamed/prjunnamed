@@ -59,7 +59,7 @@
 <a href=#59 id=59 data-nosnippet>59</a>/// be transformed into a fragment containing only Aig, single-bit Xor, and single-bit Not cells, with the single-bit
 <a href=#60 id=60 data-nosnippet>60</a>/// Not cells only present when required by non-Aig non-Xor cell inputs.
 <a href=#61 id=61 data-nosnippet>61</a>///
-<a href=#62 id=62 data-nosnippet>62</a>/// The optimizations performed here are mostly borrowed from https://fmv.jku.at/papers/BrummayerBiere-MEMICS06.pdf
+<a href=#62 id=62 data-nosnippet>62</a>/// The optimizations performed here are mostly borrowed from &lt;https://fmv.jku.at/papers/BrummayerBiere-MEMICS06.pdf&gt;
 <a href=#63 id=63 data-nosnippet>63</a>/// and have an important property described in the paper: they will never create more than one new cell (Not cells
 <a href=#64 id=64 data-nosnippet>64</a>/// don't count), and they will not increase the logic level. Thus, they can never make the netlist "worse".
 <a href=#65 id=65 data-nosnippet>65</a></span><span class="kw">pub struct </span>SimpleAigOpt;
