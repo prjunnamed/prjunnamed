@@ -707,6 +707,15 @@ impl From<Net> for ControlNet {
     }
 }
 
+impl Display for ControlNet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ControlNet::Pos(net) => write!(f, "{net}"),
+            ControlNet::Neg(net) => write!(f, "!{net}"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{Net, Trit, Value};
