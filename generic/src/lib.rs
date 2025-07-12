@@ -8,14 +8,18 @@ mod merge;
 mod split;
 mod lower_arith;
 mod iobuf_insert;
+mod chain_rebalance;
+mod analysis;
 
 pub use unname::unname;
 pub use decision::decision;
 pub use lower_arith::lower_arith;
 pub use iobuf_insert::iobuf_insert;
+pub use analysis::level::LevelAnalysis;
 pub use rewrite::normalize::Normalize;
 pub use rewrite::aig::SimpleAigOpt;
 pub use rewrite::lower::{LowerMux, LowerEq, LowerLt, LowerMul, LowerShift};
+pub use chain_rebalance::chain_rebalance;
 
 pub fn canonicalize(design: &mut Design) {
     for iter in 1.. {

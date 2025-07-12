@@ -3,7 +3,13 @@ use prjunnamed_netlist::{Cell, MetaItemRef, Net, RewriteResult, RewriteRuleset, 
 pub struct LowerMux;
 
 impl RewriteRuleset for LowerMux {
-    fn rewrite<'a>(&self, cell: &Cell, _meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a> {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        _meta: MetaItemRef<'a>,
+        _output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
         let &Cell::Mux(sel, ref val1, ref val2) = cell else {
             return RewriteResult::None;
         };
@@ -18,33 +24,36 @@ impl RewriteRuleset for LowerMux {
 pub struct LowerEq;
 
 impl RewriteRuleset for LowerEq {
-    fn rewrite<'a>(&self, cell: &Cell, _meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a> {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        _meta: MetaItemRef<'a>,
+        _output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
         let &Cell::Eq(ref val1, ref val2) = cell else {
             return RewriteResult::None;
         };
-        if val1.is_empty() {
-            Net::ONE.into()
-        } else {
-            let xor = rewriter.add_cell(Cell::Xor(val1.clone(), val2.clone()));
-            let mut diff = Vec::from_iter(xor);
-            while diff.len() > 1 {
-                for chunk in std::mem::take(&mut diff).chunks(2) {
-                    match chunk {
-                        &[net_a, net_b] => diff.push(rewriter.add_cell(Cell::Or(net_a.into(), net_b.into()))[0]),
-                        &[net] => diff.push(net),
-                        _ => unreachable!(),
-                    }
-                }
-            }
-            Cell::Not(diff[0].into()).into()
+        let xor = rewriter.add_cell(Cell::Xor(val1.clone(), val2.clone()));
+        let xnor = rewriter.add_cell(Cell::Not(xor));
+        let mut eq = Net::ONE;
+        for bit in xnor {
+            eq = rewriter.add_cell(Cell::And(eq.into(), bit.into()))[0];
         }
+        eq.into()
     }
 }
 
 pub struct LowerLt;
 
 impl RewriteRuleset for LowerLt {
-    fn rewrite<'a>(&self, cell: &Cell, _meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a> {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        _meta: MetaItemRef<'a>,
+        _output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
         match cell {
             Cell::ULt(a, b) => {
                 let b_inv = rewriter.add_cell(Cell::Not(b.clone()));
@@ -65,7 +74,13 @@ impl RewriteRuleset for LowerLt {
 pub struct LowerMul;
 
 impl RewriteRuleset for LowerMul {
-    fn rewrite<'a>(&self, cell: &Cell, _meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a> {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        _meta: MetaItemRef<'a>,
+        _output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
         let &Cell::Mul(ref a, ref b) = cell else {
             return RewriteResult::None;
         };
@@ -86,7 +101,13 @@ impl RewriteRuleset for LowerMul {
 pub struct LowerShift;
 
 impl RewriteRuleset for LowerShift {
-    fn rewrite<'a>(&self, cell: &Cell, _meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a> {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        _meta: MetaItemRef<'a>,
+        _output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
         enum Mode {
             Shl,
             UShr,
