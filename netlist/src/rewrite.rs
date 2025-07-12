@@ -47,7 +47,22 @@ pub enum RewriteNetSource<'a> {
 }
 
 pub trait RewriteRuleset {
-    fn rewrite<'a>(&self, cell: &Cell, meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a>;
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        meta: MetaItemRef<'a>,
+        output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
+        let _ = (cell, meta, output, rewriter);
+        RewriteResult::None
+    }
+    fn cell_added(&self, design: &Design, cell: &Cell, output: &Value) {
+        let _ = (design, cell, output);
+    }
+    fn net_replaced(&self, design: &Design, from: Net, to: Net) {
+        let _ = (design, from, to);
+    }
 }
 
 pub struct Rewriter<'a> {
@@ -68,7 +83,7 @@ impl<'a> Rewriter<'a> {
         }
     }
 
-    fn process_cell(&self, cell: &Cell, meta: MetaItemRef<'a>) -> RewriteResult<'a> {
+    fn process_cell(&self, cell: &Cell, meta: MetaItemRef<'a>, output: Option<&Value>) -> RewriteResult<'a> {
         let mut replacement_cell = None;
         let mut replacement_meta = None;
         'outer: loop {
@@ -76,7 +91,7 @@ impl<'a> Rewriter<'a> {
                 let cur_cell = replacement_cell.as_ref().unwrap_or(cell);
                 let cur_meta = replacement_meta.unwrap_or(meta);
                 let _guard = self.design.use_metadata(cur_meta);
-                match rule.rewrite(cur_cell, cur_meta, self) {
+                match rule.rewrite(cur_cell, cur_meta, output, self) {
                     RewriteResult::None => (),
                     RewriteResult::Cell(new_cell) => {
                         replacement_cell = Some(new_cell);
@@ -85,7 +100,6 @@ impl<'a> Rewriter<'a> {
                     RewriteResult::CellMeta(new_cell, new_meta) => {
                         replacement_cell = Some(new_cell);
                         replacement_meta = Some(new_meta);
-                        // TODO: should store meta on rewriter or pass to rules or something?
                         continue 'outer;
                     }
                     RewriteResult::Value(value) => {
@@ -114,13 +128,20 @@ impl<'a> Rewriter<'a> {
     }
 
     pub fn add_cell_meta(&self, cell: Cell, meta: MetaItemRef<'_>) -> Value {
-        let (cell, meta) = match self.process_cell(&cell, meta) {
+        self.add_cell_meta_output(cell, meta, None)
+    }
+
+    fn add_cell_meta_output(&self, cell: Cell, meta: MetaItemRef<'_>, output: Option<&Value>) -> Value {
+        let (cell, meta) = match self.process_cell(&cell, meta, output) {
             RewriteResult::None => (cell, meta),
             RewriteResult::Cell(new_cell) => (new_cell, meta),
             RewriteResult::CellMeta(new_cell, new_meta) => (new_cell, new_meta),
             RewriteResult::Value(value) => return value,
         };
         let value = self.design.add_cell_with_metadata_ref(cell.clone(), meta);
+        for &rule in self.rules {
+            rule.cell_added(self.design, &cell, &value);
+        }
         for net in &value {
             self.processed.borrow_mut().insert(net);
         }
@@ -138,8 +159,11 @@ impl<'a> Rewriter<'a> {
                     let output = cell_ref.output();
                     let mut cell = cell_ref.get().into_owned();
                     cell.visit_mut(|net| *net = self.design.map_net_new(*net));
-                    match self.process_cell(&cell, cell_ref.metadata()) {
+                    match self.process_cell(&cell, cell_ref.metadata(), Some(&output)) {
                         RewriteResult::None => {
+                            for &rule in self.rules {
+                                rule.cell_added(self.design, &cell, &output);
+                            }
                             if !cell.has_effects(self.design) {
                                 self.cache.borrow_mut().insert(cell, output.clone());
                             }
@@ -149,6 +173,9 @@ impl<'a> Rewriter<'a> {
                         }
                         RewriteResult::Cell(new_cell) => {
                             cell_ref.replace(new_cell.clone());
+                            for &rule in self.rules {
+                                rule.cell_added(self.design, &new_cell, &output);
+                            }
                             if !new_cell.has_effects(self.design) {
                                 self.cache.borrow_mut().insert(new_cell, output.clone());
                             }
@@ -158,6 +185,9 @@ impl<'a> Rewriter<'a> {
                         }
                         RewriteResult::CellMeta(new_cell, new_meta) => {
                             cell_ref.replace(new_cell.clone());
+                            for &rule in self.rules {
+                                rule.cell_added(self.design, &new_cell, &output);
+                            }
                             cell_ref.append_metadata(new_meta);
                             if !new_cell.has_effects(self.design) {
                                 self.cache.borrow_mut().insert(new_cell, output.clone());
@@ -170,6 +200,9 @@ impl<'a> Rewriter<'a> {
                             assert_eq!(value.len(), output.len());
                             for (net, new_net) in output.iter().zip(value) {
                                 self.design.replace_net(net, new_net);
+                                for &rule in self.rules {
+                                    rule.net_replaced(self.design, net, new_net);
+                                }
                                 self.processed.borrow_mut().insert(net);
                             }
                             cell_ref.unalive();
@@ -179,9 +212,13 @@ impl<'a> Rewriter<'a> {
                 TopoSortItem::CellBit(cell, bit) => {
                     let mut slice = cell.get().slice(bit..bit + 1).unwrap();
                     slice.visit_mut(|net| *net = self.design.map_net_new(*net));
-                    let new_value = self.add_cell_meta(slice, cell.metadata());
                     let net = cell.output()[bit];
-                    self.design.replace_net(net, new_value[0]);
+                    let new_value = self.add_cell_meta_output(slice, cell.metadata(), Some(&net.into()));
+                    let new_net = new_value[0];
+                    self.design.replace_net(net, new_net);
+                    for &rule in self.rules {
+                        rule.net_replaced(self.design, net, new_net);
+                    }
                     self.processed.borrow_mut().insert(net);
                 }
             }

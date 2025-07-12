@@ -467,9 +467,21 @@ impl Cell {
     pub fn has_effects(&self, design: &Design) -> bool {
         match self {
             Cell::IoBuf(_) | Cell::Other(_) | Cell::Input(..) | Cell::Output(..) | Cell::Name(..) => true,
-
             Cell::Target(target_cell) => design.target_prototype(&target_cell).purity == TargetCellPurity::HasEffects,
+            _ => false,
+        }
+    }
 
+    pub fn has_state(&self, design: &Design) -> bool {
+        match self {
+            Cell::IoBuf(_)
+            | Cell::Other(_)
+            | Cell::Input(..)
+            | Cell::Output(..)
+            | Cell::Name(..)
+            | Cell::Memory(..)
+            | Cell::Dff(..) => true,
+            Cell::Target(target_cell) => design.target_prototype(&target_cell).purity != TargetCellPurity::Pure,
             _ => false,
         }
     }

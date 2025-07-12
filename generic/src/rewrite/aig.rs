@@ -65,7 +65,13 @@ use prjunnamed_netlist::{
 pub struct SimpleAigOpt;
 
 impl RewriteRuleset for SimpleAigOpt {
-    fn rewrite<'a>(&self, cell: &Cell, meta: MetaItemRef<'a>, rewriter: &Rewriter<'a>) -> RewriteResult<'a> {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        meta: MetaItemRef<'a>,
+        _output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
         match *cell {
             Cell::Not(ref val) if val.len() == 1 => {
                 let net = val[0];

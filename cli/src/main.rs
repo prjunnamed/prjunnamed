@@ -8,6 +8,7 @@ use std::{
     sync::Arc,
 };
 
+use prjunnamed_generic::chain_rebalance;
 use prjunnamed_netlist::{Design, Target};
 
 fn process(design: &mut Design) {
@@ -27,6 +28,7 @@ fn process(design: &mut Design) {
                 &prjunnamed_generic::SimpleAigOpt,
                 &prjunnamed_generic::Normalize,
             ]);
+            chain_rebalance(design);
         }
         Some(ref target) => {
             prjunnamed_generic::unname(design);
