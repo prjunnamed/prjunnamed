@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["canonicalize","decision","iobuf_insert","lower_arith","unname"],"struct":["LowerEq","LowerLt","LowerMul","LowerMux","LowerShift","Normalize","SimpleAigOpt"]};
+window.SIDEBAR_ITEMS = {"fn":["canonicalize","chain_rebalance","decision","iobuf_insert","lower_arith","unname"],"struct":["LevelAnalysis","LowerEq","LowerLt","LowerMul","LowerMux","LowerShift","Normalize","SimpleAigOpt"]};
