@@ -9,6 +9,7 @@ mod split;
 mod lower_arith;
 mod iobuf_insert;
 mod chain_rebalance;
+mod tree_rebalance;
 mod analysis;
 
 pub use unname::unname;
@@ -20,6 +21,7 @@ pub use rewrite::normalize::Normalize;
 pub use rewrite::aig::SimpleAigOpt;
 pub use rewrite::lower::{LowerMux, LowerEq, LowerLt, LowerMul, LowerShift};
 pub use chain_rebalance::chain_rebalance;
+pub use tree_rebalance::tree_rebalance;
 
 pub fn canonicalize(design: &mut Design) {
     for iter in 1.. {

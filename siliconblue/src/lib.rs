@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use prjunnamed_generic::chain_rebalance;
+use prjunnamed_generic::{chain_rebalance, tree_rebalance};
 use prjunnamed_netlist::{
     Cell, Const, Design, Instance, MetaItemRef, Net, ParamValue, Target, TargetCell, TargetImportError,
     TargetPrototype, Trit, Value,
@@ -725,6 +725,7 @@ impl Target for SiliconBlueTarget {
         self.lower_iobufs(design);
         chain_rebalance(design);
         prjunnamed_generic::canonicalize(design);
+        tree_rebalance(design);
         self.lower_luts(design);
         prjunnamed_generic::canonicalize(design);
         Ok(())
