@@ -110,7 +110,7 @@ impl<'a> Rewriter<'a> {
             break;
         }
         let cell = replacement_cell.as_ref().unwrap_or(cell);
-        if let Some(value) = self.cache.borrow().get(&cell) {
+        if let Some(value) = self.cache.borrow().get(cell) {
             let meta = replacement_meta.unwrap_or(meta);
             self.design.append_metadata_by_net(value[0], meta);
             RewriteResult::Value(value.clone())

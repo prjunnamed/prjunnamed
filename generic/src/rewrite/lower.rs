@@ -17,7 +17,7 @@ impl RewriteRuleset for LowerMux {
         let nsel = rewriter.add_cell(Cell::Not(sel.clone()));
         let term1 = rewriter.add_cell(Cell::And(sel, val1.clone()));
         let term2 = rewriter.add_cell(Cell::And(nsel, val2.clone()));
-        return Cell::Or(term1, term2).into();
+        Cell::Or(term1, term2).into()
     }
 }
 
@@ -31,7 +31,7 @@ impl RewriteRuleset for LowerEq {
         _output: Option<&Value>,
         rewriter: &Rewriter<'a>,
     ) -> RewriteResult<'a> {
-        let &Cell::Eq(ref val1, ref val2) = cell else {
+        let Cell::Eq(val1, val2) = cell else {
             return RewriteResult::None;
         };
         let xor = rewriter.add_cell(Cell::Xor(val1.clone(), val2.clone()));
@@ -81,7 +81,7 @@ impl RewriteRuleset for LowerMul {
         _output: Option<&Value>,
         rewriter: &Rewriter<'a>,
     ) -> RewriteResult<'a> {
-        let &Cell::Mul(ref a, ref b) = cell else {
+        let Cell::Mul(a, b) = cell else {
             return RewriteResult::None;
         };
         let mut value = Value::zero(a.len());
@@ -115,10 +115,10 @@ impl RewriteRuleset for LowerShift {
             XShr,
         }
         let (value, amount, stride, mode, overflow) = match cell {
-            &Cell::Shl(ref a, ref b, stride) => (a, b, stride, Mode::Shl, Value::zero(a.len())),
-            &Cell::UShr(ref a, ref b, stride) => (a, b, stride, Mode::UShr, Value::zero(a.len())),
-            &Cell::SShr(ref a, ref b, stride) => (a, b, stride, Mode::SShr, a.msb().repeat(a.len())),
-            &Cell::XShr(ref a, ref b, stride) => (a, b, stride, Mode::XShr, Value::undef(a.len())),
+            Cell::Shl(a, b, stride) => (a, b, *stride, Mode::Shl, Value::zero(a.len())),
+            Cell::UShr(a, b, stride) => (a, b, *stride, Mode::UShr, Value::zero(a.len())),
+            Cell::SShr(a, b, stride) => (a, b, *stride, Mode::SShr, a.msb().repeat(a.len())),
+            Cell::XShr(a, b, stride) => (a, b, *stride, Mode::XShr, Value::undef(a.len())),
             _ => return RewriteResult::None,
         };
         let mut stride = stride as usize;

@@ -245,7 +245,7 @@ impl Const {
     }
 
     pub fn has_undef(&self) -> bool {
-        self.trits.iter().any(|&trit| trit == Trit::Undef)
+        self.trits.contains(&Trit::Undef)
     }
 
     pub fn as_power_of_two(&self) -> Option<u32> {
@@ -408,7 +408,7 @@ impl Debug for Const {
             if index != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{:?}", trit)?;
+            write!(f, "{trit:?}")?;
         }
         write!(f, "])")?;
         Ok(())
@@ -418,7 +418,7 @@ impl Debug for Const {
 impl Display for Const {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         for trit in self.trits.iter().rev() {
-            write!(f, "{}", trit)?;
+            write!(f, "{trit}")?;
         }
         Ok(())
     }

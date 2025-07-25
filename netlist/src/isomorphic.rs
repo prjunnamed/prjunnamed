@@ -18,17 +18,17 @@ pub enum NotIsomorphic {
 impl Display for NotIsomorphic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NotIsomorphic::NoOutputLeft(name) => write!(f, "output {:?} is missing in the left design", name),
-            NotIsomorphic::NoOutputRight(name) => write!(f, "output {:?} is missing in the right design", name),
-            NotIsomorphic::OutputSizeMismatch(name) => write!(f, "size of output {:?} does not match", name),
-            NotIsomorphic::IoSizeMismatch(name) => write!(f, "size of IO {:?} does not match", name),
-            NotIsomorphic::NameSizeMismatch(name) => write!(f, "size of name cell {:?} does not match", name),
+            NotIsomorphic::NoOutputLeft(name) => write!(f, "output {name:?} is missing in the left design"),
+            NotIsomorphic::NoOutputRight(name) => write!(f, "output {name:?} is missing in the right design"),
+            NotIsomorphic::OutputSizeMismatch(name) => write!(f, "size of output {name:?} does not match"),
+            NotIsomorphic::IoSizeMismatch(name) => write!(f, "size of IO {name:?} does not match"),
+            NotIsomorphic::NameSizeMismatch(name) => write!(f, "size of name cell {name:?} does not match"),
             NotIsomorphic::ValueSizeMismatch(value_l, value_r) => {
-                write!(f, "size of values {} and {} do not match", value_l, value_r)
+                write!(f, "size of values {value_l} and {value_r} do not match")
             }
-            NotIsomorphic::NetMismatch(net_l, net_r) => write!(f, "nets {} and {} are not isomorphic", net_l, net_r),
+            NotIsomorphic::NetMismatch(net_l, net_r) => write!(f, "nets {net_l} and {net_r} are not isomorphic"),
             NotIsomorphic::IoNetMismatch(io_net_l, io_net_r) => {
-                write!(f, "IO nets {} and {} are not isomorphic", io_net_l, io_net_r)
+                write!(f, "IO nets {io_net_l} and {io_net_r} are not isomorphic")
             }
         }
     }

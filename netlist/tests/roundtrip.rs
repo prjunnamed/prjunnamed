@@ -9,7 +9,7 @@ fn onewaytrip(text: &str, expect: &str) {
         Ok(design) => design,
         Err(error) => panic!("{}", error),
     };
-    assert_eq!(format!("{:#}", design), format!("{}", expect))
+    assert_eq!(format!("{design:#}"), format!("{}", expect))
 }
 
 #[track_caller]

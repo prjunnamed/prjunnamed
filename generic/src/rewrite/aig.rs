@@ -205,7 +205,7 @@ impl RewriteRuleset for SimpleAigOpt {
                                             let xor = rewriter.add_cell_meta(xor, xor_meta);
                                             return Cell::Not(xor).into();
                                         } else {
-                                            return RewriteResult::CellMeta(xor.into(), xor_meta);
+                                            return RewriteResult::CellMeta(xor, xor_meta);
                                         }
                                     }
                                 }

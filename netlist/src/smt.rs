@@ -97,7 +97,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
     }
 
     fn bv_lit<'b>(&self, value: impl Into<Cow<'b, Const>>) -> SMT::BitVec {
-        self.engine.build_bitvec_lit(&*value.into())
+        self.engine.build_bitvec_lit(&value.into())
     }
 
     fn bv_const(&self, prefix: &str, index: usize, suffix: &str, width: usize) -> Result<SMT::BitVec, SMT::Error> {
@@ -297,7 +297,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
     }
 
     fn curr_value(&self, value: &Value) -> Result<SmtTritVec<SMT>, SMT::Error> {
-        Ok(self.tv_concat(value.iter().map(|net| self.curr_net(net)).collect::<Result<Vec<_>, _>>()?.into_iter()))
+        Ok(self.tv_concat(value.iter().map(|net| self.curr_net(net)).collect::<Result<Vec<_>, _>>()?))
     }
 
     fn past_net(&self, net: Net) -> Result<SmtTritVec<SMT>, SMT::Error> {
@@ -312,7 +312,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
     }
 
     fn past_value(&self, value: &Value) -> Result<SmtTritVec<SMT>, SMT::Error> {
-        Ok(self.tv_concat(value.iter().map(|net| self.past_net(net)).collect::<Result<Vec<_>, _>>()?.into_iter()))
+        Ok(self.tv_concat(value.iter().map(|net| self.past_net(net)).collect::<Result<Vec<_>, _>>()?))
     }
 
     fn net(&self, net: Net) -> Result<SmtTritVec<SMT>, SMT::Error> {
@@ -328,7 +328,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
     }
 
     fn value(&self, value: &Value) -> Result<SmtTritVec<SMT>, SMT::Error> {
-        Ok(self.tv_concat(value.iter().map(|net| self.net(net)).collect::<Result<Vec<_>, _>>()?.into_iter()))
+        Ok(self.tv_concat(value.iter().map(|net| self.net(net)).collect::<Result<Vec<_>, _>>()?))
     }
 
     fn invert_net(&self, control_net: ControlNet, tv_net: SmtTritVec<SMT>) -> Result<SmtTritVec<SMT>, SMT::Error> {
@@ -359,7 +359,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
             Ok((width, tv_value_ext, tv_amount_ext, bv_amount_mul))
         };
 
-        let bv_cell = match &*cell {
+        let bv_cell = match cell {
             Cell::Buf(a) => self.value(a)?,
             Cell::Not(a) => self.tv_not(self.value(a)?),
             Cell::And(a, b) => self.tv_and(self.value(a)?, self.value(b)?, output.len())?,
@@ -521,12 +521,12 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
                 }
                 let tv_matches = self.tv_bind(self.tv_concat(tv_matches), patterns.len())?;
                 let tv_enable = self.net(*enable)?;
-                let tv_all_cold = self.tv_lit(&Const::zero(patterns.len()));
+                let tv_all_cold = self.tv_lit(Const::zero(patterns.len()));
                 let mut tv_result = tv_all_cold.clone();
                 for index in (0..patterns.len()).rev() {
                     tv_result = self.tv_mux(
                         self.tv_extract(index, index, tv_matches.clone()),
-                        self.tv_lit(&Const::one_hot(patterns.len(), index)),
+                        self.tv_lit(Const::one_hot(patterns.len(), index)),
                         tv_result,
                         patterns.len(),
                     )?;
@@ -549,14 +549,14 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
                 let reset = self.control_net(flip_flop.reset)?;
                 let enable = self.control_net(flip_flop.enable)?;
                 if flip_flop.reset_over_enable {
-                    data = self.tv_mux(enable, data, self.past_value(&output)?, output.len())?;
+                    data = self.tv_mux(enable, data, self.past_value(output)?, output.len())?;
                     data = self.tv_mux(reset, self.tv_lit(&flip_flop.reset_value), data, output.len())?;
                 } else {
                     data = self.tv_mux(reset, self.tv_lit(&flip_flop.reset_value), data, output.len())?;
-                    data = self.tv_mux(enable, data, self.past_value(&output)?, output.len())?;
+                    data = self.tv_mux(enable, data, self.past_value(output)?, output.len())?;
                 }
                 let active_edge = self.clock_net(flip_flop.clock)?;
-                let value = self.tv_mux(active_edge, data, self.past_value(&output)?, output.len())?;
+                let value = self.tv_mux(active_edge, data, self.past_value(output)?, output.len())?;
                 if flip_flop.has_clear() {
                     self.tv_mux(clear, self.tv_lit(&flip_flop.clear_value), value, output.len())?
                 } else {

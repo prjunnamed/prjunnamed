@@ -147,7 +147,7 @@ impl<P: Pattern<Net>> Pattern<Net> for PDff<P> {
                     init_value: flip_flop.init_value[offset].into(),
                     ..*flip_flop
                 };
-                return self.0.execute(design, &flip_flop.data[0]).and_then(|capture| Some((flip_flop, capture)));
+                return self.0.execute(design, &flip_flop.data[0]).map(|capture| (flip_flop, capture));
             }
         }
         None
@@ -188,7 +188,7 @@ impl<P: Pattern<Value>> Pattern<Value> for PDff<P> {
             }
         }
         target_flip_flop.and_then(|target_flip_flop| {
-            self.0.execute(design, &target_flip_flop.data).and_then(|capture| Some((target_flip_flop, capture)))
+            self.0.execute(design, &target_flip_flop.data).map(|capture| (target_flip_flop, capture))
         })
     }
 }

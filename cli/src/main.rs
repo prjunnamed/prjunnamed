@@ -120,7 +120,7 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
 
     eprintln!("cell counts:");
     for (class, amount) in statistics {
-        eprintln!("{:>7} {}", amount, class);
+        eprintln!("{amount:>7} {class}");
     }
 
     Ok(())
@@ -165,7 +165,7 @@ fn main() {
     env_logger::init();
     prjunnamed_siliconblue::register();
     if let Err(error) = run() {
-        eprintln!("error: {}", error);
+        eprintln!("error: {error}");
         std::process::exit(1)
     }
 }

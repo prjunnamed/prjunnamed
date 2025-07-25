@@ -404,7 +404,7 @@ impl Debug for Value {
             if index != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{:?}", net)?;
+            write!(f, "{net:?}")?;
         }
         write!(f, "])")?;
         Ok(())
@@ -420,7 +420,7 @@ impl Display for Value {
         } else {
             write!(f, "[")?;
             for net in self.iter().rev() {
-                write!(f, " {}", net)?;
+                write!(f, " {net}")?;
             }
             write!(f, " ]")
         }
@@ -557,7 +557,7 @@ impl<'a> IntoIterator for &'a Value {
     type IntoIter = std::iter::Cloned<std::slice::Iter<'a, Net>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.as_slice().into_iter().cloned()
+        self.0.as_slice().iter().cloned()
     }
 }
 

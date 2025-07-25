@@ -48,12 +48,12 @@ impl From<yosys::MetadataTypeError> for Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::Io(error) => write!(f, "I/O error: {}", error),
-            Error::Json(error) => write!(f, "JSON parse error: {}", error),
-            Error::Syntax(error) => write!(f, "{}", error),
-            Error::MetaDataType(error) => write!(f, "{}", error),
+            Error::Io(error) => write!(f, "I/O error: {error}"),
+            Error::Json(error) => write!(f, "JSON parse error: {error}"),
+            Error::Syntax(error) => write!(f, "{error}"),
+            Error::MetaDataType(error) => write!(f, "{error}"),
             Error::Semantic => write!(f, "semantic error"),
-            Error::Unsupported(feature) => write!(f, "unsupported feature: {}", feature),
+            Error::Unsupported(feature) => write!(f, "unsupported feature: {feature}"),
         }
     }
 }
@@ -299,7 +299,7 @@ impl ModuleImporter<'_> {
     }
 
     fn handle_cell(&mut self, cell: &yosys::CellDetails) -> Result<(), Error> {
-        let _guard = ModuleImporter::use_attribute_metadata(&self.design, &cell.attributes);
+        let _guard = ModuleImporter::use_attribute_metadata(self.design, &cell.attributes);
 
         match &cell.type_[..] {
             "$not" | "$pos" | "$neg" => {
@@ -704,7 +704,7 @@ impl ModuleImporter<'_> {
                 return Err(Error::Unsupported(format!(
                     "{} cell; run the Yosys `memory_collect` pass before writing JSON",
                     cell.type_
-                )))
+                )));
             }
             _ => {
                 if cell.type_.starts_with('$') {
@@ -825,7 +825,7 @@ fn index_io_ports(design: &yosys::Design) -> Result<BTreeSet<(&str, &str)>, Erro
             }
             let Some(net_details) = module.netnames.get(port_name) else { continue };
             if let Some(val) = net_details.attributes.get("iopad_external_pin") {
-                if val.as_bool()? == true {
+                if val.as_bool()? {
                     io_ports.insert((mod_name, port_name));
                 }
             }

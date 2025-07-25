@@ -324,7 +324,7 @@ impl<'a> MetaItemRef<'a> {
 
     pub fn from_iter(design: &'a Design, iter: impl IntoIterator<Item = MetaItemRef<'a>>) -> Self {
         let items = BTreeSet::from_iter(iter);
-        if items.len() == 0 {
+        if items.is_empty() {
             MetaItemRef { design, index: MetaItemIndex::NONE }
         } else if items.len() == 1 {
             *items.first().unwrap()
@@ -347,7 +347,7 @@ impl<'a> MetaItemRef<'a> {
     }
 
     pub fn merge(&self, other: MetaItemRef<'a>) -> Self {
-        Self::from_merge(&self.design, [*self, other])
+        Self::from_merge(self.design, [*self, other])
     }
 }
 
