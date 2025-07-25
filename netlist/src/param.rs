@@ -57,7 +57,7 @@ impl Display for ParamValue {
             ParamValue::Const(value) => write!(f, "{value}"),
             ParamValue::Int(value) => write!(f, "#{value}"),
             ParamValue::Float(_value) => unimplemented!("float parameter"),
-            ParamValue::String(value) => Design::write_string(f, &value),
+            ParamValue::String(value) => Design::write_string(f, value),
         }
     }
 }

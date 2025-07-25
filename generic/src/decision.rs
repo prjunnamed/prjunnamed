@@ -91,7 +91,7 @@ impl MatchMatrix {
         for self_row in std::mem::take(&mut self.rows) {
             if self_row.rules.contains(&at) {
                 for other_row in &other.rows {
-                    self.add(self_row.clone().merge(&other_row));
+                    self.add(self_row.clone().merge(other_row));
                 }
             } else {
                 self.add(self_row.merge(&MatchRow::empty(other.value.len())));
@@ -289,7 +289,7 @@ impl Decision {
             Decision::Result { rules } => {
                 let mut result = None;
                 for rule in rules {
-                    if let Some(value) = values.get(&rule) {
+                    if let Some(value) = values.get(rule) {
                         assert!(result.is_none());
                         result = Some(value.clone());
                     }
@@ -439,7 +439,7 @@ impl<'a> AssignChains<'a> {
         let mut chains = Vec::new();
         for root in roots {
             let mut chain = vec![root];
-            while let Some(links) = links.get(&chain.last().unwrap()) {
+            while let Some(links) = links.get(chain.last().unwrap()) {
                 if links.len() == 1 {
                     chain.push(*links.first().unwrap());
                 } else {
@@ -569,7 +569,7 @@ pub fn decision(design: &mut Design) {
             values.insert(*enable, update.clone());
         }
 
-        let _guard = design.use_metadata_from(&chain[..]);
+        let _guard = design.use_metadata_from(chain);
         design.replace_value(last_assign.output(), decision.emit_disjoint_mux(design, &values, default));
         used_assigns.insert(*last_assign);
     }
@@ -614,9 +614,9 @@ impl Display for MatchRow {
 
 impl Display for MatchMatrix {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}:\n", self.value)?;
+        writeln!(f, "{}:", self.value)?;
         for row in &self.rows {
-            write!(f, "  {row}\n")?;
+            writeln!(f, "  {row}")?;
         }
         Ok(())
     }
@@ -647,11 +647,11 @@ impl Decision {
             match decision {
                 Decision::Result { rules } => {
                     write!(f, "{net} = {value} =>")?;
-                    format_rules(f, &rules)?;
-                    write!(f, "\n")
+                    format_rules(f, rules)?;
+                    writeln!(f)
                 }
                 Decision::Branch { .. } => {
-                    write!(f, "{net} = {value} =>\n")?;
+                    writeln!(f, "{net} = {value} =>")?;
                     decision.format(f, level + 1)
                 }
             }
@@ -661,8 +661,8 @@ impl Decision {
             Decision::Result { rules } => {
                 assert_eq!(level, 0);
                 write!(f, "=>")?;
-                format_rules(f, &rules)?;
-                write!(f, "\n")?;
+                format_rules(f, rules)?;
+                writeln!(f)?;
             }
             Decision::Branch { test, if0, if1 } => {
                 format_decision(f, *test, 0, if0)?;
@@ -724,7 +724,7 @@ mod test {
         ml.add(MatchRow::new(Const::lit("10"), [n1]));
         ml.add(MatchRow::new(Const::lit("01"), [n2]));
 
-        let mut mr = MatchMatrix::new(&v.concat(en));
+        let mut mr = MatchMatrix::new(v.concat(en));
         mr.add(MatchRow::new(Const::lit("0XX"), []));
         mr.add(MatchRow::new(Const::lit("110"), [n1]));
         mr.add(MatchRow::new(Const::lit("101"), [n2]));
@@ -817,31 +817,31 @@ mod test {
         let h = Helper::new();
         let n = h.net();
 
-        let mut m00 = MatchMatrix::new(&Value::from(Const::lit("0")));
+        let mut m00 = MatchMatrix::new(Value::from(Const::lit("0")));
         m00.add(MatchRow::new(Const::lit("0"), [n]));
 
-        let mut m01 = MatchMatrix::new(&Value::from(Const::lit("0")));
+        let mut m01 = MatchMatrix::new(Value::from(Const::lit("0")));
         m01.add(MatchRow::new(Const::lit("1"), [n]));
 
-        let mut m0X = MatchMatrix::new(&Value::from(Const::lit("0")));
+        let mut m0X = MatchMatrix::new(Value::from(Const::lit("0")));
         m0X.add(MatchRow::new(Const::lit("X"), [n]));
 
-        let mut m10 = MatchMatrix::new(&Value::from(Const::lit("1")));
+        let mut m10 = MatchMatrix::new(Value::from(Const::lit("1")));
         m10.add(MatchRow::new(Const::lit("0"), [n]));
 
-        let mut m11 = MatchMatrix::new(&Value::from(Const::lit("1")));
+        let mut m11 = MatchMatrix::new(Value::from(Const::lit("1")));
         m11.add(MatchRow::new(Const::lit("1"), [n]));
 
-        let mut m1X = MatchMatrix::new(&Value::from(Const::lit("1")));
+        let mut m1X = MatchMatrix::new(Value::from(Const::lit("1")));
         m1X.add(MatchRow::new(Const::lit("X"), [n]));
 
-        let mut mX0 = MatchMatrix::new(&Value::from(Const::lit("X")));
+        let mut mX0 = MatchMatrix::new(Value::from(Const::lit("X")));
         mX0.add(MatchRow::new(Const::lit("0"), [n]));
 
-        let mut mX1 = MatchMatrix::new(&Value::from(Const::lit("X")));
+        let mut mX1 = MatchMatrix::new(Value::from(Const::lit("X")));
         mX1.add(MatchRow::new(Const::lit("1"), [n]));
 
-        let mut mXX = MatchMatrix::new(&Value::from(Const::lit("X")));
+        let mut mXX = MatchMatrix::new(Value::from(Const::lit("X")));
         mXX.add(MatchRow::new(Const::lit("X"), [n]));
 
         for must_reject in [m01, m10, mX0, mX1] {
@@ -929,7 +929,7 @@ mod test {
         let v = h.val(2);
         let (n1, n2, n3) = (h.net(), h.net(), h.net());
 
-        let mut m = MatchMatrix::new(&v.concat(&v));
+        let mut m = MatchMatrix::new(v.concat(&v));
         m.add(MatchRow::new(Const::lit("XXX0"), [n1]));
         m.add(MatchRow::new(Const::lit("XXX1"), [n2]));
         m.add(MatchRow::new(Const::lit("1X0X"), [n3]));
@@ -1279,7 +1279,7 @@ mod test {
         let a2_cell = design.find_cell(a2[0]).unwrap().0;
         let AssignChains { chains } = AssignChains::build(&design);
 
-        assert!(chains == &[vec![a1_cell, a2_cell]]);
+        assert!(chains == [vec![a1_cell, a2_cell]]);
     }
 
     #[test]

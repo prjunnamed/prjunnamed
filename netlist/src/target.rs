@@ -292,7 +292,7 @@ impl TargetPrototype {
         if let Some(TargetParam { index, .. }) = self.get_param(name) {
             target_cell.params[*index] = value.into();
         } else {
-            panic!("parameter {:?} does not exist for target cell", name);
+            panic!("parameter {name:?} does not exist for target cell");
         }
     }
 
@@ -306,7 +306,7 @@ impl TargetPrototype {
         if let Some(TargetInput { range, .. }) = self.get_input(name) {
             target_cell.inputs[range.clone()].copy_from_slice(&value[..]);
         } else {
-            panic!("input {:?} does not exist for target cell", name);
+            panic!("input {name:?} does not exist for target cell");
         }
     }
 
@@ -320,7 +320,7 @@ impl TargetPrototype {
         if let Some(TargetIo { range, .. }) = self.get_io(name) {
             target_cell.ios[range.clone()].copy_from_slice(&value[..]);
         } else {
-            panic!("input {:?} does not exist for target cell", name);
+            panic!("input {name:?} does not exist for target cell");
         }
     }
 
@@ -329,7 +329,7 @@ impl TargetPrototype {
         if let Some(TargetParam { index, .. }) = self.get_param(name) {
             &target_cell.params[*index]
         } else {
-            panic!("param {:?} does not exist for target cell", name);
+            panic!("param {name:?} does not exist for target cell");
         }
     }
 
@@ -340,7 +340,7 @@ impl TargetPrototype {
             let ParamValue::Const(ref value) = target_cell.params[*index] else { unreachable!() };
             value[0] == Trit::One
         } else {
-            panic!("param {:?} does not exist for target cell", name);
+            panic!("param {name:?} does not exist for target cell");
         }
     }
 
@@ -349,7 +349,7 @@ impl TargetPrototype {
         if let Some(TargetInput { range, .. }) = self.get_input(name) {
             target_cell.inputs.slice(range.clone())
         } else {
-            panic!("input {:?} does not exist for target cell", name);
+            panic!("input {name:?} does not exist for target cell");
         }
     }
 
@@ -358,7 +358,7 @@ impl TargetPrototype {
         if let Some(TargetOutput { range, .. }) = self.get_output(name) {
             target_cell_output.slice(range.clone())
         } else {
-            panic!("output {:?} does not exist for target cell", name);
+            panic!("output {name:?} does not exist for target cell");
         }
     }
 

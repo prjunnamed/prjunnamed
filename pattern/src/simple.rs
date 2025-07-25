@@ -32,7 +32,7 @@ impl<T: Clone, P: Pattern<T>> Pattern<T> for PBind<P> {
 
     #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
-        self.0.execute(design, target).and_then(|capture| Some((target.clone(), capture)))
+        self.0.execute(design, target).map(|capture| (target.clone(), capture))
     }
 }
 
@@ -58,7 +58,7 @@ impl Pattern<Value> for PConst {
 
     #[inline]
     fn execute(&self, _design: &dyn DesignDyn, target: &Value) -> Option<Self::Capture> {
-        Value::as_const(&target).map(|value| (value,))
+        Value::as_const(target).map(|value| (value,))
     }
 }
 

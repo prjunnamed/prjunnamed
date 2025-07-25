@@ -104,7 +104,7 @@ impl Design {
                 changes.cell_cache.insert(cell_with_meta.clone(), output.clone());
             }
             changes.added_cells.push(cell_with_meta);
-            for _ in 0..output_len.checked_sub(1).unwrap_or(0) {
+            for _ in 0..output_len.saturating_sub(1) {
                 changes.added_cells.push(CellRepr::Skip(index.try_into().expect("cell index too large")).into())
             }
             output
@@ -329,9 +329,9 @@ impl Design {
             if matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
             } else if cell.output_len() == 0 {
             } else if let Some(new_cell) = changes.replaced_cells.get(&index) {
-                smt.replace_cell(&Value::from_cell_range(index, cell.output_len()), &*cell.get(), &*new_cell.get())?;
+                smt.replace_cell(&Value::from_cell_range(index, cell.output_len()), &cell.get(), &new_cell.get())?;
             } else {
-                smt.add_cell(&Value::from_cell_range(index, cell.output_len()), &*cell.get())?;
+                smt.add_cell(&Value::from_cell_range(index, cell.output_len()), &cell.get())?;
             }
         }
         for (&net, &new_net) in changes.replaced_nets.iter() {
@@ -350,7 +350,7 @@ impl Design {
             smt.replace_net(net, new_net)?;
         }
         if let Some(example) = smt.check()? {
-            let mut message = format!("verification failed!\n");
+            let mut message = "verification failed!\n".to_string();
             message.push_str(&format!("\ndesign:\n{self:#}"));
             message.push_str("\ncounterexample:\n");
             for (index, cell) in self.cells.iter().chain(changes.added_cells.iter()).enumerate() {
@@ -453,9 +453,9 @@ impl Deref for AnnotatedCell {
     }
 }
 
-impl Into<AnnotatedCell> for CellRepr {
-    fn into(self) -> AnnotatedCell {
-        AnnotatedCell { repr: self, meta: MetaItemIndex::NONE }
+impl From<CellRepr> for AnnotatedCell {
+    fn from(val: CellRepr) -> Self {
+        AnnotatedCell { repr: val, meta: MetaItemIndex::NONE }
     }
 }
 
@@ -918,7 +918,7 @@ impl Design {
                 for offset in 0..cell.output_len() {
                     net_map.insert(Net::from_cell_index(old_index + offset), Net::from_cell_index(new_index + offset));
                 }
-                let skip_count = cell.output_len().checked_sub(1).unwrap_or(0);
+                let skip_count = cell.output_len().saturating_sub(1);
                 self.cells.push(cell);
                 for _ in 0..skip_count {
                     self.cells.push(CellRepr::Skip(new_index as u32).into());
@@ -954,10 +954,10 @@ impl Design {
         let result = RefCell::new(BTreeMap::<String, usize>::new());
         for cell_ref in self.iter_cells() {
             let simple = |name: &str| {
-                *result.borrow_mut().entry(format!("{name}")).or_default() += 1;
+                *result.borrow_mut().entry(name.to_string()).or_default() += 1;
             };
             let bitwise = |name: &str, amount: usize| {
-                *result.borrow_mut().entry(format!("{name}")).or_default() += amount;
+                *result.borrow_mut().entry(name.to_string()).or_default() += amount;
             };
             let wide = |name: &str, size: usize| {
                 *result.borrow_mut().entry(format!("{name}:{size}")).or_default() += 1;
@@ -1135,7 +1135,7 @@ impl Display for Design {
                 for index in (index..index + cell.output_len()).rev() {
                     if let Some((name, offset)) = net_names.get(&Net::from_cell_index(index)) {
                         write!(f, "{comment}drives ")?;
-                        Design::write_string(f, &*name)?;
+                        Design::write_string(f, name)?;
                         writeln!(f, "+{offset}")?;
                     }
                 }
@@ -1171,16 +1171,16 @@ impl Display for Design {
 
         if f.alternate() {
             for cell_ref in self.iter_cells() {
-                write_cell(f, cell_ref.index, &*cell_ref.get(), cell_ref.metadata_index())?;
+                write_cell(f, cell_ref.index, &cell_ref.get(), cell_ref.metadata_index())?;
             }
         } else {
             for cell_ref in self.iter_cells_topo() {
-                write_cell(f, cell_ref.index, &*cell_ref.get(), cell_ref.metadata_index())?;
+                write_cell(f, cell_ref.index, &cell_ref.get(), cell_ref.metadata_index())?;
             }
         }
         for (offset, cell) in changes.added_cells.iter().enumerate() {
             if !matches!(cell.repr, CellRepr::Skip(_) | CellRepr::Void) {
-                write_cell(f, self.cells.len() + offset, &*cell.get(), cell.meta)?;
+                write_cell(f, self.cells.len() + offset, &cell.get(), cell.meta)?;
             }
         }
 

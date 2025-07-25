@@ -164,6 +164,6 @@ impl RewriteRuleset for TreeRebalance<'_> {
 
 pub fn tree_rebalance(design: &mut Design) {
     let levels = LevelAnalysis::new();
-    let rebalance = TreeRebalance::new(&design, &levels);
+    let rebalance = TreeRebalance::new(design, &levels);
     design.rewrite(&[&Normalize, &SimpleAigOpt, &levels, &rebalance]);
 }

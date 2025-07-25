@@ -24,7 +24,7 @@ impl SiliconBlueTarget {
         if memory.read_ports.iter().any(|port| port.flip_flop.is_none()) {
             return None;
         }
-        let write_port = memory.write_ports.get(0);
+        let write_port = memory.write_ports.first();
         let mut read_port_swizzles = vec![];
         for (read_port_index, read_port) in memory.read_ports.iter().enumerate() {
             let mut cand_swizzles = vec![];
@@ -79,7 +79,7 @@ impl SiliconBlueTarget {
                     .min_by_key(|swizzle| {
                         let num_brams = memory.swizzle_depths(swizzle).len();
                         let (write_mux_bits, read_mux_bits) = memory.swizzle_mux_bits(&[read_port_index], swizzle);
-                        let write_mux_bits = write_mux_bits.get(0).copied().unwrap_or(0);
+                        let write_mux_bits = write_mux_bits.first().copied().unwrap_or(0);
                         let read_mux_bits = read_mux_bits[0];
                         (num_brams, read_mux_bits, write_mux_bits)
                     })
@@ -90,7 +90,7 @@ impl SiliconBlueTarget {
                     .min_by_key(|swizzle| {
                         let num_brams = memory.swizzle_depths(swizzle).len();
                         let (write_mux_bits, read_mux_bits) = memory.swizzle_mux_bits(&[read_port_index], swizzle);
-                        let write_mux_bits = write_mux_bits.get(0).copied().unwrap_or(0);
+                        let write_mux_bits = write_mux_bits.first().copied().unwrap_or(0);
                         let read_mux_bits = read_mux_bits[0];
                         (read_mux_bits, num_brams, write_mux_bits)
                     })
@@ -122,7 +122,7 @@ impl SiliconBlueTarget {
         assert_eq!(memory.read_ports.len(), 1);
         assert!(memory.depth * memory.width <= 0x1000);
 
-        if let Some(write_port) = memory.write_ports.get(0) {
+        if let Some(write_port) = memory.write_ports.first() {
             prototype.apply_param(&mut target_cell, "IS_WCLK_INVERTED", write_port.clock.is_negative());
             prototype.apply_input(&mut target_cell, "WCLK", write_port.clock.net());
             prototype.apply_input(&mut target_cell, "WE", Net::ONE);

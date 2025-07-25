@@ -26,7 +26,7 @@ pub use tree_rebalance::tree_rebalance;
 pub fn canonicalize(design: &mut Design) {
     for iter in 1.. {
         if cfg!(feature = "trace") {
-            eprintln!(">canonicalize #{}", iter);
+            eprintln!(">canonicalize #{iter}");
         }
         let did_simplify = simplify::simplify(design);
         let did_merge = merge::merge(design);

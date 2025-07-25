@@ -21,7 +21,7 @@ impl Design {
         let cell_index = cell_ref.debug_index();
         match &*cell_ref.get() {
             Cell::Other(instance) => {
-                for (_name, range) in &instance.outputs {
+                for range in instance.outputs.values() {
                     if range.contains(&offset) {
                         return Ok((
                             cell_ref.output().slice(range.clone()),
@@ -71,7 +71,7 @@ impl Design {
                 write!(f, "{}", *byte as char)?;
             } else {
                 assert!(byte.is_ascii());
-                write!(f, "\\{:02x}", byte)?;
+                write!(f, "\\{byte:02x}")?;
             }
         }
         write!(f, "\"")?;
@@ -87,7 +87,7 @@ impl Design {
                 Some((name, offset)) => {
                     Design::write_string(f, name)?;
                     if self.get_io(name).unwrap().len() > 1 {
-                        write!(f, "+{}", offset)?;
+                        write!(f, "+{offset}")?;
                     }
                     Ok(())
                 }
@@ -261,12 +261,12 @@ impl Design {
         };
 
         let write_control = |f: &mut std::fmt::Formatter, name: &str, control_net: ControlNet| -> std::fmt::Result {
-            write!(f, "{}=", name)?;
+            write!(f, "{name}=")?;
             self.write_control_net(f, control_net)
         };
 
         let write_common = |f: &mut std::fmt::Formatter, name: &str, args: &[&Value]| -> std::fmt::Result {
-            write!(f, "{}", name)?;
+            write!(f, "{name}")?;
             for arg in args {
                 write!(f, " ")?;
                 self.write_value(f, arg)?;
@@ -276,7 +276,7 @@ impl Design {
 
         let write_shift =
             |f: &mut std::fmt::Formatter, name: &str, arg1: &Value, arg2: &Value, stride: u32| -> std::fmt::Result {
-                write!(f, "{} ", name)?;
+                write!(f, "{name} ")?;
                 self.write_value(f, arg1)?;
                 write!(f, " ")?;
                 self.write_value(f, arg2)?;
@@ -300,7 +300,7 @@ impl Design {
         if single_output {
             write!(f, "{prefix}%{}:{} = ", index, cell.output_len())?;
         } else {
-            write!(f, "{prefix}%{}:_ = ", index)?; // to be able to find any cell by its index
+            write!(f, "{prefix}%{index}:_ = ")?; // to be able to find any cell by its index
         }
         match &cell {
             Cell::Buf(arg) => write_common(f, "buf", &[arg])?,
@@ -543,7 +543,7 @@ impl Design {
                 }
                 for (name, range) in instance.outputs.iter() {
                     write!(f, "  %{}:{} = output ", index + range.start, range.len())?;
-                    Design::write_string(f, &name)?;
+                    Design::write_string(f, name)?;
                     write!(f, "{newline}")?;
                 }
                 for (name, value) in instance.ios.iter() {
@@ -630,7 +630,7 @@ impl Design {
 
     pub fn display_cell<'a>(&'a self, cell_ref: CellRef<'a>) -> impl Display + 'a {
         DisplayFn(self, move |design: &Design, f| {
-            design.write_cell(f, "", cell_ref.debug_index(), &*cell_ref.get(), cell_ref.metadata().index())
+            design.write_cell(f, "", cell_ref.debug_index(), &cell_ref.get(), cell_ref.metadata().index())
         })
     }
 }

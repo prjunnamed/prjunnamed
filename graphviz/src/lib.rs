@@ -150,7 +150,7 @@ impl<'a> Context<'a> {
                 let mut iter = clarify.into_iter();
                 write!(&mut label, "{:?}", iter.next().unwrap()).unwrap();
                 for input in iter {
-                    write!(&mut label, ", {:?}", input).unwrap();
+                    write!(&mut label, ", {input:?}").unwrap();
                 }
                 writeln!(&mut label, ")").unwrap();
             } else if !arg.ends_with('\n') {
@@ -170,7 +170,7 @@ impl<'a> Context<'a> {
             let input_index = input.from_cell.debug_index();
             let port = match input.to_arg {
                 Some(n) => format!("arg{n}"),
-                None => format!("out"),
+                None => "out".to_string(),
             };
 
             writeln!(writer, "  node_{input_index}:out -> node_{index}:{port};")?;

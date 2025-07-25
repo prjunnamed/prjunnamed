@@ -24,7 +24,7 @@ impl NetOrValue for Net {
     }
 
     fn as_const(&self) -> Option<Const> {
-        Net::as_const(*self).map(|trit| Const::from(trit))
+        Net::as_const(*self).map(Const::from)
     }
 
     fn iter(&self) -> impl Iterator<Item = Net> {
