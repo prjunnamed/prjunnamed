@@ -548,6 +548,14 @@ impl CellDetails {
     }
 
     pub fn add_to(mut self, name: &str, module: &mut Module) {
+        let mut name = name;
+        let hdlname: String;
+        if let Some(MetadataValue::String(value)) = self.attributes.0.get("hdlname") {
+            hdlname = value.replace(' ', ".");
+            if !module.cells.contains_key(value) {
+                name = &hdlname;
+            }
+        }
         assert!(!module.cells.contains_key(name));
         self.hide_name = name.starts_with('$');
         module.cells.add(name, self)
