@@ -70,6 +70,7 @@ impl NetlistIndexer {
 fn map_metadata(metadata: MetaItemRef) -> Vec<(String, yosys::MetadataValue)> {
     let mut ys_attrs: Vec<(String, MetadataValue)> = Vec::new();
     let mut ys_srcs = Vec::new();
+    let mut ys_hdlname = None;
     for item in metadata.iter() {
         match item.get() {
             MetaItem::Source { file, start, end } => {
@@ -85,11 +86,28 @@ fn map_metadata(metadata: MetaItemRef) -> Vec<(String, yosys::MetadataValue)> {
             MetaItem::Attr { name, value } => {
                 ys_attrs.push((name.get().to_owned(), value.into()));
             }
+            MetaItem::Ident { name, scope } => 'ident: {
+                let mut parts = vec![name.get()];
+                let mut scope = scope;
+                while !scope.is_none() {
+                    let MetaItem::NamedScope { name, parent, .. } = scope.get() else {
+                        break 'ident;
+                    };
+                    scope = parent;
+                    parts.push(name.get());
+                }
+                parts.pop();
+                let name = Vec::from_iter(parts.iter().rev().map(|s| &**s));
+                ys_hdlname = Some(name.join(" "));
+            }
             _ => (),
         }
     }
     if !ys_srcs.is_empty() {
         ys_attrs.push(("src".to_owned(), ys_srcs.join("|").into()));
+    }
+    if let Some(ys_hdlname) = ys_hdlname {
+        ys_attrs.push(("hdlname".to_owned(), ys_hdlname.into()));
     }
     ys_attrs
 }
