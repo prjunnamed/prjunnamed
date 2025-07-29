@@ -68,6 +68,7 @@ struct ModuleImporter<'a> {
     nets: BTreeMap<usize, Net>,
     init: BTreeMap<usize, Trit>,
     design: &'a Design,
+    scope_top: MetaItemRef<'a>,
 }
 
 impl ModuleImporter<'_> {
@@ -131,11 +132,7 @@ impl ModuleImporter<'_> {
     fn port_control_net(&mut self, cell: &yosys::CellDetails, port: &str) -> ControlNet {
         let net = self.port_value(cell, port).unwrap_net();
         let polarity = cell.parameters.get(&format!("{port}_POLARITY")).unwrap().as_bool().unwrap();
-        if polarity {
-            ControlNet::Pos(net)
-        } else {
-            ControlNet::Neg(net)
-        }
+        if polarity { ControlNet::Pos(net) } else { ControlNet::Neg(net) }
     }
 
     fn init_value(&self, cell: &yosys::CellDetails, port: &str) -> Const {
@@ -152,11 +149,7 @@ impl ModuleImporter<'_> {
     }
 
     fn value_ext(&mut self, cell: &yosys::CellDetails, port: &str, width: usize, signed: bool) -> Value {
-        if signed {
-            self.port_value(cell, port).sext(width)
-        } else {
-            self.port_value(cell, port).zext(width)
-        }
+        if signed { self.port_value(cell, port).sext(width) } else { self.port_value(cell, port).zext(width) }
     }
 
     fn handle_init(&mut self) -> Result<(), Error> {
@@ -250,13 +243,11 @@ impl ModuleImporter<'_> {
             if details.hide_name {
                 continue;
             }
-            if details.bits.iter().any(|bit| {
-                if let yosys::Bit::Net(net) = bit {
-                    self.io_nets.contains_key(net)
-                } else {
-                    false
-                }
-            }) {
+            if details
+                .bits
+                .iter()
+                .any(|bit| if let yosys::Bit::Net(net) = bit { self.io_nets.contains_key(net) } else { false })
+            {
                 continue;
             }
             let value = self.value(&details.bits);
@@ -265,7 +256,12 @@ impl ModuleImporter<'_> {
         Ok(())
     }
 
-    fn use_attribute_metadata<'a>(design: &'a Design, attributes: &yosys::Metadata) -> WithMetadataGuard<'a> {
+    fn use_attribute_metadata<'a>(
+        &self,
+        design: &'a Design,
+        name: &str,
+        attributes: &yosys::Metadata,
+    ) -> WithMetadataGuard<'a> {
         fn parse_position(text: &str) -> Option<SourcePosition> {
             if let Some((line, column)) = text.split_once(".") {
                 Some(SourcePosition { line: line.parse::<u32>().ok()?, column: column.parse::<u32>().ok()? })
@@ -295,11 +291,31 @@ impl ModuleImporter<'_> {
             }
         }
 
+        let meta_none = MetaItemRef::from_iter(design, []);
+
+        if let Some(yosys::MetadataValue::String(string)) = attributes.get("hdlname") {
+            let mut scope = self.scope_top;
+            let mut parts = string.split(' ');
+            if let Some(last) = parts.next_back() {
+                for name in parts {
+                    let name = design.add_metadata_string(name);
+                    scope = design.add_metadata_item(&MetaItem::NamedScope { name, source: meta_none, parent: scope });
+                }
+                let name = design.add_metadata_string(last);
+                let ident = design.add_metadata_item(&MetaItem::Ident { name, scope });
+                items.push(ident);
+            }
+        } else if !name.starts_with('$') {
+            let name = design.add_metadata_string(name);
+            let ident = design.add_metadata_item(&MetaItem::Ident { name, scope: self.scope_top });
+            items.push(ident);
+        }
+
         design.use_metadata(MetaItemRef::from_iter(design, items))
     }
 
-    fn handle_cell(&mut self, cell: &yosys::CellDetails) -> Result<(), Error> {
-        let _guard = ModuleImporter::use_attribute_metadata(&self.design, &cell.attributes);
+    fn handle_cell(&mut self, name: &str, cell: &yosys::CellDetails) -> Result<(), Error> {
+        let _guard = self.use_attribute_metadata(&self.design, name, &cell.attributes);
 
         match &cell.type_[..] {
             "$not" | "$pos" | "$neg" => {
@@ -704,7 +720,7 @@ impl ModuleImporter<'_> {
                 return Err(Error::Unsupported(format!(
                     "{} cell; run the Yosys `memory_collect` pass before writing JSON",
                     cell.type_
-                )))
+                )));
             }
             _ => {
                 if cell.type_.starts_with('$') {
@@ -791,6 +807,12 @@ fn import_module(
     }
 
     let mut design = Design::with_target(target);
+    let meta_none = MetaItemRef::from_iter(&design, []);
+    let scope_top = design.add_metadata_item(&MetaItem::NamedScope {
+        name: design.add_metadata_string("top"),
+        source: meta_none,
+        parent: meta_none,
+    });
 
     let mut importer = ModuleImporter {
         module,
@@ -800,13 +822,14 @@ fn import_module(
         nets: BTreeMap::new(),
         init: BTreeMap::new(),
         design: &design,
+        scope_top,
     };
 
     importer.handle_init()?;
     importer.handle_ports()?;
     importer.handle_names()?;
-    for cell in module.cells.0.values() {
-        importer.handle_cell(cell)?;
+    for (name, cell) in &module.cells.0 {
+        importer.handle_cell(name, cell)?;
     }
     importer.handle_undriven_nets();
     design.compact();
