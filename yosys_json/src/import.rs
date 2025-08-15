@@ -411,7 +411,7 @@ impl ModuleImporter<'_> {
                 let y = self.design.add_adc(&a, &b, ci);
                 self.port_drive(cell, "Y", &y[..width]);
                 let xor = self.design.add_xor(&a[1..], &b[1..]);
-                let co = self.design.add_xor(xor, &y[1..]).concat(y[width]);
+                let co = self.design.add_xor(xor, &y[1..width]).concat(y[width]);
                 self.port_drive(cell, "CO", co);
             }
             "$shl" | "$sshl" | "$shr" | "$sshr" | "$shift" | "$shiftx" => {
