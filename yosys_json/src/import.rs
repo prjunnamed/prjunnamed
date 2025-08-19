@@ -319,7 +319,9 @@ impl ModuleImporter<'_> {
 
         match &cell.type_[..] {
             "$not" | "$pos" | "$neg" => {
-                let width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let a_width = cell.parameters.get("A_WIDTH").unwrap().as_i32()? as usize;
+                let y_width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let width = std::cmp::max(a_width, y_width);
                 let a_signed = cell.parameters.get("A_SIGNED").unwrap().as_bool()?;
                 let a = self.value_ext(cell, "A", width, a_signed);
                 let value = match &cell.type_[..] {
@@ -331,7 +333,7 @@ impl ModuleImporter<'_> {
                     }
                     _ => unreachable!(),
                 };
-                self.port_drive(cell, "Y", value);
+                self.port_drive(cell, "Y", &value[..y_width]);
             }
             "$reduce_and" | "$reduce_or" | "$reduce_xor" | "$reduce_xnor" | "$reduce_bool" | "$logic_not" => {
                 let width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
@@ -366,7 +368,10 @@ impl ModuleImporter<'_> {
             }
             "$and" | "$or" | "$xor" | "$xnor" | "$add" | "$sub" | "$mul" | "$div" | "$mod" | "$divfloor"
             | "$modfloor" => {
-                let width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let a_width = cell.parameters.get("A_WIDTH").unwrap().as_i32()? as usize;
+                let b_width = cell.parameters.get("B_WIDTH").unwrap().as_i32()? as usize;
+                let y_width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let width = std::cmp::max(std::cmp::max(a_width, b_width), y_width);
                 let a_signed = cell.parameters.get("A_SIGNED").unwrap().as_bool()?;
                 let b_signed = cell.parameters.get("B_SIGNED").unwrap().as_bool()?;
                 assert_eq!(a_signed, b_signed);
@@ -394,10 +399,13 @@ impl ModuleImporter<'_> {
                     "$modfloor" => self.design.add_smod_floor(a, b),
                     _ => unreachable!(),
                 };
-                self.port_drive(cell, "Y", value);
+                self.port_drive(cell, "Y", &value[..y_width]);
             }
             "$alu" => {
-                let width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let a_width = cell.parameters.get("A_WIDTH").unwrap().as_i32()? as usize;
+                let b_width = cell.parameters.get("B_WIDTH").unwrap().as_i32()? as usize;
+                let y_width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let width = std::cmp::max(std::cmp::max(a_width, b_width), y_width);
                 let bi = self.port_value(cell, "BI").unwrap_net();
                 let ci = self.port_value(cell, "CI").unwrap_net();
                 let a_signed = cell.parameters.get("A_SIGNED").unwrap().as_bool()?;
@@ -407,15 +415,17 @@ impl ModuleImporter<'_> {
                 let b_inv = self.design.add_not(&b);
                 let b = self.design.add_mux(bi, b_inv, &b);
                 let x = self.design.add_xor(&a, &b);
-                self.port_drive(cell, "X", x);
+                self.port_drive(cell, "X", &x[..y_width]);
                 let y = self.design.add_adc(&a, &b, ci);
-                self.port_drive(cell, "Y", &y[..width]);
+                self.port_drive(cell, "Y", &y[..y_width]);
                 let xor = self.design.add_xor(&a[1..], &b[1..]);
                 let co = self.design.add_xor(xor, &y[1..width]).concat(y[width]);
-                self.port_drive(cell, "CO", co);
+                self.port_drive(cell, "CO", &co[..y_width]);
             }
             "$shl" | "$sshl" | "$shr" | "$sshr" | "$shift" | "$shiftx" => {
-                let width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let a_width = cell.parameters.get("A_WIDTH").unwrap().as_i32()? as usize;
+                let y_width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
+                let width = std::cmp::max(a_width, y_width);
                 let a_signed = cell.parameters.get("A_SIGNED").unwrap().as_bool()?;
                 let b_signed = cell.parameters.get("B_SIGNED").unwrap().as_bool()?;
                 let mut a = self.port_value(cell, "A");
@@ -460,7 +470,7 @@ impl ModuleImporter<'_> {
                     }
                     _ => unreachable!(),
                 };
-                self.port_drive(cell, "Y", &value[..width]);
+                self.port_drive(cell, "Y", &value[..y_width]);
             }
             "$lt" | "$le" | "$gt" | "$ge" | "$eq" | "$ne" => {
                 let y_width = cell.parameters.get("Y_WIDTH").unwrap().as_i32()? as usize;
