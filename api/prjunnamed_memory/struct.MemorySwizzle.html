@@ -56,7 +56,7 @@ and write address decoders are inserted.</p>
 </li>
 <li>
 <p>The memory is cut along its width, into <code>data_width_unit</code>-sized chunks, which are returned as individual
-[<code>Memory</code>] structures.  The last chunk is padded with dummy bits.</p>
+<a href="../prjunnamed_netlist/cell/memory/struct.Memory.html" title="struct prjunnamed_netlist::cell::memory::Memory"><code>Memory</code></a> structures.  The last chunk is padded with dummy bits.</p>
 </li>
 </ol>
 </div></details><h2 id="fields" class="fields section-header">Fields<a href="#fields" class="anchor">§</a></h2><span id="structfield.data_swizzle" class="structfield section-header"><a href="#structfield.data_swizzle" class="anchor field">§</a><code>data_swizzle: <a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.89.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>&gt;&gt;</code></span><div class="docblock"><p>The data swizzle.  In the first step, the data width of the memory is adjusted to the length of this
