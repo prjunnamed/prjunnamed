@@ -21,11 +21,11 @@ impl EasySmtEngine {
         Self(RefCell::new(EasySmtState { context, declares: BTreeMap::new() }))
     }
 
-    fn context(&self) -> Ref<easy_smt::Context> {
+    fn context(&self) -> Ref<'_, easy_smt::Context> {
         Ref::map(self.0.borrow(), |r| &r.context)
     }
 
-    fn context_mut(&self) -> RefMut<easy_smt::Context> {
+    fn context_mut(&self) -> RefMut<'_, easy_smt::Context> {
         RefMut::map(self.0.borrow_mut(), |r| &mut r.context)
     }
 }
