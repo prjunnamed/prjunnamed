@@ -134,7 +134,7 @@ impl RewriteRuleset for LowerShift {
                 value = rewriter.add_cell(Cell::Mux(bit, shifted, value));
                 stride *= 2;
             } else {
-                let rest = amount.slice(index + 1..);
+                let rest = amount.slice(index..);
                 let rest_len = rest.len();
                 let no_overflow = rewriter.add_cell(Cell::Eq(rest, Value::zero(rest_len)));
                 value = rewriter.add_cell(Cell::Mux(no_overflow[0], value, overflow));

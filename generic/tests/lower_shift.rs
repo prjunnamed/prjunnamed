@@ -42,3 +42,27 @@ fn test_lower_shift_short() {
     .unwrap();
     assert_isomorphic!(design, gold);
 }
+
+#[test]
+fn test_xyz_issue9() {
+    let mut design = Design::from_str(concat!(
+        r#"
+%0:2 = input "a"
+%2:2 = shl 01 %0:2 #1
+%4:0 = output "y" %2:2
+"#
+    ))
+    .unwrap();
+    design.rewrite(&[&LowerShift]);
+    let mut gold = Design::from_str(
+        r#"
+%0:2 = input "a"
+%3:2 = mux %0+0 10 01
+%5:1 = eq %0+1 0
+%6:2 = mux %5 %3:2 00
+%2:0 = output "y" %6:2
+    "#,
+    )
+    .unwrap();
+    assert_isomorphic!(design, gold);
+}
