@@ -7,9 +7,6 @@ repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
 
-[lib]
-doctest = false
-
 [dependencies]
 prjunnamed-netlist.workspace = true
 
