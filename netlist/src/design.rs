@@ -1,11 +1,11 @@
 use std::fmt::Display;
 use std::ops::{Deref, Range};
-use std::cell::{Ref, RefCell};
+use std::cell::RefCell;
 use std::borrow::Cow;
 use std::hash::Hash;
 use std::collections::{btree_map, BTreeMap, BTreeSet, HashMap};
 use std::rc::Rc;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock, RwLockReadGuard};
 
 use crate::{MetaItem, MetaStringRef, MetaItemRef};
 use crate::{
@@ -20,8 +20,8 @@ use crate::smt::{SmtEngine, SmtBuilder};
 pub struct Design {
     ios: BTreeMap<String, Range<u32>>,
     cells: Vec<AnnotatedCell>,
-    changes: RefCell<ChangeQueue>,
-    metadata: RefCell<MetadataStore>,
+    changes: Arc<RwLock<ChangeQueue>>,
+    metadata: Arc<RwLock<MetadataStore>>,
     target: Option<Arc<dyn Target>>,
 }
 
@@ -47,14 +47,14 @@ impl Design {
         Design {
             ios: BTreeMap::new(),
             cells: vec![],
-            changes: RefCell::new(ChangeQueue::default()),
-            metadata: RefCell::new(MetadataStore::new()),
+            changes: Arc::new(RwLock::new(ChangeQueue::default())),
+            metadata: Arc::new(RwLock::new(MetadataStore::new())),
             target,
         }
     }
 
     pub fn add_io(&self, name: impl Into<String>, width: usize) -> IoValue {
-        let mut changes = self.changes.borrow_mut();
+        let mut changes = self.changes.write().unwrap();
         let name = name.into();
         let width = width as u32;
         let range = changes.next_io..(changes.next_io + width);
@@ -93,7 +93,7 @@ impl Design {
     pub(crate) fn add_cell_with_metadata_index(&self, cell: Cell, metadata: MetaItemIndex) -> Value {
         cell.validate(self);
         let cell_with_meta = AnnotatedCell { repr: cell.clone().into(), meta: metadata };
-        let mut changes = self.changes.borrow_mut();
+        let mut changes = self.changes.write().unwrap();
         if let Some(value) = changes.cell_cache.get(&cell_with_meta) {
             value.clone()
         } else {
@@ -117,12 +117,12 @@ impl Design {
 
     pub fn add_cell_with_metadata(&self, cell: Cell, metadata: &MetaItem) -> Value {
         metadata.validate();
-        let metadata = self.metadata.borrow_mut().add_item(metadata);
+        let metadata = self.metadata.write().unwrap().add_item(metadata);
         self.add_cell_with_metadata_index(cell, metadata)
     }
 
     pub fn use_metadata(&self, item: MetaItemRef) -> WithMetadataGuard<'_> {
-        let mut changes = self.changes.borrow_mut();
+        let mut changes = self.changes.write().unwrap();
         let guard = WithMetadataGuard { design: self, restore: changes.cell_metadata };
         changes.cell_metadata = item.index();
         guard
@@ -134,17 +134,17 @@ impl Design {
     }
 
     pub fn get_use_metadata(&self) -> MetaItemRef<'_> {
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
         self.ref_metadata_item(changes.cell_metadata)
     }
 
     pub fn add_cell(&self, cell: Cell) -> Value {
-        let metadata = self.changes.borrow().cell_metadata;
+        let metadata = self.changes.read().unwrap().cell_metadata;
         self.add_cell_with_metadata_index(cell, metadata)
     }
 
     pub fn add_void(&self, width: usize) -> Value {
-        let mut changes = self.changes.borrow_mut();
+        let mut changes = self.changes.write().unwrap();
         let index = self.cells.len() + changes.added_cells.len();
         for _ in 0..width {
             changes.added_cells.push(CellRepr::Void.into());
@@ -163,7 +163,7 @@ impl Design {
     }
 
     pub fn map_net_new(&self, net: impl Into<Net>) -> Net {
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
         let mut net = net.into();
         while let Some(new_net) = changes.replaced_nets.get(&net) {
             net = *new_net;
@@ -174,7 +174,7 @@ impl Design {
     pub fn find_new_cell(&self, net: Net) -> Result<(Cow<'_, Cell>, MetaItemRef<'_>, usize), Trit> {
         let net = self.map_net_new(net);
         let index = net.as_cell_index()?;
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
         let (mut cell, mut meta, index, bit) = if index < self.cells.len() {
             let (index, bit) = match self.cells[index].repr {
                 CellRepr::Void => panic!("located a void cell %{index} in design"),
@@ -211,7 +211,7 @@ impl Design {
     pub fn append_metadata_by_net(&self, net: Net, metadata: MetaItemRef<'_>) {
         let net = self.map_net_new(net);
         let Ok(index) = net.as_cell_index() else { return };
-        let mut changes = self.changes.borrow_mut();
+        let mut changes = self.changes.write().unwrap();
         let index = if index < self.cells.len() {
             match self.cells[index].repr {
                 CellRepr::Void => panic!("located a void cell %{index} in design"),
@@ -236,33 +236,33 @@ impl Design {
         index < self.cells.len()
     }
 
-    pub(crate) fn metadata(&self) -> Ref<'_, MetadataStore> {
-        self.metadata.borrow()
+    pub(crate) fn metadata(&self) -> RwLockReadGuard<'_, MetadataStore> {
+        self.metadata.read().unwrap()
     }
 
     pub fn add_metadata_string(&self, string: &str) -> MetaStringRef<'_> {
-        let index = self.metadata.borrow_mut().add_string(string);
-        self.metadata.borrow().ref_string(self, index)
+        let index = self.metadata.write().unwrap().add_string(string);
+        self.metadata.read().unwrap().ref_string(self, index)
     }
 
     pub(crate) fn ref_metadata_string(&self, index: MetaStringIndex) -> MetaStringRef<'_> {
-        self.metadata.borrow().ref_string(self, index)
+        self.metadata.read().unwrap().ref_string(self, index)
     }
 
     pub fn add_metadata_item(&self, item: &MetaItem) -> MetaItemRef<'_> {
         item.validate();
-        let index = self.metadata.borrow_mut().add_item(item);
-        self.metadata.borrow().ref_item(self, index)
+        let index = self.metadata.write().unwrap().add_item(item);
+        self.metadata.read().unwrap().ref_item(self, index)
     }
 
     pub(crate) fn ref_metadata_item(&self, index: MetaItemIndex) -> MetaItemRef<'_> {
-        self.metadata.borrow().ref_item(self, index)
+        self.metadata.read().unwrap().ref_item(self, index)
     }
 
     pub fn replace_net(&self, from_net: impl Into<Net>, to_net: impl Into<Net>) {
         let (from_net, to_net) = (from_net.into(), to_net.into());
         if from_net != to_net {
-            let mut changes = self.changes.borrow_mut();
+            let mut changes = self.changes.write().unwrap();
             assert_eq!(changes.replaced_nets.insert(from_net, to_net), None);
         }
     }
@@ -276,7 +276,7 @@ impl Design {
     }
 
     pub fn map_net(&self, net: impl Into<Net>) -> Net {
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
         let net = net.into();
         let mut mapped_net = net;
         while let Some(new_net) = changes.replaced_nets.get(&mapped_net) {
@@ -300,7 +300,7 @@ impl Design {
     }
 
     pub fn is_changed(&self) -> bool {
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
         !changes.added_ios.is_empty()
             || !changes.added_cells.is_empty()
             || !changes.replaced_cells.is_empty()
@@ -309,7 +309,7 @@ impl Design {
     }
 
     pub fn verify<SMT: SmtEngine>(&self, engine: SMT) -> Result<(), SMT::Error> {
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
         let locate_cell = |net: Net| {
             net.as_cell_index().map(|index| {
                 if index < self.cells.len() {
@@ -385,8 +385,8 @@ impl Design {
         #[cfg(feature = "verify")]
         self.verify(crate::EasySmtEngine::z3().unwrap()).unwrap();
 
-        let mut changes = std::mem::take(self.changes.get_mut());
-        self.changes.get_mut().next_io = changes.next_io;
+        let mut changes = std::mem::take(&mut *self.changes.write().unwrap());
+        self.changes.write().unwrap().next_io = changes.next_io;
 
         let mut did_change = !changes.added_ios.is_empty() || !changes.added_cells.is_empty();
         self.ios.extend(changes.added_ios);
@@ -466,7 +466,7 @@ pub struct WithMetadataGuard<'a> {
 
 impl Drop for WithMetadataGuard<'_> {
     fn drop(&mut self) {
-        self.design.changes.borrow_mut().cell_metadata = self.restore;
+        self.design.changes.write().unwrap().cell_metadata = self.restore;
     }
 }
 
@@ -511,7 +511,7 @@ impl<'a> CellRef<'a> {
     }
 
     pub fn metadata(&self) -> MetaItemRef<'a> {
-        self.design.metadata.borrow().ref_item(self.design, self.design.cells[self.index].meta)
+        self.design.metadata.read().unwrap().ref_item(self.design, self.design.cells[self.index].meta)
     }
 
     pub fn output_len(&self) -> usize {
@@ -530,18 +530,18 @@ impl<'a> CellRef<'a> {
         if *self.design.cells[self.index].get() != to_cell {
             to_cell.validate(self.design);
             let to_cell = AnnotatedCell { repr: to_cell.into(), meta: self.design.cells[self.index].meta };
-            let mut changes = self.design.changes.borrow_mut();
+            let mut changes = self.design.changes.write().unwrap();
             assert!(changes.replaced_cells.insert(self.index, to_cell).is_none());
         }
     }
 
     pub fn append_metadata(&self, metadata: MetaItemRef<'a>) {
-        let mut changes = self.design.changes.borrow_mut();
+        let mut changes = self.design.changes.write().unwrap();
         changes.appended_metadata.entry(self.index).or_default().push(metadata.index())
     }
 
     pub fn unalive(&self) {
-        let mut changes = self.design.changes.borrow_mut();
+        let mut changes = self.design.changes.write().unwrap();
         changes.unalived_cells.insert(self.index);
     }
 
@@ -1007,7 +1007,7 @@ impl Design {
 // This can't be in `crate::print` because of the privacy violations.
 impl Display for Design {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let changes = self.changes.borrow();
+        let changes = self.changes.read().unwrap();
 
         let diff = self.is_changed();
         let added = "+";
@@ -1042,7 +1042,7 @@ impl Display for Design {
             writeln!(f)?;
         }
 
-        for metadata_ref in self.metadata.borrow().iter_items(self) {
+        for metadata_ref in self.metadata.read().unwrap().iter_items(self) {
             if metadata_ref.index() == MetaItemIndex::NONE {
                 continue;
             }

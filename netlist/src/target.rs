@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::{CellRef, Const, Design, Instance, IoValue, ParamValue, TargetCell, Trit, Value};
 
-pub trait Target: Debug {
+pub trait Target: Debug + Send + Sync {
     /// Get target name. The name of the target can be used to construct a new instance of it.
     fn name(&self) -> &str;
 
