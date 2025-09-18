@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This library contains various common utilities for writing target-specific memory lowering passes."><title>prjunnamed_memory - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="prjunnamed_memory" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0 (1159e78c4 2025-09-14)" data-channel="1.90.0" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-68b7e25d.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../prjunnamed_memory/index.html">prjunnamed_<wbr>memory</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>prjunnamed_memory</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/prjunnamed_memory/lib.rs.html#1-1057">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This library contains various common utilities for writing target-specific memory lowering passes.</p>
+<p>Target-specific memory lowering passes are organized roughly as follows:</p>
+<ul>
+<li>for each memory in the design:
+<ul>
+<li>a list of candidate lowerings is assembled:
+<ul>
+<li>if a lowering mode (ff / lutram / blockram / hugeram) is explicitly selected, only the relevant
+target cells types are considered</li>
+<li>for each available type of target cell:
+<ul>
+<li>hard requirements are checked, and the target cell is rejected if they are unmet, eg:
+<ul>
+<li>memories with more write ports than the target cell are rejected</li>
+<li>memories with asynchronous read ports are rejected if not supported by target cell</li>
+</ul>
+</li>
+<li>a set of candidate “swizzle” transformations is assembled, for rearranging the memory geometry
+to match the target cell
+<ul>
+<li>the candidate swizzles are created according to target-specific rules, with some help from
+common functions for eg. legalizing write mask granularity</li>
+</ul>
+</li>
+<li>the best swizzle is selected, according to some metric (such as inserted soft mux depth or number
+of used target cells)</li>
+<li>when a memory needs to be split/duplicated because of excessive read port count, each of the
+split/duplicated sub-memories will have its own swizzle</li>
+<li>if a swizzle is egregiously bad (uses more resources than the entire FPGA has available), it is
+rejected</li>
+</ul>
+</li>
+<li>if applicable, a “fallback” lowering candidate is inserted into the list of candidates
+<ul>
+<li>no fallback lowering if multiple write port domains present</li>
+<li>lowering to FFs for RAMs (very expensive)</li>
+<li>lowering to LUTs for ROMs (somewhat expensive)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>if no candidates are available, synthesis is aborted with a fatal error</li>
+<li>one of the candidate lowerings is picked, according to some target-specific heuristic
+<ul>
+<li>initial heuristic will simply switch between target cells based on memory depth</li>
+<li>in the future, we will want to take target resource counts into account (moving the depth threshold
+to avoid overfilling the FPGA)</li>
+</ul>
+</li>
+<li>if the “fallback” lowering candidate has been selected, the common lowering code is called to perform it</li>
+<li>otherwise, target cell lowering is performed:
+<ul>
+<li>the memory is split into sub-memories (using common code), as required to satisfy max read port count,
+then each sub-memory is processed independently</li>
+<li>various fixup transformations (implemented in common code, but driven by target code) are performed on
+the memory to match it with target cell capabilities:
+<ul>
+<li>sync read ports are converted to async if required</li>
+<li>read port enable / clear / reset / initial value are unmapped and emulated if not supported</li>
+<li>transparency is unmapped and emulated if not supported</li>
+<li>read-first relations are emulated if not supported</li>
+</ul>
+</li>
+<li>the swizzle (computed earlier) is applied to the memory (using common code), aligning its geometry
+with the target cell</li>
+<li>the memory is consumed and converted into actual target cells</li>
+<li>any target-specific post-processing (such as merging output pipeline registers) is performed</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.MemorySwizzle.html" title="struct prjunnamed_memory::MemorySwizzle">Memory<wbr>Swizzle</a></dt><dd>Describes a “swizzle” transformation, used to align memory geometry to target requirements.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.MemoryExt.html" title="trait prjunnamed_memory::MemoryExt">Memory<wbr>Ext</a></dt><dd>An extension trait for <code>Memory</code> with assorted memory lowering utility functions.</dd></dl></section></div></main></body></html>

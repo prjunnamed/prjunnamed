@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["assert_netlist","netlist_match","netlist_replace"],"mod":["patterns"],"struct":["CellCollector"],"trait":["DesignDyn","NetOrValue","Pattern"]};

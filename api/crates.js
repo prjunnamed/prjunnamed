@@ -1,0 +1,2 @@
+window.ALL_CRATES = ["prjunnamed_generic","prjunnamed_graphviz","prjunnamed_lut","prjunnamed_memory","prjunnamed_netlist","prjunnamed_pattern","prjunnamed_siliconblue","prjunnamed_yosys_json"];
+//{"start":21,"fragment_lengths":[20,22,17,20,21,21,25,24]}

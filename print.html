@@ -1,0 +1,514 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>The Project Unnamed Book</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Project Unnamed Book</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/prjunnamed/prjunnamed" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p><a href="https://github.com/prjunnamed/prjunnamed">Project Unnamed</a> aims to deliver a comprehensive end-to-end FPGA synthesis, placement, routing, and bitstream generation tools targeting multiple FPGA families and integrating with <a href="https://github.com/prjunnamed/prjcombine">Project Combine</a>.</p>
+<p>The project is currently in the early stage of research and prototyping, and is not suitable for general use.</p>
+<h2 id="community"><a class="header" href="#community">Community</a></h2>
+<p>Project Unnamed has a dedicated IRC channel, <a href="https://web.libera.chat/#prjunnamed">#prjunnamed at libera.chat</a>, which is <em>bridged</em><sup class="footnote-reference" id="fr-1-1"><a href="#footnote-1">1</a></sup> to Matrix at <a href="https://matrix.to/#/#prjunnamed:catircservices.org">#prjunnamed:catircservices.org</a>. Feel free to join to discuss ongoing development of Project Unnamed and its related projects.</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>Project Unnamed is distributed under the terms of the <a href="LICENSE-0BSD.txt">0-clause BSD license</a> and the <a href="LICENSE-Apache-2.0.txt">Apache License (Version 2.0)</a>.</p>
+<p>By submitting your contribution you agree to be bound by all provisions of both of these licenses, including the clause 3 (Grant of Patent License) of the Apache License (Version 2.0).</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-1">
+<p>The same messages appear on IRC and on Matrix, and one can participate in the discussion equally using either communication system. <a href="#fr-1-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h1>
+<p>In order to build Project Unnamed and run its testsuite, you will need <a href="https://rust-lang.org/">Rust</a> (latest stable release) and <a href="https://github.com/Z3Prover/z3">Z3</a>. We recommend using <a href="https://rustup.rs/">rustup</a> or installing Rust from the software repository of your Linux distribution. Once you have these tools, run:</p>
+<pre><code class="language-console">$ cargo test
+</code></pre>
+<p>We use <a href="https://rust-lang.github.io/rustfmt/">rustfmt</a> to ensure consistent formatting of the entire codebase. Prior to sending a pull request, run:</p>
+<pre><code class="language-console">$ cargo fmt
+</code></pre>
+<p>In order to build the documentation, you will need <a href="https://rust-lang.github.io/mdBook/guide/installation.html">mdbook</a> (which can be installed in a number of ways including via <a href="https://rustup.rs/">rustup</a>). Once you have it, run:</p>
+<pre><code class="language-console">$ mdbook serve docs
+</code></pre>
+<p>The documentation will be accessible in a browser at <a href="http://localhost:3000">http://localhost:3000</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="language-reference"><a class="header" href="#language-reference">Language reference</a></h1>
+<p>Project Unnamed is based around an <a href="https://en.wikipedia.org/wiki/Intermediate_representation">intermediate representation</a>: a kind of compiler developer readable and writable programming language designed for convenience of implementing transformations. These transformations include optimization, technology mapping, verification, and more.</p>
+<p>The Project Unnamed intermediate representation is called "Unnamed IR", and it has two forms: the in-memory form composed out of the data structures in the <a href="dev//api/prjunnamed_netlist/">prjunnamed-netlist</a> crate, and the text form described in this document. The text form is a part of the public interface, and incompatible changes to it are considered breaking changes to Project Unnamed itself.</p>
+<div class="warning">
+<p>This document is incomplete.</p>
+</div>
+<h2 id="typography"><a class="header" href="#typography">Typographical conventions</a></h2>
+<p>The examples of the text IR in this document include placeholders delimited by the <code>&lt;</code> and <code>&gt;</code> characters. These characters are only used to denote placeholders, and do not appear in the syntax of the text IR itself. For example:</p>
+<pre><code>%&lt;cell-idx&gt;:&lt;width&gt; = and &lt;a&gt; &lt;b&gt;
+</code></pre>
+<p>The snippet above describes the syntax of the <code>and</code> cell, including the fixed elements (the percent, colon, and equals characters, and the <code>add</code> keyword) and the variable elements (cell index <code>&lt;cell-idx&gt;</code>, output width <code>&lt;width&gt;</code>, arguments <code>&lt;a&gt;</code> and <code>&lt;b&gt;</code>).</p>
+<p>Whenever a syntactic element is followed by the <code>...</code> characters, it means that it can be repeated an arbitrary amount of times, with the repetitions delimited by <a href="dev/langref.html#whitespace">whitespace</a>. For example:</p>
+<pre><code>[ &lt;part&gt;... ]
+</code></pre>
+<p>The snippet above describes the syntax of a <a href="dev/langref.html#concat">concatenation</a>, where it is equivalent to any of the following:</p>
+<pre><code>[]
+[&lt;part&gt;]
+[ &lt;part&gt; &lt;part&gt; ]
+</code></pre>
+<p>And so on.</p>
+<h2 id="general"><a class="header" href="#general">General principles</a></h2>
+<p>The text IR is designed for ease of reading of large, unstructured netlists, and for ease of writing or generating them, in that order. It is partly inspired by the well-known <a href="https://llvm.org/docs/LangRef.html">LLVM IR</a>.</p>
+<p>All introduced identifiers are namespaced, with the namespace indicated by a sigil (a prefix character like <code>!</code> or <code>%</code>). For identifiers that refer to objects that can be referenced in part, each reference unambiguously indicates the size of the partial reference so that it is not necessary to consult the declaration to find it out.</p>
+<h2 id="lexical"><a class="header" href="#lexical">Lexical structure</a></h2>
+<p>The text IR has a conservative lexical structure, where the first character of a non-whitespace sequence of characters determines its lexical category.</p>
+<p>The byte encoding of the text IR is always <a href="https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-2/#G11165">UTF-8</a>.</p>
+<h3 id="whitespace"><a class="header" href="#whitespace">Whitespace</a></h3>
+<p>The only characters recognized as whitespace are <code>U+0020 SPACE</code>, <code>U+0009 CHARACTER TABULATION</code>, and <code>U+000A LINE FEED</code>. All of them may be used for separating other tokens, and <code>U+000A LINE FEED</code> is used to indicate the end of a syntactic construct. The file must end with a <code>U+000A LINE FEED</code> character.</p>
+<p>A <code>U+000D CARRIAGE RETURN</code> character followed by a <code>U+000A LINE FEED</code> character is treated as the latter character alone.</p>
+<div class="warning">
+<p>The <a href="dev//api/prjunnamed_netlist/">prjunnamed-netlist</a> parser currently handles whitespace in a questionable and inconsistent way. This will be fixed in the future.</p>
+</div>
+<h3 id="comment"><a class="header" href="#comment">Comments</a></h3>
+<pre><code>;&lt;text&gt;
+</code></pre>
+<p><em>Comments</em> are sequences of characters starting with <code>;</code> and ending with <code>U+000A LINE FEED</code>. They are treated the same as a <code>U+000A LINE FEED</code> character.</p>
+<h3 id="string"><a class="header" href="#string">Strings</a></h3>
+<pre><code>"&lt;bytes&gt;"
+</code></pre>
+<p>For example:</p>
+<pre><code>""
+"meow"
+"this\0ais a anewline"
+"\22quoted\22"
+"\5cescaped"
+</code></pre>
+<p><em>Strings</em> are delimited by <code>"</code> on both ends and denote byte sequences (not character sequences). Within a string, <code>\</code> followed by two hexadecimal digits <code>0</code>..<code>9</code> or <code>a</code>..<code>f</code> (lowercase only) corresponds to that particular byte, and any other character corresponds to its unique <a href="https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-2/#G11165">UTF-8</a> encoding. No normalization is performed.</p>
+<p>A string containing a <code>\</code> followed by two characters that are not hexadecimal digits is ill-formed.</p>
+<h3 id="decimal"><a class="header" href="#decimal">Decimal numbers</a></h3>
+<pre><code>#&lt;digits&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>#0
+#10
+#-1
+</code></pre>
+<p><em>Decimal numbers</em> start with a <code>#</code> sigil, followed by an optional <code>-</code> sign and a non-empty sequence of <code>0</code>..<code>9</code> digits. No whitespace is allowed between any of the characters.</p>
+<p>In some contexts, only non-negative decimal numbers, or decimal numbers up to a certain magnitude, may be accepted.</p>
+<p>Decimal numbers are not interchangeable with <a href="dev/langref.html#constant">constants</a>; where both are accepted, the meaning of the syntactic construct differs between the two.</p>
+<h3 id="constant"><a class="header" href="#constant">Constants</a></h3>
+<pre><code>&lt;trits&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>0
+1
+X
+100
+1XX0
+XXXX
+</code></pre>
+<p><em>Constants</em> are made up of <code>0</code>, <code>1</code>, and <code>X</code> (uppercase only) characters. No whitespace is allowed between any of the characters.</p>
+<p>Constants denote bit vectors with some positions being "don't care" or "undefined" (depending on the context), and are written in the usual order where the most significant position is on the left. That is, <code>1010</code> has the numeric value 10 decimal, its first bit is <code>0</code> and last bit is <code>1</code>.</p>
+<p>Constants are not interchangeable with <a href="dev/langref.html#decimal">decimal numbers</a>; where both are accepted, the meaning of the syntactic construct differs between the two.</p>
+<h3 id="metadata"><a class="header" href="#metadata">Metadata identifiers</a></h3>
+<pre><code>!&lt;index&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>!0
+!15
+</code></pre>
+<p><em>Metadata identifiers</em> start with a <code>!</code> sigil followed by a non-empty sequence of <code>0</code>..<code>9</code> digits, where leading <code>0</code> digits are insignificant. No whitespace is allowed between any of the characters.</p>
+<h3 id="io"><a class="header" href="#io">I/O identifiers</a></h3>
+<pre><code>&amp;&lt;string&gt;
+&amp;&lt;string&gt;:&lt;width&gt;
+&amp;&lt;string&gt;+&lt;offset&gt;
+&amp;_
+&amp;_:&lt;width&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>&amp;"pin"
+&amp;"gpio":8
+&amp;"gpio"+3
+&amp;_
+&amp;_:16
+</code></pre>
+<p><em>I/O identifiers</em> start with a <code>&amp;</code> sigil followed by a non-empty <a href="dev/langref.html#string">string</a> (in which case the I/O identifier is <em>named</em>) or a <code>_</code> character (in which case it is <em>floating</em>). No whitespace is allowed between the sigil and the string or <code>_</code> character, or any of the following characters for the cases below.</p>
+<p>Named I/O identifiers may be followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes the width of the declaration or the reference.</p>
+<p>Alternatively, named I/O identifiers may be followed by a <code>+</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes a 1-wide reference at the given offset.</p>
+<p>Floating I/O identifiers may be followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes the width of the reference. They are used in <a href="dev/langref.html#concat">concatenations</a> to declare a partial connection to an I/O port.</p>
+<h3 id="cell"><a class="header" href="#cell">Cell identifiers</a></h3>
+<pre><code>%&lt;index&gt;
+%&lt;index&gt;:&lt;width&gt;
+%&lt;index&gt;+&lt;offset&gt;
+%&lt;index&gt;+&lt;offset&gt;:&lt;width&gt;
+%&lt;index&gt;:_
+</code></pre>
+<p>For example:</p>
+<pre><code>%0
+%1:4
+%1+0
+%1+2:2
+%2:0
+%3:_
+</code></pre>
+<p><em>Cell identifiers</em> start with a <code>%</code> sigil followed by a non-empty sequence of <code>0</code>..<code>9</code> digits, optionally followed by a <code>+</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits (denoting an offset into the wide output of a cell), optionally followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits (denoting the width of a cell declaration or reference). No whitespace is allowed between any of the characters.</p>
+<p>A <em>placeholder</em> cell identifier starts with a <code>%</code> sigil followed by a non-empty sequence of <code>0</code>..<code>9</code> digits, a <code>:</code> character, and a <code>_</code> character. No whitespace is allowed between any of the characters. The placeholder cell identifier is only used when declaring cells with multiple outputs.</p>
+<div class="warning">
+<p>While the in-memory IR has the property that a cell with a wide output occupies a contiguous range of cell indices (i.e. that <code>%0+1</code> and <code>%1</code> always refer to the same net), the same is not true in the text IR. Instead, each unique <code>&lt;index&gt;</code> can refer to a distinct cell with an output of any width.</p>
+<p>To avoid confusion, the IR printer ensures that in references, <code>&lt;index&gt;</code> is equal to the lowest index occupied by a cell with a wide output (i.e. it will never format <code>%0+1</code> as <code>%1</code>).</p>
+</div>
+<h3 id="repeat"><a class="header" href="#repeat">Repetitions</a></h3>
+<pre><code>&lt;value&gt;*&lt;count&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>X*0
+%0*4
+XXX*8
+</code></pre>
+<p><em>Repetitions</em> start with a <a href="dev/langref.html#constant">constant</a> or a <a href="dev/langref.html#cell">cell identifier</a>, followed by the <code>*</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits. No whitespace is allowed between <code>&lt;value&gt;</code>, <code>*</code>, and <code>&lt;count&gt;</code>.</p>
+<h3 id="concat"><a class="header" href="#concat">Concatenations</a></h3>
+<pre><code>[ &lt;part&gt;... ]
+</code></pre>
+<p>For example:</p>
+<pre><code>[]
+[ ]
+[&amp;"gpio":1 &amp;"gpio":0]
+[ &amp;"pin" &amp;_ ]
+[1001]
+[10 01]
+[ %0 %1:4 000 ]
+[ XXXX ]
+[ %0*4 %0:4 0*4 ]
+</code></pre>
+<p><em>Concatenations</em> are delimited by <code>[</code> and <code>]</code> characters on either end and contain zero or more parts delimited by <a href="dev/langref.html#whitespace">whitespace</a>. The first part of the concatenation in the source code order corresponds to the most significant positions of the resulting reference. The two types of concatenations are <em>I/O concatenations</em> and <em>value concatenations</em>.</p>
+<p>Each part of an I/O concatenation must be an <a href="dev/langref.html#io">I/O identifier</a>, which could be named or floating.</p>
+<p>Each part of a value concatenation must be a <a href="dev/langref.html#constant">constant</a>, a <a href="dev/langref.html#cell">cell identifier</a>, or a <a href="dev/langref.html#repeat">repetition</a>.</p>
+<h3 id="value"><a class="header" href="#value">Value references</a></h3>
+<p>For example:</p>
+<pre><code>0
+1010
+XXX
+[ 10 %5 ]
+%5:10
+%1*10
+[]
+</code></pre>
+<p><em>Value references</em> are used as operands within <a href="dev/langref.html#cell-decls">cell declarations</a>. A value reference must be a <a href="dev/langref.html#constant">constant</a>, a <a href="dev/langref.html#cell">cell identifier</a>, a <a href="dev/langref.html#concat">concatenation</a>, or a <a href="dev/langref.html#repeat">repetition</a>.</p>
+<p>The width of a value reference can be determined solely from its syntax.</p>
+<h3 id="special"><a class="header" href="#special">Other special characters</a></h3>
+<p>Special characters <code>[</code>, <code>]</code>, <code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>, <code>=</code>, and <code>,</code> are used as delimiters within <a href="dev/langref.html#decls">declarations</a>.</p>
+<p>These characters may be optionally surrounded by the <a href="dev/langref.html#whitespace">whitespace</a> characters <code>U+0020 SPACE</code> and <code>U+0009 CHARACTER TABULATION</code> without altering their meaning. In addition, the <a href="dev/langref.html#whitespace">whitespace</a> character <code>U+000A LINE FEED</code> may appear between the matching <code>[</code>, <code>]</code>, <code>(</code>, <code>)</code>, <code>{</code>, or <code>}</code> delimiter pairs, in which case it does not indicate the end of the syntactic construct.</p>
+<h2 id="header"><a class="header" href="#header">Header</a></h2>
+<p>The header must be located at the beginning of the file, after any initial <a href="dev/langref.html#whitespace">whitespace</a> or <a href="dev/langref.html#comment">comments</a>. It describes how the remainder of the file must be interpreted.</p>
+<h3 id="target"><a class="header" href="#target">Target specification</a></h3>
+<pre><code>target &lt;target&gt; &lt;option&gt;=&lt;value&gt;...
+</code></pre>
+<p>For example:</p>
+<pre><code>target "siliconblue"
+target "siliconblue" "device"="ice40hx8k"
+target "siliconblue" "device"="ice40up5k" "dsp"="off"
+</code></pre>
+<p>The target specification defines the specific device for which the netlist is intended, as well as target-specific configuration options for the flow. The <code>&lt;target&gt;</code>, <code>&lt;option&gt;</code>, and <code>&lt;value&gt;</code> are all <a href="dev/langref.html#string">strings</a> that are passed to the <a href="dev//api/prjunnamed_netlist/fn.register_target.html">builder function</a> as-is.</p>
+<h2 id="decls"><a class="header" href="#decls">Declarations</a></h2>
+<p><em>Declarations</em> are syntactic constructs that, taken together, describe the entire netlist. There are several kinds of declarations:</p>
+<ul>
+<li><a href="dev/langref.html#metadata-decls"><em>metadata declarations</em></a>,</li>
+<li><a href="dev/langref.html#io-decls"><em>I/O declarations</em></a>,</li>
+<li><a href="dev/langref.html#cell-decls"><em>cell declarations</em></a>.</li>
+</ul>
+<p>The general structure of a declaration is:</p>
+<pre><code>&lt;ident&gt; = &lt;keyword&gt; &lt;operand&gt;...
+</code></pre>
+<p>For example:</p>
+<pre><code>!1 = ident "clk" in=!0
+%0:1 = input "clk" !2
+</code></pre>
+<p>In the snippet above, <code>!1</code> and <code>%0:1</code> are identifiers <em>introduced</em> by the declaration, <code>ident</code> and <code>input</code> are <em>keywords</em>, and <code>"clk"</code>, <code>in=!0</code>, and <code>!2</code> are <em>operands</em>.</p>
+<p>A <a href="dev/langref.html#metadata">metadata identifier</a> can only reference a metadata declaration introduced at an earlier point in the file. In contrast, a <a href="dev/langref.html#cell">cell identifier</a> can reference a cell declaration introduced anywhere in the file, including by the cell declaration it is an operand of.</p>
+<h3 id="metadata-decls"><a class="header" href="#metadata-decls">Metadata declarations</a></h3>
+<p>Metadata declarations correspond to the <a href="dev//api/prjunnamed_netlist/enum.MetaItem.html">enum prjunnamed_netlist::MetaItem</a>.</p>
+<div class="warning">
+<p>The names that occur within metadata are opaque: they must not be examined by the tools for any reason other than communicating it to the user or to other tools.</p>
+<p>In particular, it is forbidden to interpret names with certain suffixes such as <code>inst[0]</code> or <code>wire[2:0]</code> in a special way. If necessary, this may be done prior to generating Unnamed IR.</p>
+</div>
+<h4 id="metadata-set"><a class="header" href="#metadata-set">Metadata sets</a></h4>
+<pre><code>!&lt;decl&gt; = { !&lt;ref&gt; !&lt;ref&gt;... }
+</code></pre>
+<p>For example:</p>
+<pre><code>!10 = { !2 !3 }
+!11 = { !2 !3 !4 }
+</code></pre>
+<p><em>Metadata sets</em> are used to group multiple pieces of metadata to be referenced in <a href="dev/langref.html#cell-decls">cell declarations</a> with a single index.</p>
+<p>A metadata set with less than two elements is ill-formed. A metadata set that refers to another metadata set is ill-formed.</p>
+<h4 id="metadata-source"><a class="header" href="#metadata-source">Source metadata</a></h4>
+<pre><code>!&lt;decl&gt; = source "&lt;file&gt;" (#&lt;start-line&gt; #&lt;start-col&gt;) (#&lt;end-line&gt; #&lt;end-col&gt;)
+</code></pre>
+<p>For example:</p>
+<pre><code>!1 = source "/home/whitequark/design/top.py" (#20 #4) (#20 #10)
+</code></pre>
+<p><em>Source metadata</em> is used to refer to a contiguous possibly empty range of characters within a source file.</p>
+<p>The <code>"&lt;file&gt;"</code> <a href="dev/langref.html#string">string</a> is an environment specific location of a source file, which may be absolute or relative. It cannot be empty, or the declaration is ill-formed.</p>
+<p>The <code>#&lt;start-line&gt;</code> and <code>#&lt;start-col&gt;</code> <a href="dev/langref.html#decimal">decimal numbers</a> are zero-based non-negative indices into the contents of <code>"&lt;file&gt;"</code>, where <code>#&lt;start-line&gt;</code> is the number of <code>U+000A LINE FEED</code> characters before the start of the range, and <code>#&lt;start-col&gt;</code> is the number of the Unicode code points after the last <code>U+000A LINE FEED</code> character and before the beginning of the range.</p>
+<p>The <code>#&lt;end-line&gt;</code> and <code>#&lt;end-col&gt;</code> <a href="dev/langref.html#decimal">decimal numbers</a> are zero-based non-negative indices defined in the same way, except they point to the end of the range. The index <code>#&lt;end-line&gt;</code> cannot be less than <code>#&lt;start-line&gt;</code>, and if the two are equal, the index <code>#&lt;end-col&gt;</code> cannot be less than <code>#&lt;start-col&gt;</code>, or the declaration is ill-formed.</p>
+<p>If the IR generator does not have access to accurate location information, the range may be left empty. If only line number information is available, the range should be specified as <code>(#&lt;line&gt; #0) (#&lt;line&gt; #0)</code>.</p>
+<h4 id="metadata-scope"><a class="header" href="#metadata-scope">Scope metadata</a></h4>
+<pre><code>!&lt;decl&gt; = scope "&lt;name&gt;" in=!&lt;parent&gt; src=!&lt;source&gt;
+!&lt;decl&gt; = scope #&lt;index&gt; in=!&lt;parent&gt; src=!&lt;source&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>!10 = scope "top"
+!11 = scope "cpu" in=!10
+!12 = scope "alu" in=!11 src=!0
+!13 = scope "io" src=!1
+!14 = scope #0 in=!13
+!14 = scope #1 in=!13 src=!2
+</code></pre>
+<p><em>Scope metadata</em> is used to describe a hierarchy of regions within the source code. The nature of a region is not constrained here, and includes without limitation: modules, conditional blocks, instance declarations, and so on. By traversing the chain of scope metadata, it should be possible for tools like timing analyzers, source level debuggers, and so on to be able to unambiguously locate a declaration by its hierarchical name.</p>
+<p>There are two kinds of scopes: <em>named scopes</em> and <em>indexed scopes</em>. Indexed scopes typically correspond to source-level declarations of arrays, whereas named scopes correspond to any other source-level declarations. Negative indices are accepted for indexed scopes.</p>
+<p>Hierarchy arises when a scope is declared to be a part of another scope using the optional <code>in=!&lt;parent&gt;</code> operand. The <code>!&lt;parent&gt;</code> <a href="dev/langref.html#metadata">metadata identifier</a> must refer to scope metadata, or the declaration is ill-formed.</p>
+<p>A scope may have a <a href="dev/langref.html#metadata-source">source location</a> attached using the optional <code>src=!&lt;source&gt;</code> operand. The <code>!&lt;source&gt;</code> <a href="dev/langref.html#metadata">metadata identifier</a> must refer to source metadata, or the declaration is ill-formed.</p>
+<p>If the <code>"&lt;name&gt;"</code> <a href="dev/langref.html#string">string</a> is empty, the declaration is ill-formed.</p>
+<h4 id="metadata-ident"><a class="header" href="#metadata-ident">Identifier metadata</a></h4>
+<pre><code>!&lt;decl&gt; = ident "&lt;name&gt;" in=!&lt;scope&gt;
+</code></pre>
+<p>For example:</p>
+<pre><code>!1 = ident "clk" in=!0
+</code></pre>
+<p><em>Identifier metadata</em> is used to refer to a specific declaration within an elaborated hierarchy. The full hierarchical name is obtained by collecting the names or indices while recursively traversing <a href="dev/langref.html#metadata-scope">scope metadata</a> referenced by the <code>!&lt;scope&gt;</code> <a href="dev/langref.html#metadata">metadata identifier</a> and appending the <code>"&lt;name&gt;"</code> <a href="dev/langref.html#string">string</a> at the end.</p>
+<p>If the <code>"&lt;name&gt;"</code> is empty, or the <code>!&lt;scope&gt;</code> does not refer to scope metadata, the declaration is ill-formed.</p>
+<h4 id="metadata-attr"><a class="header" href="#metadata-attr">Attribute metadata</a></h4>
+<pre><code>!&lt;decl&gt; = attr "&lt;name&gt;" &lt;const&gt;
+!&lt;decl&gt; = attr "&lt;name&gt;" #&lt;int&gt;
+!&lt;decl&gt; = attr "&lt;name&gt;" "&lt;string&gt;"
+</code></pre>
+<p>For example:</p>
+<pre><code>!0 = attr "top" #1
+!1 = attr "PIN_TYPE" 110000
+!2 = attr "BEL" "X0/Y1"
+</code></pre>
+<p><em>Attribute metadata</em> is used to encapsulate source-level attributes that are not otherwise recognized by the target-independent or target-specific parts of the flow. An attribute has a <code>"&lt;name&gt;"</code> <a href="dev/langref.html#string">string</a> and a payload. There are three possible types of payloads: <a href="dev/langref.html#constant">constants</a>, <a href="dev/langref.html#decimal">integers</a>, and <a href="dev/langref.html#string">strings</a>.</p>
+<p>Attribute metadata is strongly typed: the tools preserve the type of the payload and ensure it matches the expected type whenever the payload is examined.</p>
+<p>If the <code>"&lt;name&gt;"</code> is empty, the declaration is ill-formed.</p>
+<h3 id="io-decls"><a class="header" href="#io-decls">I/O declarations</a></h3>
+<pre><code>&amp;"&lt;name&gt;":&lt;width&gt; = io
+</code></pre>
+<p>For example:</p>
+<pre><code>&amp;"clk":1 = io
+&amp;"gpio":8 = io
+</code></pre>
+<p><em>I/O declarations</em> are used to specify the width of an I/O port (using an <a href="dev/langref.html#io">I/O identifier</a> in the form specified above).</p>
+<p>If the <code>"&lt;name&gt;"</code> is empty, or a preceding I/O declaration uses the same <code>"&lt;name&gt;"</code>, the declaration is ill-formed.</p>
+<h3 id="cell-decls"><a class="header" href="#cell-decls">Cell declarations</a></h3>
+<p>Cell declarations correspond to the <a href="dev//api/prjunnamed_netlist/enum.Cell.html">enum prjunnamed_netlist::Cell</a>.</p>
+<p>To be written.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
