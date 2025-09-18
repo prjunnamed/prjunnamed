@@ -58,6 +58,7 @@ jobs:
       - name: Publish documentation
         uses: JamesIves/github-pages-deploy-action@releases/v4
         with:
+          branch: pages
           folder: docs/out/
 
   cargo-deny:
