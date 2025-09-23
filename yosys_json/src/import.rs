@@ -4,9 +4,9 @@ use std::{
 };
 
 use prjunnamed_netlist::{
-    Const, ControlNet, Design, FlipFlop, Instance, IoBuffer, IoNet, IoValue, Net, ParamValue, Target, Trit, Value,
-    Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation, WithMetadataGuard, SourcePosition,
-    MetaItem, MetaItemRef,
+    Const, ControlNet, Design, DLatchSr, ADLatch, FlipFlop, Instance, IoBuffer, IoNet, IoValue, Net, ParamValue,
+    Target, Trit, Value, Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation,
+    WithMetadataGuard, SourcePosition, MetaItem, MetaItemRef,
 };
 
 use crate::yosys;
@@ -576,7 +576,49 @@ impl ModuleImporter<'_> {
                     self.driven_nets.insert(ynet);
                 }
             }
-            "$dff" | "$dffe" | "$adff" | "$adffe" | "$sdff" | "$sdffe" | "$sdffce" => {
+            "$dlatchsr" => {
+                let data = self.port_value(cell, "D");
+                let set = self.port_value(cell, "SET");
+                let reset = self.port_value(cell, "CLR");
+
+                let set_polarity = cell.parameters.get("SET_POLARITY").unwrap().as_bool().unwrap();
+                let reset_polarity = cell.parameters.get("CLR_POLARITY").unwrap().as_bool().unwrap();
+
+                let set = if set_polarity { self.design.add_not(set) } else { set };
+                let reset = if reset_polarity { self.design.add_not(reset) } else { reset };
+
+                let enable = if cell.connections.contains_key("EN") {
+                    self.port_control_net(cell, "EN")
+                } else {
+                    ControlNet::Pos(Net::ONE)
+                };
+                let init_value = self.init_value(cell, "Q");
+                let q = self.design.add_d_latch_sr(DLatchSr { data, enable, init_value, set, reset });
+                self.port_drive(cell, "Q", q);
+            }
+            "$adlatch" | "$dlatch" => {
+                let data = self.port_value(cell, "D");
+                let (arst, arst_value) = match &cell.type_[..] {
+                    "$dlatch" => (ControlNet::Pos(Net::ZERO), Const::undef(data.len())),
+                    "$adlatch" => {
+                        let arst = self.port_control_net(cell, "ARST");
+                        let arst_value = cell.parameters.get("ARST_VALUE").unwrap().as_const()?;
+
+                        (arst, arst_value)
+                    }
+                    _ => unreachable!(),
+                };
+
+                let enable = if cell.connections.contains_key("EN") {
+                    self.port_control_net(cell, "EN")
+                } else {
+                    ControlNet::Pos(Net::ONE)
+                };
+                let init_value = self.init_value(cell, "Q");
+                let q = self.design.add_ad_latch(ADLatch { data, enable, arst, init_value, arst_value });
+                self.port_drive(cell, "Q", q);
+            }
+            "$dff" | "$dffe" | "$adff" | "$adffe" | "$sdff" | "$sdffe" | "$sdffce" | "$aldff" => {
                 let data = self.port_value(cell, "D");
                 let enable = if cell.connections.contains_key("EN") {
                     self.port_control_net(cell, "EN")
@@ -593,6 +635,17 @@ impl ModuleImporter<'_> {
                 } else {
                     (ControlNet::Pos(Net::ZERO), Const::undef(data.len()))
                 };
+
+                // mux data based on ALOAD if present
+                let data = if cell.connections.contains_key("ALOAD") {
+                    let load_enable = self.port_control_net(cell, "ALOAD");
+                    let load_value = self.port_value(cell, "AD");
+
+                    self.design.add_mux(load_enable, data, load_value)
+                } else {
+                    data
+                };
+
                 let clock = self.port_control_net(cell, "CLK");
                 let init_value = self.init_value(cell, "Q");
                 let q = self.design.add_dff(FlipFlop {

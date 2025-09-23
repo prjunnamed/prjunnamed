@@ -305,7 +305,51 @@ fn export_module(mut design: Design) -> yosys::Module {
 
             Cell::Match { .. } => unimplemented!("match cells must be lowered first for Yosys JSON export"),
             Cell::Assign { .. } => unimplemented!("assign cells must be lowered first for Yosys JSON export"),
-
+            Cell::ADLatch(adlatch) => {
+                let ys_cell_type = "$adlatch";
+                let mut ys_cell = CellDetails::new(ys_cell_type);
+                if adlatch.has_enable() {
+                    ys_cell = ys_cell
+                        .param("EN_POLARITY", adlatch.enable.is_positive())
+                        .input("EN", indexer.net(adlatch.enable.net()));
+                }
+                if adlatch.has_reset_value() {
+                    ys_cell = ys_cell
+                        .param("ARST_POLARITY", adlatch.arst.is_positive())
+                        .input("ARST", indexer.net(adlatch.arst.net()));
+                }
+                ys_cell
+                    .param("WIDTH", output.len())
+                    .input("D", indexer.value(&adlatch.data))
+                    .output("Q", indexer.value(&output))
+                    .attrs(map_metadata(cell_ref.metadata()))
+                    .add_to(&ys_cell_name, &mut ys_module);
+                NetDetails::new(indexer.value(&output))
+                    .attr("init", adlatch.init_value.clone())
+                    .add_to(&format!("{}$adlatch", ys_cell_name), &mut ys_module);
+                continue; // skip default $out wire (init-less) creation
+            }
+            Cell::DLatchSr(dlatchsr) => {
+                let ys_cell_type = "$dlatchsr";
+                let mut ys_cell = CellDetails::new(ys_cell_type);
+                if dlatchsr.has_enable() {
+                    ys_cell = ys_cell
+                        .param("EN_POLARITY", dlatchsr.enable.is_positive())
+                        .input("EN", indexer.net(dlatchsr.enable.net()));
+                }
+                ys_cell
+                    .param("WIDTH", output.len())
+                    .input("D", indexer.value(&dlatchsr.data))
+                    .input("SET", indexer.value(&dlatchsr.set))
+                    .input("CLR", indexer.value(&dlatchsr.reset))
+                    .output("Q", indexer.value(&output))
+                    .attrs(map_metadata(cell_ref.metadata()))
+                    .add_to(&ys_cell_name, &mut ys_module);
+                NetDetails::new(indexer.value(&output))
+                    .attr("init", dlatchsr.init_value.clone())
+                    .add_to(&format!("{}$dlatchsr", ys_cell_name), &mut ys_module);
+                continue; // skip default $out wire (init-less) creation
+            }
             Cell::Dff(flip_flop) => {
                 let ys_cell_type = match (
                     flip_flop.has_clear(),

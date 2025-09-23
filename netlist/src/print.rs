@@ -409,7 +409,36 @@ impl Design {
                     write!(f, " at=#{}", assign_cell.offset)?;
                 }
             }
+            Cell::ADLatch(ad_latch) => {
+                write_common(f, "dlatchsr", &[&ad_latch.data])?;
+                if ad_latch.has_enable() {
+                    write_control(f, " en", ad_latch.enable)?;
+                }
 
+                write_control(f, " arst", ad_latch.arst)?;
+                if ad_latch.arst_value != ad_latch.init_value {
+                    write!(f, ",{}", ad_latch.arst_value)?;
+                }
+
+                if ad_latch.has_init_value() {
+                    write!(f, " init={}", ad_latch.init_value)?;
+                }
+            }
+            Cell::DLatchSr(d_latch_sr) => {
+                write_common(f, "dlatchsr", &[&d_latch_sr.data])?;
+                if d_latch_sr.has_enable() {
+                    write_control(f, " en", d_latch_sr.enable)?;
+                }
+                if d_latch_sr.has_set() {
+                    write_common(f, " set", &[&d_latch_sr.set])?;
+                }
+                if d_latch_sr.has_reset() {
+                    write_common(f, " rst", &[&d_latch_sr.reset])?;
+                }
+                if d_latch_sr.has_init_value() {
+                    write!(f, " init={}", d_latch_sr.init_value)?;
+                }
+            }
             Cell::Dff(flip_flop) => {
                 write_common(f, "dff", &[&flip_flop.data])?;
                 write_control(f, " clk", flip_flop.clock)?;

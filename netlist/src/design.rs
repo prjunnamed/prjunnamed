@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use crate::{MetaItem, MetaStringRef, MetaItemRef};
 use crate::{
-    cell::CellRepr, AssignCell, Cell, ControlNet, FlipFlop, Instance, IoBuffer, IoNet, IoValue, MatchCell, Memory, Net,
-    Target, TargetCell, TargetCellPurity, TargetPrototype, Trit, Value,
+    cell::CellRepr, AssignCell, Cell, ControlNet, ADLatch, DLatchSr, FlipFlop, Instance, IoBuffer, IoNet, IoValue,
+    MatchCell, Memory, Net, Target, TargetCell, TargetCellPurity, TargetPrototype, Trit, Value,
 };
 use crate::metadata::{MetadataStore, MetaStringIndex, MetaItemIndex};
 use crate::smt::{SmtEngine, SmtBuilder};
@@ -666,6 +666,10 @@ impl Design {
             Match(arg.into());
         add_assign(arg: impl Into<AssignCell>) -> Value :
             Assign(arg.into());
+        add_ad_latch(arg: impl Into<ADLatch>) -> Value :
+            ADLatch(arg.into());
+        add_d_latch_sr(arg: impl Into<DLatchSr>) -> Value :
+            DLatchSr(arg.into());
         add_dff(arg: impl Into<FlipFlop>) -> Value :
             Dff(arg.into());
         add_memory(arg: impl Into<Memory>) -> Value :
@@ -990,6 +994,8 @@ impl Design {
                 Cell::SModFloor(arg, _) => wide("smod_floor", arg.len()),
                 Cell::Match(_) => custom(format_args!("match")),
                 Cell::Assign(AssignCell { value, .. }) => bitwise("assign", value.len()),
+                Cell::ADLatch(ADLatch { data, .. }) => bitwise("adlatch", data.len()),
+                Cell::DLatchSr(DLatchSr { data, .. }) => bitwise("dlatchsr", data.len()),
                 Cell::Dff(FlipFlop { data, .. }) => bitwise("dff", data.len()),
                 Cell::Memory(Memory { depth, width, .. }) => custom(format_args!("memory:{depth}:{width}")),
                 Cell::IoBuf(IoBuffer { io, .. }) => bitwise("iobuf", io.len()),
