@@ -3,7 +3,6 @@ use std::{borrow::Cow, hash::Hash};
 use crate::{ControlNet, Design, Net, TargetCellPurity, Value};
 
 mod decision;
-mod latch;
 mod flip_flop;
 mod memory;
 mod io_buffer;
@@ -11,7 +10,6 @@ mod target;
 mod instance;
 
 pub use decision::{MatchCell, AssignCell};
-pub use latch::{ADLatch, DLatchSr};
 pub use flip_flop::FlipFlop;
 pub use memory::{Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop, MemoryPortRelation};
 pub use io_buffer::IoBuffer;
@@ -137,9 +135,6 @@ pub enum Cell {
     Match(MatchCell),
     Assign(AssignCell),
 
-    ADLatch(ADLatch),
-    DLatchSr(DLatchSr),
-
     Dff(FlipFlop),
     Memory(Memory),
     IoBuf(IoBuffer),
@@ -223,14 +218,6 @@ impl Cell {
             }
             Cell::Assign(assign_cell) => {
                 assert!(assign_cell.value.len() >= assign_cell.update.len() + assign_cell.offset);
-            }
-            Cell::ADLatch(ad_latch) => {
-                assert_eq!(ad_latch.data.len(), ad_latch.init_value.len());
-            }
-            Cell::DLatchSr(sr_latch) => {
-                assert_eq!(sr_latch.data.len(), sr_latch.init_value.len());
-                assert_eq!(sr_latch.data.len(), sr_latch.set.len());
-                assert_eq!(sr_latch.data.len(), sr_latch.reset.len());
             }
 
             Cell::Dff(flip_flop) => {
@@ -465,9 +452,6 @@ impl Cell {
             Cell::Match(match_cell) => match_cell.output_len(),
             Cell::Assign(assign_cell) => assign_cell.output_len(),
 
-            Cell::ADLatch(ad_latch) => ad_latch.output_len(),
-            Cell::DLatchSr(dlatch_sr) => dlatch_sr.output_len(),
-
             Cell::Dff(flip_flop) => flip_flop.output_len(),
             Cell::Memory(memory) => memory.output_len(),
             Cell::IoBuf(io_buffer) => io_buffer.output_len(),
@@ -539,8 +523,6 @@ impl Cell {
             }
             Cell::Match(match_cell) => match_cell.visit(&mut f),
             Cell::Assign(assign_cell) => assign_cell.visit(&mut f),
-            Cell::ADLatch(ad_latch) => ad_latch.visit(&mut f),
-            Cell::DLatchSr(dlatch_sr) => dlatch_sr.visit(&mut f),
             Cell::Dff(flip_flop) => flip_flop.visit(&mut f),
             Cell::Memory(memory) => memory.visit(&mut f),
             Cell::IoBuf(io_buffer) => io_buffer.visit(&mut f),
@@ -586,8 +568,6 @@ impl Cell {
             }
             Cell::Match(match_cell) => match_cell.visit_mut(&mut f),
             Cell::Assign(assign_cell) => assign_cell.visit_mut(&mut f),
-            Cell::ADLatch(ad_latch) => ad_latch.visit_mut(&mut f),
-            Cell::DLatchSr(dlatch_sr) => dlatch_sr.visit_mut(&mut f),
             Cell::Dff(flip_flop) => flip_flop.visit_mut(&mut f),
             Cell::Memory(memory) => memory.visit_mut(&mut f),
             Cell::IoBuf(io_buffer) => io_buffer.visit_mut(&mut f),

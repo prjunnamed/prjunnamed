@@ -25,8 +25,8 @@ pub use value::{Net, ControlNet, Value};
 pub use param::ParamValue;
 pub use io::{IoNet, IoValue};
 pub use cell::{
-    Cell, MatchCell, AssignCell, ADLatch, DLatchSr, FlipFlop, IoBuffer, Memory, MemoryWritePort, MemoryReadPort,
-    MemoryReadFlipFlop, MemoryPortRelation, TargetCell, Instance,
+    Cell, MatchCell, AssignCell, FlipFlop, IoBuffer, Memory, MemoryWritePort, MemoryReadPort, MemoryReadFlipFlop,
+    MemoryPortRelation, TargetCell, Instance,
 };
 pub use metadata::{MetaStringRef, MetaItem, MetaItemRef, SourcePosition};
 pub use design::{Design, CellRef, WithMetadataGuard};

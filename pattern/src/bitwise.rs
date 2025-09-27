@@ -142,6 +142,7 @@ impl<P: Pattern<Net>> Pattern<Net> for PDff<P> {
             if let Cell::Dff(flip_flop) = &*cell_ref.get() {
                 let flip_flop = FlipFlop {
                     data: flip_flop.data[offset].into(),
+                    load_data: flip_flop.load_data[offset].into(),
                     clear_value: flip_flop.clear_value[offset].into(),
                     reset_value: flip_flop.reset_value[offset].into(),
                     init_value: flip_flop.init_value[offset].into(),
@@ -178,6 +179,7 @@ impl<P: Pattern<Value>> Pattern<Value> for PDff<P> {
                     } else {
                         target_flip_flop = Some(FlipFlop {
                             data: flip_flop.data[offset].into(),
+                            load_data: flip_flop.load_data[offset].into(),
                             clear_value: flip_flop.clear_value[offset].into(),
                             reset_value: flip_flop.reset_value[offset].into(),
                             init_value: flip_flop.init_value[offset].into(),
