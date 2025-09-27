@@ -548,6 +548,9 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
                 let clear = self.control_net(flip_flop.clear)?;
                 let reset = self.control_net(flip_flop.reset)?;
                 let enable = self.control_net(flip_flop.enable)?;
+                if flip_flop.has_load() {
+                    panic!("load-enabled flip-flops are not supported yet");
+                }
                 if flip_flop.reset_over_enable {
                     data = self.tv_mux(enable, data, self.past_value(&output)?, output.len())?;
                     data = self.tv_mux(reset, self.tv_lit(&flip_flop.reset_value), data, output.len())?;

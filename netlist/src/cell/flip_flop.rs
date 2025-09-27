@@ -6,7 +6,8 @@ use crate::{Const, ControlNet, Design, Net, Value};
 ///
 /// - at the beginning of time, the output is set to `init_value`
 /// - whenever `clear` as active, the output is set to `clear_value`
-/// - whenever `clear` is not active, and an active edge happens on `clock`:
+/// - whenever `clear` is not active and `load` is active, the output is set to `load_data`
+/// - whenever `clear` and `load` are not active, and an active edge happens on `clock`:
 ///   - if `reset_over_enable` is true:
 ///     - if `reset` is active, the output is set to `reset_value`
 ///     - if `enable` is false, output value is unchanged
@@ -22,6 +23,8 @@ pub struct FlipFlop {
     pub clock: ControlNet,
     /// Asynchronous reset.
     pub clear: ControlNet,
+    /// Asynchronous load.
+    pub load: ControlNet,
     /// Synchronous reset.
     pub reset: ControlNet,
     /// Clock enable.
@@ -31,6 +34,8 @@ pub struct FlipFlop {
 
     /// Must have the same width as `data`.
     pub clear_value: Const,
+    /// Must have the same width as `data` and `load_data`.
+    pub load_data: Value,
     /// Must have the same width as `data`.
     pub reset_value: Const,
     /// Must have the same width as `data`.
@@ -44,10 +49,12 @@ impl FlipFlop {
             data,
             clock: clock.into(),
             clear: ControlNet::ZERO,
+            load: ControlNet::ZERO,
             reset: ControlNet::ZERO,
             enable: ControlNet::ONE,
             reset_over_enable: false,
             clear_value: Const::undef(size),
+            load_data: Value::undef(size),
             reset_value: Const::undef(size),
             init_value: Const::undef(size),
         }
@@ -86,6 +93,14 @@ impl FlipFlop {
         Self { clear_value: value.clone(), reset_value: value.clone(), init_value: value, ..self }
     }
 
+    pub fn with_load_data(self, load_data: impl Into<Value>) -> Self {
+        Self { load_data: load_data.into(), ..self }
+    }
+
+    pub fn with_load(self, load: impl Into<ControlNet>) -> Self {
+        Self { load: load.into(), ..self }
+    }
+
     pub fn output_len(&self) -> usize {
         self.data.len()
     }
@@ -114,6 +129,14 @@ impl FlipFlop {
         !self.clear_value.is_undef()
     }
 
+    pub fn has_load(&self) -> bool {
+        !self.load.is_always(false)
+    }
+
+    pub fn has_load_data(&self) -> bool {
+        !self.load_data.is_undef()
+    }
+
     pub fn has_init_value(&self) -> bool {
         !self.init_value.is_undef()
     }
@@ -123,10 +146,12 @@ impl FlipFlop {
             data: self.data.slice(range.clone()),
             clock: self.clock,
             clear: self.clear,
+            load: self.load,
             reset: self.reset,
             enable: self.enable,
             reset_over_enable: self.reset_over_enable,
             clear_value: self.clear_value.slice(range.clone()),
+            load_data: self.load_data.slice(range.clone()),
             reset_value: self.reset_value.slice(range.clone()),
             init_value: self.init_value.slice(range.clone()),
         }
@@ -164,6 +189,11 @@ impl FlipFlop {
         self.reset = ControlNet::ZERO;
     }
 
+    pub fn unmap_load(&mut self, design: &Design) {
+        self.data = design.add_mux(self.load, &self.load_data, &self.data);
+        self.load = ControlNet::ZERO;
+    }
+
     pub fn unmap_enable(&mut self, design: &Design, output: &Value) {
         self.remap_reset_over_enable(design);
         self.data = design.add_mux(self.enable, &self.data, output);
@@ -172,6 +202,7 @@ impl FlipFlop {
 
     pub fn invert(&mut self, design: &Design, output: &Value) -> Value {
         self.data = design.add_not(&self.data);
+        self.load_data = design.add_not(&self.load_data);
         self.clear_value = self.clear_value.not();
         self.reset_value = self.reset_value.not();
         self.init_value = self.init_value.not();
@@ -182,17 +213,21 @@ impl FlipFlop {
 
     pub fn visit(&self, mut f: impl FnMut(Net)) {
         self.data.visit(&mut f);
+        self.load_data.visit(&mut f);
         self.clock.visit(&mut f);
         self.enable.visit(&mut f);
         self.reset.visit(&mut f);
+        self.load.visit(&mut f);
         self.clear.visit(&mut f);
     }
 
     pub fn visit_mut(&mut self, mut f: impl FnMut(&mut Net)) {
         self.data.visit_mut(&mut f);
+        self.load_data.visit_mut(&mut f);
         self.clock.visit_mut(&mut f);
         self.enable.visit_mut(&mut f);
         self.reset.visit_mut(&mut f);
+        self.load.visit_mut(&mut f);
         self.clear.visit_mut(&mut f);
     }
 }

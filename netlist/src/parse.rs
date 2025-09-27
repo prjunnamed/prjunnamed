@@ -721,6 +721,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
             }
             "dff" => {
                 let data = parse_value_arg(t)?;
+                let data_len = data.len();
                 let clock = parse_control_arg(t, "clk")?;
                 let (clear, clear_value) = t
                     .optional(|t| parse_dff_reset_control_net_arg(t, "clr"))
@@ -731,12 +732,14 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
                 let enable = t.optional(|t| parse_control_arg(t, "en")).unwrap_or(ControlNet::Pos(Net::ONE));
                 let reset_over_enable = t.optional(|t| parse_reset_over_enable_arg(t)).unwrap_or(false);
                 let init_value =
-                    t.optional(|t| parse_dff_init_value_arg(t)).unwrap_or_else(|| Const::undef(data.len()));
+                    t.optional(|t| parse_dff_init_value_arg(t)).unwrap_or_else(|| Const::undef(data_len));
                 Cell::Dff(FlipFlop {
                     data,
                     clock,
                     clear,
+                    load: ControlNet::ZERO,
                     clear_value: clear_value.unwrap_or_else(|| init_value.clone()),
+                    load_data: Value::undef(data_len),
                     reset,
                     reset_value: reset_value.unwrap_or_else(|| init_value.clone()),
                     enable,
@@ -866,6 +869,9 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
             let clock = parse_control_arg(t, "clk")?;
             let (clear, clear_value) =
                 t.optional(|t| parse_dff_reset_control_net_arg(t, "clr")).unwrap_or((ControlNet::Pos(Net::ZERO), None));
+            let load = ControlNet::Pos(Net::ZERO);
+            let load_data = Value::undef(width);
+
             let (reset, reset_value) =
                 t.optional(|t| parse_dff_reset_control_net_arg(t, "rst")).unwrap_or((ControlNet::Pos(Net::ZERO), None));
             let enable = t.optional(|t| parse_control_arg(t, "en")).unwrap_or(ControlNet::Pos(Net::ONE));
@@ -891,6 +897,8 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
                 clock,
                 clear,
                 clear_value: clear_value.unwrap_or_else(|| init_value.clone()),
+                load,
+                load_data,
                 reset,
                 reset_value: reset_value.unwrap_or_else(|| init_value.clone()),
                 enable,
