@@ -1,4 +1,4 @@
-use crate::{Const, ControlNet, Design, Net, Value};
+use crate::{value::ControlNets, Const, ControlNet, Design, Net, Value};
 
 /// A flip-flop cell.
 ///
@@ -22,7 +22,7 @@ pub struct FlipFlop {
     /// a [`ControlNet::Neg`].
     pub clock: ControlNet,
     /// Asynchronous reset.
-    pub clear: ControlNet,
+    pub clear: ControlNets,
     /// Asynchronous load.
     pub load: ControlNet,
     /// Synchronous reset.
@@ -48,7 +48,7 @@ impl FlipFlop {
         FlipFlop {
             data,
             clock: clock.into(),
-            clear: ControlNet::ZERO,
+            clear: ControlNets::zero(size),
             load: ControlNet::ZERO,
             reset: ControlNet::ZERO,
             enable: ControlNet::ONE,
@@ -68,11 +68,11 @@ impl FlipFlop {
         Self { clock: clock.into(), ..self }
     }
 
-    pub fn with_clear(self, clear: impl Into<ControlNet>) -> Self {
+    pub fn with_clear(self, clear: impl Into<ControlNets>) -> Self {
         Self { clear: clear.into(), ..self }
     }
 
-    pub fn with_clear_value(self, clear: impl Into<ControlNet>, clear_value: impl Into<Const>) -> Self {
+    pub fn with_clear_value(self, clear: impl Into<ControlNets>, clear_value: impl Into<Const>) -> Self {
         Self { clear: clear.into(), clear_value: clear_value.into(), ..self }
     }
 
@@ -145,7 +145,7 @@ impl FlipFlop {
         FlipFlop {
             data: self.data.slice(range.clone()),
             clock: self.clock,
-            clear: self.clear,
+            clear: self.clear.slice(range.clone()),
             load: self.load,
             reset: self.reset,
             enable: self.enable,

@@ -7,8 +7,7 @@ use std::{
 
 use prjunnamed_generic::{chain_rebalance, tree_rebalance};
 use prjunnamed_netlist::{
-    Cell, Const, Design, Instance, MetaItemRef, Net, ParamValue, Target, TargetCell, TargetImportError,
-    TargetPrototype, Trit, Value,
+    Cell, Const, ControlNet, Design, Instance, MetaItemRef, Net, ParamValue, Target, TargetCell, TargetImportError, TargetPrototype, Trit, Value
 };
 
 use prjunnamed_lut::Lut;
@@ -779,7 +778,8 @@ impl SiliconBlueTarget {
             let enable = flip_flop.enable.into_pos(design);
             let (is_reset_async, reset) = if !flip_flop.clear.is_always(false) {
                 assert!(flip_flop.reset.is_always(false));
-                (true, flip_flop.clear.into_pos(design))
+                let clear: ControlNet = flip_flop.clear.clone().try_into().expect("clear net");
+                (true, clear.into_pos(design))
             } else {
                 (false, flip_flop.reset.into_pos(design))
             };

@@ -355,7 +355,8 @@ fn fold_controls(design: &Design, cell_ref: CellRef) {
         Cell::Dff(flip_flop) => {
             let mut flip_flop = FlipFlop {
                 clock: fold_control_net(flip_flop.clock),
-                clear: fold_control_net(flip_flop.clear),
+                // clear: fold_control_net(flip_flop.clear),
+                clear: flip_flop.clear.clone(),
                 load: fold_control_net(flip_flop.load),
                 reset: fold_control_net(flip_flop.reset),
                 enable: fold_control_net(flip_flop.enable),

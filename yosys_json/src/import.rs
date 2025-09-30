@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     collections::{btree_map, BTreeMap, BTreeSet},
     sync::Arc,
@@ -608,7 +609,7 @@ impl ModuleImporter<'_> {
                     enable,
                     reset,
                     reset_over_enable: cell.type_ != "$sdffce",
-                    clear,
+                    clear: clear.into(),
                     load,
                     load_data,
                     init_value,
@@ -616,6 +617,48 @@ impl ModuleImporter<'_> {
                     clear_value,
                 });
                 self.port_drive(cell, "Q", q);
+            }
+            "$dlatch" | "$dlatchsr" | "$adlatch" => {
+            //     let data = self.port_value(cell, "D");
+            //                     let enable = if cell.connections.contains_key("EN") {
+            //         self.port_control_net(cell, "EN")
+            //     } else {
+            //         ControlNet::Pos(Net::ONE)
+            //     };
+            //     let (clear, clear_value) = if cell.connections.contains_key("ARST") {
+            //         (self.port_control_net(cell, "ARST"), cell.parameters.get("ARST_VALUE").unwrap().as_const()?)
+            //     } else {
+            //         (ControlNet::Pos(Net::ZERO), Const::undef(data.len()))
+            //     };
+            //     let (reset, reset_value) = if cell.connections.contains_key("SRST") {
+            //         (self.port_control_net(cell, "SRST"), cell.parameters.get("SRST_VALUE").unwrap().as_const()?)
+            //     } else {
+            //         (ControlNet::Pos(Net::ZERO), Const::undef(data.len()))
+            //     };
+
+            //     let (load, load_data) = if cell.connections.contains_key("ALOAD") {
+            //         (self.port_control_net(cell, "ALOAD"), self.port_value(cell, "AD"))
+            //     } else {
+            //         (ControlNet::Pos(Net::ZERO), Value::undef(data.len()))
+            //     };
+
+            //     let clock = self.port_control_net(cell, "CLK");
+            //     let init_value = self.init_value(cell, "Q");
+            //     let q = self.design.add_dff(FlipFlop {
+            //         data,
+            //         clock,
+            //         enable,
+            //         reset,
+            //         reset_over_enable: cell.type_ != "$sdffce",
+            //         clear: clear.into(),
+            //         load,
+            //         load_data,
+            //         init_value,
+            //         reset_value,
+            //         clear_value,
+            //     });
+            //     self.port_drive(cell, "Q", q);
+                todo!()
             }
             "$mem_v2" => {
                 let offset = usize::try_from(cell.parameters.get("OFFSET").unwrap().as_i32()?).unwrap();
@@ -745,7 +788,7 @@ impl ModuleImporter<'_> {
             }
             _ => {
                 if cell.type_.starts_with('$') {
-                    return Err(Error::Unsupported(format!("{} cell", cell.type_)));
+                    return Err(Error::Unsupported(format!("unhandled cell type: {}\n{:#?}", cell.type_, cell)));
                 }
                 // instance
                 let mut out_bits = vec![];

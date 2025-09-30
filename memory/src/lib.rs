@@ -311,7 +311,7 @@ impl MemoryExt for Memory {
         let q = design.add_dff(FlipFlop {
             data,
             clock: port_flip_flop.clock,
-            clear: port_flip_flop.clear,
+            clear: port_flip_flop.clear.into(),
             load: port_flip_flop.load,
             reset: port_flip_flop.reset,
             enable: port_flip_flop.enable,
@@ -366,7 +366,7 @@ impl MemoryExt for Memory {
         let data = design.add_dff(FlipFlop {
             data,
             clock: port_flip_flop.clock,
-            clear: port_flip_flop.clear,
+            clear: port_flip_flop.clear.into(),
             load: port_flip_flop.load,
             reset: port_flip_flop.reset,
             enable: port_flip_flop.enable,
@@ -379,7 +379,7 @@ impl MemoryExt for Memory {
         let mask = design.add_dedup_dff(FlipFlop {
             data: mask,
             clock: port_flip_flop.clock,
-            clear: port_flip_flop.clear,
+            clear: port_flip_flop.clear.into(),
             load: port_flip_flop.load,
             reset: port_flip_flop.reset,
             enable: port_flip_flop.enable,

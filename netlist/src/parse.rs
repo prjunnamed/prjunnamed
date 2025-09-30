@@ -736,7 +736,7 @@ fn parse_cell(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<
                 Cell::Dff(FlipFlop {
                     data,
                     clock,
-                    clear,
+                    clear: clear.into(),
                     load: ControlNet::ZERO,
                     clear_value: clear_value.unwrap_or_else(|| init_value.clone()),
                     load_data: Value::undef(data_len),

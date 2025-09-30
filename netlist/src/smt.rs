@@ -1,6 +1,6 @@
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 
-use crate::{AssignCell, Cell, Const, ControlNet, Design, MatchCell, Net, Trit, Value};
+use crate::{value::ControlNets, AssignCell, Cell, Const, ControlNet, Design, MatchCell, Net, Trit, Value};
 
 #[cfg(feature = "easy-smt")]
 pub mod easy_smt;
@@ -340,6 +340,13 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
         self.invert_net(control_net, self.net(control_net.net())?)
     }
 
+    fn control_nets(&self, control_nets: &ControlNets) -> Result<SmtTritVec<SMT>, SMT::Error> {
+        let control_nets_vec: Vec<ControlNet> = control_nets.clone().control_nets();
+
+        Ok(self.tv_concat(control_nets_vec.iter().map(|control_net| self.control_net(*control_net)).collect::<Result<Vec<_>, _>>()?.into_iter()))
+    }
+
+
     fn clock_net(&mut self, control_net: ControlNet) -> Result<SmtTritVec<SMT>, SMT::Error> {
         self.tv_and(
             self.invert_net(control_net, self.curr_net(control_net.net())?)?,
@@ -545,7 +552,7 @@ impl<'a, SMT: SmtEngine> SmtBuilder<'a, SMT> {
             )?,
             Cell::Dff(flip_flop) => {
                 let mut data = self.value(&flip_flop.data)?;
-                let clear = self.control_net(flip_flop.clear)?;
+                let clear = self.control_nets(&flip_flop.clear)?;
                 let reset = self.control_net(flip_flop.reset)?;
                 let enable = self.control_net(flip_flop.enable)?;
                 if flip_flop.has_load() {
