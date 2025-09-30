@@ -72,7 +72,11 @@ pub fn split(design: &mut Design) -> bool {
                     queue.insert(ff.data[offset]);
                     queue.insert(ff.clock.net());
                     queue.insert(ff.reset.net());
-                    queue.insert(ff.clear.net());
+
+                    for net in ff.clear.nets() {
+                        queue.insert(*net);
+                    }
+
                     queue.insert(ff.enable.net());
                 }
 
@@ -161,11 +165,13 @@ pub fn split(design: &mut Design) -> bool {
                 design.add_dff(FlipFlop {
                     data: arg_live_nets(&flip_flop.data),
                     clock: flip_flop.clock,
-                    clear: flip_flop.clear,
+                    clear: flip_flop.clear.clone(),
+                    load: flip_flop.load,
                     reset: flip_flop.reset,
                     enable: flip_flop.enable,
                     reset_over_enable: flip_flop.reset_over_enable,
                     clear_value: arg_live_trits(&flip_flop.clear_value),
+                    load_data: arg_live_nets(&flip_flop.load_data),
                     reset_value: arg_live_trits(&flip_flop.reset_value),
                     init_value: arg_live_trits(&flip_flop.init_value),
                 }),

@@ -88,9 +88,12 @@ pub struct MemoryReadPort {
 pub struct MemoryReadFlipFlop {
     pub clock: ControlNet,
     pub clear: ControlNet, // async reset
+    pub load: ControlNet,  // async load
     pub reset: ControlNet, // sync reset
     pub enable: ControlNet,
     pub reset_over_enable: bool,
+
+    pub load_data: Value,
 
     pub clear_value: Const,
     pub reset_value: Const,
@@ -192,9 +195,11 @@ impl MemoryReadPort {
             flip_flop: Some(MemoryReadFlipFlop {
                 clock: clock.into(),
                 clear: ControlNet::ZERO,
+                load: ControlNet::ZERO,
                 reset: ControlNet::ZERO,
                 enable: ControlNet::ONE,
                 reset_over_enable: false,
+                load_data: Value::undef(data_len),
                 clear_value: Const::undef(data_len),
                 reset_value: Const::undef(data_len),
                 init_value: Const::undef(data_len),
@@ -215,6 +220,8 @@ impl MemoryReadPort {
         if let Some(ref flip_flop) = self.flip_flop {
             flip_flop.clock.visit(&mut f);
             flip_flop.clear.visit(&mut f);
+            flip_flop.load.visit(&mut f);
+            flip_flop.load_data.visit(&mut f);
             flip_flop.reset.visit(&mut f);
             flip_flop.enable.visit(&mut f);
         }
@@ -225,6 +232,8 @@ impl MemoryReadPort {
         if let Some(ref mut flip_flop) = self.flip_flop {
             flip_flop.clock.visit_mut(&mut f);
             flip_flop.clear.visit_mut(&mut f);
+            flip_flop.load.visit_mut(&mut f);
+            flip_flop.load_data.visit_mut(&mut f);
             flip_flop.reset.visit_mut(&mut f);
             flip_flop.enable.visit_mut(&mut f);
         }
@@ -242,6 +251,14 @@ impl MemoryReadFlipFlop {
 
     pub fn with_clear_value(self, clear: impl Into<ControlNet>, clear_value: impl Into<Const>) -> Self {
         Self { clear: clear.into(), clear_value: clear_value.into(), ..self }
+    }
+
+    pub fn with_load(self, load: impl Into<ControlNet>) -> Self {
+        Self { load: load.into(), ..self }
+    }
+
+    pub fn with_load_data(self, load: impl Into<ControlNet>, load_data: impl Into<Value>) -> Self {
+        Self { load: load.into(), load_data: load_data.into(), ..self }
     }
 
     pub fn with_reset(self, reset: impl Into<ControlNet>) -> Self {

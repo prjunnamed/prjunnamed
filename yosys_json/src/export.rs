@@ -327,7 +327,7 @@ fn export_module(mut design: Design) -> yosys::Module {
                     ys_cell = ys_cell
                         .param("ARST_POLARITY", flip_flop.clear.is_positive())
                         .param("ARST_VALUE", flip_flop.clear_value.clone())
-                        .input("ARST", indexer.net(flip_flop.clear.net()));
+                        .input("ARST", indexer.net(*flip_flop.clear.nets().first().expect("clear net missing")));
                 }
                 if flip_flop.has_reset() {
                     ys_cell = ys_cell
