@@ -13,21 +13,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -37,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex.js";
+            window.path_to_searchindex_js = "searchindex-26ee8b8f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="toc-882fd1c8.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -54,7 +53,7 @@
             </div>
         </div>
     </div>
-    <div id="body-container">
+    <div id="mdbook-body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
             try {
@@ -83,12 +82,12 @@
             html.classList.add("js");
         </script>
 
-        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
             let sidebar = null;
-            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
@@ -103,39 +102,39 @@
             }
         </script>
 
-        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
                 <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
             </noscript>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
             </div>
         </nav>
 
-        <div id="page-wrapper" class="page-wrapper">
+        <div id="mdbook-page-wrapper" class="page-wrapper">
 
             <div class="page">
-                <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
-                            <i class="fa fa-bars"></i>
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
                         </label>
-                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
-                            <i class="fa fa-paint-brush"></i>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
                         </button>
-                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
-                            <i class="fa fa-search"></i>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
                         </button>
                     </div>
 
@@ -143,41 +142,41 @@
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
-                            <i id="print-button" class="fa fa-print"></i>
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
                         <a href="https://github.com/prjunnamed/prjunnamed" title="Git repository" aria-label="Git repository">
-                            <i id="git-repository-button" class="fa fa-github"></i>
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
 
                     </div>
                 </div>
 
-                <div id="search-wrapper" class="hidden">
-                    <form id="searchbar-outer" class="searchbar-outer">
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
                         <div class="search-wrapper">
-                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
                             <div class="spinner-wrapper">
-                                <i class="fa fa-spinner fa-spin"></i>
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
                             </div>
                         </div>
                     </form>
-                    <div id="searchresults-outer" class="searchresults-outer hidden">
-                        <div id="searchresults-header" class="searchresults-header"></div>
-                        <ul id="searchresults">
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
                         </ul>
                     </div>
                 </div>
 
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
                 <script>
-                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
-                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
-                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
                         link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
                     });
                 </script>
 
-                <div id="content" class="content">
+                <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
 <p><a href="https://github.com/prjunnamed/prjunnamed">Project Unnamed</a> aims to deliver a comprehensive end-to-end FPGA synthesis, placement, routing, and bitstream generation tools targeting multiple FPGA families and integrating with <a href="https://github.com/prjunnamed/prjcombine">Project Combine</a>.</p>
@@ -188,10 +187,13 @@
 <p>Project Unnamed is distributed under the terms of the <a href="LICENSE-0BSD.txt">0-clause BSD license</a> and the <a href="LICENSE-Apache-2.0.txt">Apache License (Version 2.0)</a>.</p>
 <p>By submitting your contribution you agree to be bound by all provisions of both of these licenses, including the clause 3 (Grant of Patent License) of the Apache License (Version 2.0).</p>
 <hr>
-<ol class="footnote-definition"><li id="footnote-1">
+<ol class="footnote-definition">
+<li id="footnote-1">
 <p>The same messages appear on IRC and on Matrix, and one can participate in the discussion equally using either communication system. <a href="#fr-1-1">↩</a></p>
 </li>
-</ol><div style="break-before: page; page-break-before: always;"></div><h1 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h1>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h1>
 <p>In order to build Project Unnamed and run its testsuite, you will need <a href="https://rust-lang.org/">Rust</a> (latest stable release) and <a href="https://github.com/Z3Prover/z3">Z3</a>. We recommend using <a href="https://rustup.rs/">rustup</a> or installing Rust from the software repository of your Linux distribution. Once you have these tools, run:</p>
 <pre><code class="language-console">$ cargo test
 </code></pre>
@@ -202,21 +204,23 @@
 <pre><code class="language-console">$ mdbook serve docs
 </code></pre>
 <p>The documentation will be accessible in a browser at <a href="http://localhost:3000">http://localhost:3000</a>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="language-reference"><a class="header" href="#language-reference">Language reference</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="language-reference"><a class="header" href="#language-reference">Language reference</a></h1>
 <p>Project Unnamed is based around an <a href="https://en.wikipedia.org/wiki/Intermediate_representation">intermediate representation</a>: a kind of compiler developer readable and writable programming language designed for convenience of implementing transformations. These transformations include optimization, technology mapping, verification, and more.</p>
-<p>The Project Unnamed intermediate representation is called "Unnamed IR", and it has two forms: the in-memory form composed out of the data structures in the <a href="dev//api/prjunnamed_netlist/">prjunnamed-netlist</a> crate, and the text form described in this document. The text form is a part of the public interface, and incompatible changes to it are considered breaking changes to Project Unnamed itself.</p>
-<div class="warning">
+<p>The Project Unnamed intermediate representation is called “Unnamed IR”, and it has two forms: the in-memory form composed out of the data structures in the <a href="/api/prjunnamed_netlist">prjunnamed-netlist</a> crate, and the text form described in this document. The text form is a part of the public interface, and incompatible changes to it are considered breaking changes to Project Unnamed itself.</p>
+<blockquote class="blockquote-tag blockquote-tag-warning">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>Warning</p>
 <p>This document is incomplete.</p>
-</div>
+</blockquote>
 <h2 id="typography"><a class="header" href="#typography">Typographical conventions</a></h2>
 <p>The examples of the text IR in this document include placeholders delimited by the <code>&lt;</code> and <code>&gt;</code> characters. These characters are only used to denote placeholders, and do not appear in the syntax of the text IR itself. For example:</p>
 <pre><code>%&lt;cell-idx&gt;:&lt;width&gt; = and &lt;a&gt; &lt;b&gt;
 </code></pre>
 <p>The snippet above describes the syntax of the <code>and</code> cell, including the fixed elements (the percent, colon, and equals characters, and the <code>add</code> keyword) and the variable elements (cell index <code>&lt;cell-idx&gt;</code>, output width <code>&lt;width&gt;</code>, arguments <code>&lt;a&gt;</code> and <code>&lt;b&gt;</code>).</p>
-<p>Whenever a syntactic element is followed by the <code>...</code> characters, it means that it can be repeated an arbitrary amount of times, with the repetitions delimited by <a href="dev/langref.html#whitespace">whitespace</a>. For example:</p>
+<p>Whenever a syntactic element is followed by the <code>...</code> characters, it means that it can be repeated an arbitrary amount of times, with the repetitions delimited by <a href="#whitespace">whitespace</a>. For example:</p>
 <pre><code>[ &lt;part&gt;... ]
 </code></pre>
-<p>The snippet above describes the syntax of a <a href="dev/langref.html#concat">concatenation</a>, where it is equivalent to any of the following:</p>
+<p>The snippet above describes the syntax of a <a href="#concat">concatenation</a>, where it is equivalent to any of the following:</p>
 <pre><code>[]
 [&lt;part&gt;]
 [ &lt;part&gt; &lt;part&gt; ]
@@ -231,9 +235,10 @@
 <h3 id="whitespace"><a class="header" href="#whitespace">Whitespace</a></h3>
 <p>The only characters recognized as whitespace are <code>U+0020 SPACE</code>, <code>U+0009 CHARACTER TABULATION</code>, and <code>U+000A LINE FEED</code>. All of them may be used for separating other tokens, and <code>U+000A LINE FEED</code> is used to indicate the end of a syntactic construct. The file must end with a <code>U+000A LINE FEED</code> character.</p>
 <p>A <code>U+000D CARRIAGE RETURN</code> character followed by a <code>U+000A LINE FEED</code> character is treated as the latter character alone.</p>
-<div class="warning">
-<p>The <a href="dev//api/prjunnamed_netlist/">prjunnamed-netlist</a> parser currently handles whitespace in a questionable and inconsistent way. This will be fixed in the future.</p>
-</div>
+<blockquote class="blockquote-tag blockquote-tag-warning">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>Warning</p>
+<p>The <a href="/api/prjunnamed_netlist">prjunnamed-netlist</a> parser currently handles whitespace in a questionable and inconsistent way. This will be fixed in the future.</p>
+</blockquote>
 <h3 id="comment"><a class="header" href="#comment">Comments</a></h3>
 <pre><code>;&lt;text&gt;
 </code></pre>
@@ -260,7 +265,7 @@
 </code></pre>
 <p><em>Decimal numbers</em> start with a <code>#</code> sigil, followed by an optional <code>-</code> sign and a non-empty sequence of <code>0</code>..<code>9</code> digits. No whitespace is allowed between any of the characters.</p>
 <p>In some contexts, only non-negative decimal numbers, or decimal numbers up to a certain magnitude, may be accepted.</p>
-<p>Decimal numbers are not interchangeable with <a href="dev/langref.html#constant">constants</a>; where both are accepted, the meaning of the syntactic construct differs between the two.</p>
+<p>Decimal numbers are not interchangeable with <a href="#constant">constants</a>; where both are accepted, the meaning of the syntactic construct differs between the two.</p>
 <h3 id="constant"><a class="header" href="#constant">Constants</a></h3>
 <pre><code>&lt;trits&gt;
 </code></pre>
@@ -273,8 +278,8 @@ X
 XXXX
 </code></pre>
 <p><em>Constants</em> are made up of <code>0</code>, <code>1</code>, and <code>X</code> (uppercase only) characters. No whitespace is allowed between any of the characters.</p>
-<p>Constants denote bit vectors with some positions being "don't care" or "undefined" (depending on the context), and are written in the usual order where the most significant position is on the left. That is, <code>1010</code> has the numeric value 10 decimal, its first bit is <code>0</code> and last bit is <code>1</code>.</p>
-<p>Constants are not interchangeable with <a href="dev/langref.html#decimal">decimal numbers</a>; where both are accepted, the meaning of the syntactic construct differs between the two.</p>
+<p>Constants denote bit vectors with some positions being “don’t care” or “undefined” (depending on the context), and are written in the usual order where the most significant position is on the left. That is, <code>1010</code> has the numeric value 10 decimal, its first bit is <code>0</code> and last bit is <code>1</code>.</p>
+<p>Constants are not interchangeable with <a href="#decimal">decimal numbers</a>; where both are accepted, the meaning of the syntactic construct differs between the two.</p>
 <h3 id="metadata"><a class="header" href="#metadata">Metadata identifiers</a></h3>
 <pre><code>!&lt;index&gt;
 </code></pre>
@@ -297,10 +302,10 @@ XXXX
 &amp;_
 &amp;_:16
 </code></pre>
-<p><em>I/O identifiers</em> start with a <code>&amp;</code> sigil followed by a non-empty <a href="dev/langref.html#string">string</a> (in which case the I/O identifier is <em>named</em>) or a <code>_</code> character (in which case it is <em>floating</em>). No whitespace is allowed between the sigil and the string or <code>_</code> character, or any of the following characters for the cases below.</p>
+<p><em>I/O identifiers</em> start with a <code>&amp;</code> sigil followed by a non-empty <a href="#string">string</a> (in which case the I/O identifier is <em>named</em>) or a <code>_</code> character (in which case it is <em>floating</em>). No whitespace is allowed between the sigil and the string or <code>_</code> character, or any of the following characters for the cases below.</p>
 <p>Named I/O identifiers may be followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes the width of the declaration or the reference.</p>
 <p>Alternatively, named I/O identifiers may be followed by a <code>+</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes a 1-wide reference at the given offset.</p>
-<p>Floating I/O identifiers may be followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes the width of the reference. They are used in <a href="dev/langref.html#concat">concatenations</a> to declare a partial connection to an I/O port.</p>
+<p>Floating I/O identifiers may be followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits, which denotes the width of the reference. They are used in <a href="#concat">concatenations</a> to declare a partial connection to an I/O port.</p>
 <h3 id="cell"><a class="header" href="#cell">Cell identifiers</a></h3>
 <pre><code>%&lt;index&gt;
 %&lt;index&gt;:&lt;width&gt;
@@ -318,10 +323,11 @@ XXXX
 </code></pre>
 <p><em>Cell identifiers</em> start with a <code>%</code> sigil followed by a non-empty sequence of <code>0</code>..<code>9</code> digits, optionally followed by a <code>+</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits (denoting an offset into the wide output of a cell), optionally followed by a <code>:</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits (denoting the width of a cell declaration or reference). No whitespace is allowed between any of the characters.</p>
 <p>A <em>placeholder</em> cell identifier starts with a <code>%</code> sigil followed by a non-empty sequence of <code>0</code>..<code>9</code> digits, a <code>:</code> character, and a <code>_</code> character. No whitespace is allowed between any of the characters. The placeholder cell identifier is only used when declaring cells with multiple outputs.</p>
-<div class="warning">
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
 <p>While the in-memory IR has the property that a cell with a wide output occupies a contiguous range of cell indices (i.e. that <code>%0+1</code> and <code>%1</code> always refer to the same net), the same is not true in the text IR. Instead, each unique <code>&lt;index&gt;</code> can refer to a distinct cell with an output of any width.</p>
 <p>To avoid confusion, the IR printer ensures that in references, <code>&lt;index&gt;</code> is equal to the lowest index occupied by a cell with a wide output (i.e. it will never format <code>%0+1</code> as <code>%1</code>).</p>
-</div>
+</blockquote>
 <h3 id="repeat"><a class="header" href="#repeat">Repetitions</a></h3>
 <pre><code>&lt;value&gt;*&lt;count&gt;
 </code></pre>
@@ -330,7 +336,7 @@ XXXX
 %0*4
 XXX*8
 </code></pre>
-<p><em>Repetitions</em> start with a <a href="dev/langref.html#constant">constant</a> or a <a href="dev/langref.html#cell">cell identifier</a>, followed by the <code>*</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits. No whitespace is allowed between <code>&lt;value&gt;</code>, <code>*</code>, and <code>&lt;count&gt;</code>.</p>
+<p><em>Repetitions</em> start with a <a href="#constant">constant</a> or a <a href="#cell">cell identifier</a>, followed by the <code>*</code> character and a non-empty sequence of <code>0</code>..<code>9</code> digits. No whitespace is allowed between <code>&lt;value&gt;</code>, <code>*</code>, and <code>&lt;count&gt;</code>.</p>
 <h3 id="concat"><a class="header" href="#concat">Concatenations</a></h3>
 <pre><code>[ &lt;part&gt;... ]
 </code></pre>
@@ -345,9 +351,9 @@ XXX*8
 [ XXXX ]
 [ %0*4 %0:4 0*4 ]
 </code></pre>
-<p><em>Concatenations</em> are delimited by <code>[</code> and <code>]</code> characters on either end and contain zero or more parts delimited by <a href="dev/langref.html#whitespace">whitespace</a>. The first part of the concatenation in the source code order corresponds to the most significant positions of the resulting reference. The two types of concatenations are <em>I/O concatenations</em> and <em>value concatenations</em>.</p>
-<p>Each part of an I/O concatenation must be an <a href="dev/langref.html#io">I/O identifier</a>, which could be named or floating.</p>
-<p>Each part of a value concatenation must be a <a href="dev/langref.html#constant">constant</a>, a <a href="dev/langref.html#cell">cell identifier</a>, or a <a href="dev/langref.html#repeat">repetition</a>.</p>
+<p><em>Concatenations</em> are delimited by <code>[</code> and <code>]</code> characters on either end and contain zero or more parts delimited by <a href="#whitespace">whitespace</a>. The first part of the concatenation in the source code order corresponds to the most significant positions of the resulting reference. The two types of concatenations are <em>I/O concatenations</em> and <em>value concatenations</em>.</p>
+<p>Each part of an I/O concatenation must be an <a href="#io">I/O identifier</a>, which could be named or floating.</p>
+<p>Each part of a value concatenation must be a <a href="#constant">constant</a>, a <a href="#cell">cell identifier</a>, or a <a href="#repeat">repetition</a>.</p>
 <h3 id="value"><a class="header" href="#value">Value references</a></h3>
 <p>For example:</p>
 <pre><code>0
@@ -358,13 +364,13 @@ XXX
 %1*10
 []
 </code></pre>
-<p><em>Value references</em> are used as operands within <a href="dev/langref.html#cell-decls">cell declarations</a>. A value reference must be a <a href="dev/langref.html#constant">constant</a>, a <a href="dev/langref.html#cell">cell identifier</a>, a <a href="dev/langref.html#concat">concatenation</a>, or a <a href="dev/langref.html#repeat">repetition</a>.</p>
+<p><em>Value references</em> are used as operands within <a href="#cell-decls">cell declarations</a>. A value reference must be a <a href="#constant">constant</a>, a <a href="#cell">cell identifier</a>, a <a href="#concat">concatenation</a>, or a <a href="#repeat">repetition</a>.</p>
 <p>The width of a value reference can be determined solely from its syntax.</p>
 <h3 id="special"><a class="header" href="#special">Other special characters</a></h3>
-<p>Special characters <code>[</code>, <code>]</code>, <code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>, <code>=</code>, and <code>,</code> are used as delimiters within <a href="dev/langref.html#decls">declarations</a>.</p>
-<p>These characters may be optionally surrounded by the <a href="dev/langref.html#whitespace">whitespace</a> characters <code>U+0020 SPACE</code> and <code>U+0009 CHARACTER TABULATION</code> without altering their meaning. In addition, the <a href="dev/langref.html#whitespace">whitespace</a> character <code>U+000A LINE FEED</code> may appear between the matching <code>[</code>, <code>]</code>, <code>(</code>, <code>)</code>, <code>{</code>, or <code>}</code> delimiter pairs, in which case it does not indicate the end of the syntactic construct.</p>
+<p>Special characters <code>[</code>, <code>]</code>, <code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>, <code>=</code>, and <code>,</code> are used as delimiters within <a href="#decls">declarations</a>.</p>
+<p>These characters may be optionally surrounded by the <a href="#whitespace">whitespace</a> characters <code>U+0020 SPACE</code> and <code>U+0009 CHARACTER TABULATION</code> without altering their meaning. In addition, the <a href="#whitespace">whitespace</a> character <code>U+000A LINE FEED</code> may appear between the matching <code>[</code>, <code>]</code>, <code>(</code>, <code>)</code>, <code>{</code>, or <code>}</code> delimiter pairs, in which case it does not indicate the end of the syntactic construct.</p>
 <h2 id="header"><a class="header" href="#header">Header</a></h2>
-<p>The header must be located at the beginning of the file, after any initial <a href="dev/langref.html#whitespace">whitespace</a> or <a href="dev/langref.html#comment">comments</a>. It describes how the remainder of the file must be interpreted.</p>
+<p>The header must be located at the beginning of the file, after any initial <a href="#whitespace">whitespace</a> or <a href="#comment">comments</a>. It describes how the remainder of the file must be interpreted.</p>
 <h3 id="target"><a class="header" href="#target">Target specification</a></h3>
 <pre><code>target &lt;target&gt; &lt;option&gt;=&lt;value&gt;...
 </code></pre>
@@ -373,13 +379,13 @@ XXX
 target "siliconblue" "device"="ice40hx8k"
 target "siliconblue" "device"="ice40up5k" "dsp"="off"
 </code></pre>
-<p>The target specification defines the specific device for which the netlist is intended, as well as target-specific configuration options for the flow. The <code>&lt;target&gt;</code>, <code>&lt;option&gt;</code>, and <code>&lt;value&gt;</code> are all <a href="dev/langref.html#string">strings</a> that are passed to the <a href="dev//api/prjunnamed_netlist/fn.register_target.html">builder function</a> as-is.</p>
+<p>The target specification defines the specific device for which the netlist is intended, as well as target-specific configuration options for the flow. The <code>&lt;target&gt;</code>, <code>&lt;option&gt;</code>, and <code>&lt;value&gt;</code> are all <a href="#string">strings</a> that are passed to the <a href="/api/prjunnamed_netlist/fn.register_target.html">builder function</a> as-is.</p>
 <h2 id="decls"><a class="header" href="#decls">Declarations</a></h2>
 <p><em>Declarations</em> are syntactic constructs that, taken together, describe the entire netlist. There are several kinds of declarations:</p>
 <ul>
-<li><a href="dev/langref.html#metadata-decls"><em>metadata declarations</em></a>,</li>
-<li><a href="dev/langref.html#io-decls"><em>I/O declarations</em></a>,</li>
-<li><a href="dev/langref.html#cell-decls"><em>cell declarations</em></a>.</li>
+<li><a href="#metadata-decls"><em>metadata declarations</em></a>,</li>
+<li><a href="#io-decls"><em>I/O declarations</em></a>,</li>
+<li><a href="#cell-decls"><em>cell declarations</em></a>.</li>
 </ul>
 <p>The general structure of a declaration is:</p>
 <pre><code>&lt;ident&gt; = &lt;keyword&gt; &lt;operand&gt;...
@@ -389,13 +395,15 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 %0:1 = input "clk" !2
 </code></pre>
 <p>In the snippet above, <code>!1</code> and <code>%0:1</code> are identifiers <em>introduced</em> by the declaration, <code>ident</code> and <code>input</code> are <em>keywords</em>, and <code>"clk"</code>, <code>in=!0</code>, and <code>!2</code> are <em>operands</em>.</p>
-<p>A <a href="dev/langref.html#metadata">metadata identifier</a> can only reference a metadata declaration introduced at an earlier point in the file. In contrast, a <a href="dev/langref.html#cell">cell identifier</a> can reference a cell declaration introduced anywhere in the file, including by the cell declaration it is an operand of.</p>
+<p>A <a href="#metadata">metadata identifier</a> can only reference a metadata declaration introduced at an earlier point in the file. In contrast, a <a href="#cell">cell identifier</a> can reference a cell declaration introduced anywhere in the file, including by the cell declaration it is an operand of.</p>
 <h3 id="metadata-decls"><a class="header" href="#metadata-decls">Metadata declarations</a></h3>
-<p>Metadata declarations correspond to the <a href="dev//api/prjunnamed_netlist/enum.MetaItem.html">enum prjunnamed_netlist::MetaItem</a>.</p>
-<div class="warning">
+<p>Metadata declarations correspond to the <a href="/api/prjunnamed_netlist/enum.MetaItem.html">enum prjunnamed_netlist::MetaItem</a>.</p>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
 <p>The names that occur within metadata are opaque: they must not be examined by the tools for any reason other than communicating it to the user or to other tools.</p>
 <p>In particular, it is forbidden to interpret names with certain suffixes such as <code>inst[0]</code> or <code>wire[2:0]</code> in a special way. If necessary, this may be done prior to generating Unnamed IR.</p>
-</div>
+</blockquote>
+
 <h4 id="metadata-set"><a class="header" href="#metadata-set">Metadata sets</a></h4>
 <pre><code>!&lt;decl&gt; = { !&lt;ref&gt; !&lt;ref&gt;... }
 </code></pre>
@@ -403,7 +411,7 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 <pre><code>!10 = { !2 !3 }
 !11 = { !2 !3 !4 }
 </code></pre>
-<p><em>Metadata sets</em> are used to group multiple pieces of metadata to be referenced in <a href="dev/langref.html#cell-decls">cell declarations</a> with a single index.</p>
+<p><em>Metadata sets</em> are used to group multiple pieces of metadata to be referenced in <a href="#cell-decls">cell declarations</a> with a single index.</p>
 <p>A metadata set with less than two elements is ill-formed. A metadata set that refers to another metadata set is ill-formed.</p>
 <h4 id="metadata-source"><a class="header" href="#metadata-source">Source metadata</a></h4>
 <pre><code>!&lt;decl&gt; = source "&lt;file&gt;" (#&lt;start-line&gt; #&lt;start-col&gt;) (#&lt;end-line&gt; #&lt;end-col&gt;)
@@ -412,9 +420,9 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 <pre><code>!1 = source "/home/whitequark/design/top.py" (#20 #4) (#20 #10)
 </code></pre>
 <p><em>Source metadata</em> is used to refer to a contiguous possibly empty range of characters within a source file.</p>
-<p>The <code>"&lt;file&gt;"</code> <a href="dev/langref.html#string">string</a> is an environment specific location of a source file, which may be absolute or relative. It cannot be empty, or the declaration is ill-formed.</p>
-<p>The <code>#&lt;start-line&gt;</code> and <code>#&lt;start-col&gt;</code> <a href="dev/langref.html#decimal">decimal numbers</a> are zero-based non-negative indices into the contents of <code>"&lt;file&gt;"</code>, where <code>#&lt;start-line&gt;</code> is the number of <code>U+000A LINE FEED</code> characters before the start of the range, and <code>#&lt;start-col&gt;</code> is the number of the Unicode code points after the last <code>U+000A LINE FEED</code> character and before the beginning of the range.</p>
-<p>The <code>#&lt;end-line&gt;</code> and <code>#&lt;end-col&gt;</code> <a href="dev/langref.html#decimal">decimal numbers</a> are zero-based non-negative indices defined in the same way, except they point to the end of the range. The index <code>#&lt;end-line&gt;</code> cannot be less than <code>#&lt;start-line&gt;</code>, and if the two are equal, the index <code>#&lt;end-col&gt;</code> cannot be less than <code>#&lt;start-col&gt;</code>, or the declaration is ill-formed.</p>
+<p>The <code>"&lt;file&gt;"</code> <a href="#string">string</a> is an environment specific location of a source file, which may be absolute or relative. It cannot be empty, or the declaration is ill-formed.</p>
+<p>The <code>#&lt;start-line&gt;</code> and <code>#&lt;start-col&gt;</code> <a href="#decimal">decimal numbers</a> are zero-based non-negative indices into the contents of <code>"&lt;file&gt;"</code>, where <code>#&lt;start-line&gt;</code> is the number of <code>U+000A LINE FEED</code> characters before the start of the range, and <code>#&lt;start-col&gt;</code> is the number of the Unicode code points after the last <code>U+000A LINE FEED</code> character and before the beginning of the range.</p>
+<p>The <code>#&lt;end-line&gt;</code> and <code>#&lt;end-col&gt;</code> <a href="#decimal">decimal numbers</a> are zero-based non-negative indices defined in the same way, except they point to the end of the range. The index <code>#&lt;end-line&gt;</code> cannot be less than <code>#&lt;start-line&gt;</code>, and if the two are equal, the index <code>#&lt;end-col&gt;</code> cannot be less than <code>#&lt;start-col&gt;</code>, or the declaration is ill-formed.</p>
 <p>If the IR generator does not have access to accurate location information, the range may be left empty. If only line number information is available, the range should be specified as <code>(#&lt;line&gt; #0) (#&lt;line&gt; #0)</code>.</p>
 <h4 id="metadata-scope"><a class="header" href="#metadata-scope">Scope metadata</a></h4>
 <pre><code>!&lt;decl&gt; = scope "&lt;name&gt;" in=!&lt;parent&gt; src=!&lt;source&gt;
@@ -430,16 +438,16 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 </code></pre>
 <p><em>Scope metadata</em> is used to describe a hierarchy of regions within the source code. The nature of a region is not constrained here, and includes without limitation: modules, conditional blocks, instance declarations, and so on. By traversing the chain of scope metadata, it should be possible for tools like timing analyzers, source level debuggers, and so on to be able to unambiguously locate a declaration by its hierarchical name.</p>
 <p>There are two kinds of scopes: <em>named scopes</em> and <em>indexed scopes</em>. Indexed scopes typically correspond to source-level declarations of arrays, whereas named scopes correspond to any other source-level declarations. Negative indices are accepted for indexed scopes.</p>
-<p>Hierarchy arises when a scope is declared to be a part of another scope using the optional <code>in=!&lt;parent&gt;</code> operand. The <code>!&lt;parent&gt;</code> <a href="dev/langref.html#metadata">metadata identifier</a> must refer to scope metadata, or the declaration is ill-formed.</p>
-<p>A scope may have a <a href="dev/langref.html#metadata-source">source location</a> attached using the optional <code>src=!&lt;source&gt;</code> operand. The <code>!&lt;source&gt;</code> <a href="dev/langref.html#metadata">metadata identifier</a> must refer to source metadata, or the declaration is ill-formed.</p>
-<p>If the <code>"&lt;name&gt;"</code> <a href="dev/langref.html#string">string</a> is empty, the declaration is ill-formed.</p>
+<p>Hierarchy arises when a scope is declared to be a part of another scope using the optional <code>in=!&lt;parent&gt;</code> operand. The <code>!&lt;parent&gt;</code> <a href="#metadata">metadata identifier</a> must refer to scope metadata, or the declaration is ill-formed.</p>
+<p>A scope may have a <a href="#metadata-source">source location</a> attached using the optional <code>src=!&lt;source&gt;</code> operand. The <code>!&lt;source&gt;</code> <a href="#metadata">metadata identifier</a> must refer to source metadata, or the declaration is ill-formed.</p>
+<p>If the <code>"&lt;name&gt;"</code> <a href="#string">string</a> is empty, the declaration is ill-formed.</p>
 <h4 id="metadata-ident"><a class="header" href="#metadata-ident">Identifier metadata</a></h4>
 <pre><code>!&lt;decl&gt; = ident "&lt;name&gt;" in=!&lt;scope&gt;
 </code></pre>
 <p>For example:</p>
 <pre><code>!1 = ident "clk" in=!0
 </code></pre>
-<p><em>Identifier metadata</em> is used to refer to a specific declaration within an elaborated hierarchy. The full hierarchical name is obtained by collecting the names or indices while recursively traversing <a href="dev/langref.html#metadata-scope">scope metadata</a> referenced by the <code>!&lt;scope&gt;</code> <a href="dev/langref.html#metadata">metadata identifier</a> and appending the <code>"&lt;name&gt;"</code> <a href="dev/langref.html#string">string</a> at the end.</p>
+<p><em>Identifier metadata</em> is used to refer to a specific declaration within an elaborated hierarchy. The full hierarchical name is obtained by collecting the names or indices while recursively traversing <a href="#metadata-scope">scope metadata</a> referenced by the <code>!&lt;scope&gt;</code> <a href="#metadata">metadata identifier</a> and appending the <code>"&lt;name&gt;"</code> <a href="#string">string</a> at the end.</p>
 <p>If the <code>"&lt;name&gt;"</code> is empty, or the <code>!&lt;scope&gt;</code> does not refer to scope metadata, the declaration is ill-formed.</p>
 <h4 id="metadata-attr"><a class="header" href="#metadata-attr">Attribute metadata</a></h4>
 <pre><code>!&lt;decl&gt; = attr "&lt;name&gt;" &lt;const&gt;
@@ -451,7 +459,7 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 !1 = attr "PIN_TYPE" 110000
 !2 = attr "BEL" "X0/Y1"
 </code></pre>
-<p><em>Attribute metadata</em> is used to encapsulate source-level attributes that are not otherwise recognized by the target-independent or target-specific parts of the flow. An attribute has a <code>"&lt;name&gt;"</code> <a href="dev/langref.html#string">string</a> and a payload. There are three possible types of payloads: <a href="dev/langref.html#constant">constants</a>, <a href="dev/langref.html#decimal">integers</a>, and <a href="dev/langref.html#string">strings</a>.</p>
+<p><em>Attribute metadata</em> is used to encapsulate source-level attributes that are not otherwise recognized by the target-independent or target-specific parts of the flow. An attribute has a <code>"&lt;name&gt;"</code> <a href="#string">string</a> and a payload. There are three possible types of payloads: <a href="#constant">constants</a>, <a href="#decimal">integers</a>, and <a href="#string">strings</a>.</p>
 <p>Attribute metadata is strongly typed: the tools preserve the type of the payload and ensure it matches the expected type whenever the payload is examined.</p>
 <p>If the <code>"&lt;name&gt;"</code> is empty, the declaration is ill-formed.</p>
 <h3 id="io-decls"><a class="header" href="#io-decls">I/O declarations</a></h3>
@@ -461,10 +469,10 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 <pre><code>&amp;"clk":1 = io
 &amp;"gpio":8 = io
 </code></pre>
-<p><em>I/O declarations</em> are used to specify the width of an I/O port (using an <a href="dev/langref.html#io">I/O identifier</a> in the form specified above).</p>
+<p><em>I/O declarations</em> are used to specify the width of an I/O port (using an <a href="#io">I/O identifier</a> in the form specified above).</p>
 <p>If the <code>"&lt;name&gt;"</code> is empty, or a preceding I/O declaration uses the same <code>"&lt;name&gt;"</code>, the declaration is ill-formed.</p>
 <h3 id="cell-decls"><a class="header" href="#cell-decls">Cell declarations</a></h3>
-<p>Cell declarations correspond to the <a href="dev//api/prjunnamed_netlist/enum.Cell.html">enum prjunnamed_netlist::Cell</a>.</p>
+<p>Cell declarations correspond to the <a href="/api/prjunnamed_netlist/enum.Cell.html">enum prjunnamed_netlist::Cell</a>.</p>
 <p>To be written.</p>
 
                     </main>
@@ -484,6 +492,11 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
 
         </div>
 
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
 
 
 
@@ -492,13 +505,13 @@ target "siliconblue" "device"="ice40up5k" "dsp"="off"
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
 

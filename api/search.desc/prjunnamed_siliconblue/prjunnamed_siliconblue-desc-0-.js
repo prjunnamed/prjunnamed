@@ -1,1 +1,0 @@
-searchState.loadedDescShard("prjunnamed_siliconblue", 0, "This library covers the Lattice iCE65 and iCE40 FPGA …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")
