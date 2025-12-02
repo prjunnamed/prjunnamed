@@ -5,11 +5,8 @@ Project Unnamed is based around an [intermediate representation][ir]: a kind of 
 
 The Project Unnamed intermediate representation is called "Unnamed IR", and it has two forms: the in-memory form composed out of the data structures in the [prjunnamed-netlist][] crate, and the text form described in this document. The text form is a part of the public interface, and incompatible changes to it are considered breaking changes to Project Unnamed itself.
 
-<div class="warning">
-
-This document is incomplete.
-
-</div>
+> [!WARNING]
+> This document is incomplete.
 
 [ir]: https://en.wikipedia.org/wiki/Intermediate_representation
 [prjunnamed-netlist]: /api/prjunnamed_netlist/
@@ -66,11 +63,8 @@ The only characters recognized as whitespace are `U+0020 SPACE`, `U+0009 CHARACT
 
 A `U+000D CARRIAGE RETURN` character followed by a `U+000A LINE FEED` character is treated as the latter character alone.
 
-<div class="warning">
-
-The [prjunnamed-netlist] parser currently handles whitespace in a questionable and inconsistent way. This will be fixed in the future.
-
-</div>
+> [!WARNING]
+> The [prjunnamed-netlist] parser currently handles whitespace in a questionable and inconsistent way. This will be fixed in the future.
 
 
 ### Comments {#comment}
@@ -218,13 +212,10 @@ For example:
 
 A *placeholder* cell identifier starts with a `%` sigil followed by a non-empty sequence of `0`..`9` digits, a `:` character, and a `_` character. No whitespace is allowed between any of the characters. The placeholder cell identifier is only used when declaring cells with multiple outputs.
 
-<div class="warning">
-
-While the in-memory IR has the property that a cell with a wide output occupies a contiguous range of cell indices (i.e. that `%0+1` and `%1` always refer to the same net), the same is not true in the text IR. Instead, each unique `<index>` can refer to a distinct cell with an output of any width.
-
-To avoid confusion, the IR printer ensures that in references, `<index>` is equal to the lowest index occupied by a cell with a wide output (i.e. it will never format `%0+1` as `%1`).
-
-</div>
+> [!NOTE]
+> While the in-memory IR has the property that a cell with a wide output occupies a contiguous range of cell indices (i.e. that `%0+1` and `%1` always refer to the same net), the same is not true in the text IR. Instead, each unique `<index>` can refer to a distinct cell with an output of any width.
+>
+> To avoid confusion, the IR printer ensures that in references, `<index>` is equal to the lowest index occupied by a cell with a wide output (i.e. it will never format `%0+1` as `%1`).
 
 
 ### Repetitions {#repeat}
@@ -350,11 +341,10 @@ A [metadata identifier](#metadata) can only reference a metadata declaration int
 
 Metadata declarations correspond to the [enum prjunnamed_netlist::MetaItem](/api/prjunnamed_netlist/enum.MetaItem.html).
 
-<div class="warning">
-
-The names that occur within metadata are opaque: they must not be examined by the tools for any reason other than communicating it to the user or to other tools.
-
-In particular, it is forbidden to interpret names with certain suffixes such as `inst[0]` or `wire[2:0]` in a special way. If necessary, this may be done prior to generating Unnamed IR.
+> [!NOTE]
+> The names that occur within metadata are opaque: they must not be examined by the tools for any reason other than communicating it to the user or to other tools.
+>
+> In particular, it is forbidden to interpret names with certain suffixes such as `inst[0]` or `wire[2:0]` in a special way. If necessary, this may be done prior to generating Unnamed IR.
 
 </div>
 
