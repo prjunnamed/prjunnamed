@@ -273,7 +273,7 @@ pub fn describe<'a>(writer: &mut impl io::Write, design: &'a Design) -> io::Resu
 
                 if flop.has_clear() {
                     let has_value = flop.clear_value != flop.init_value;
-                    node = node.control("clr", flop.clear, has_value.then(|| flop.clear_value.to_string()));
+                    node = node.control("clr", flop.clear.clone().try_into().expect("cannot graph multi bit control nets yet"), has_value.then(|| flop.clear_value.to_string()));
                 }
 
                 if flop.has_reset() {

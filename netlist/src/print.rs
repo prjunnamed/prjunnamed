@@ -1,8 +1,7 @@
-use std::{borrow::Cow, fmt::Display};
+use std::{borrow::Cow, fmt::Display, vec};
 
 use crate::{
-    metadata::MetaItemIndex, Cell, CellRef, Const, ControlNet, Design, IoNet, IoValue, MemoryPortRelation, Net,
-    TargetOutput, Trit, Value,
+    metadata::MetaItemIndex, value::ControlNets, Cell, CellRef, Const, ControlNet, Design, IoNet, IoValue, MemoryPortRelation, Net, TargetOutput, Trit, Value
 };
 
 struct DisplayFn<'a, F: for<'b> Fn(&Design, &mut std::fmt::Formatter<'b>) -> std::fmt::Result>(&'a Design, F);
@@ -265,6 +264,15 @@ impl Design {
             self.write_control_net(f, control_net)
         };
 
+        let write_control_nets = |f: &mut std::fmt::Formatter, name: &str, control_nets: &ControlNets| -> std::fmt::Result {
+            write!(f, "{}=", name)?;
+            let control_nets_vec: Vec<ControlNet> = control_nets.clone().control_nets();
+            for (_, control_net) in control_nets_vec.iter().enumerate() {
+                self.write_control_net(f, *control_net)?;
+            }
+            Ok(())
+        };
+
         let write_common = |f: &mut std::fmt::Formatter, name: &str, args: &[&Value]| -> std::fmt::Result {
             write!(f, "{}", name)?;
             for arg in args {
@@ -414,7 +422,7 @@ impl Design {
                 write_common(f, "dff", &[&flip_flop.data])?;
                 write_control(f, " clk", flip_flop.clock)?;
                 if flip_flop.has_clear() {
-                    write_control(f, " clr", flip_flop.clear)?;
+                    write_control_nets(f, " clr", &flip_flop.clear)?;
                     if flip_flop.clear_value != flip_flop.init_value {
                         write!(f, ",{}", flip_flop.clear_value)?;
                     }

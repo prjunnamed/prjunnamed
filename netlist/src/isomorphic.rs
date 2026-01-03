@@ -183,8 +183,17 @@ pub fn isomorphic(lft: &Design, rgt: &Design) -> Result<(), NotIsomorphic> {
             }
             (Cell::Dff(ff_l), Cell::Dff(ff_r)) => {
                 queue_vals(&mut queue, &ff_l.data, &ff_r.data)?;
+                
+                // zip the control nets and check if they are isomorphic
+                let ff_l_clear = ff_l.clear.clone().control_nets();
+                let ff_r_clear = ff_r.clear.clone().control_nets();
+                let zipped_clears = ff_l_clear.iter().zip(ff_r_clear.iter());
+                for (clear_l, clear_r) in zipped_clears {
+                    queue.insert((clear_l.net(), clear_r.net()));
+                }
+
                 queue.insert((ff_l.clock.net(), ff_r.clock.net()));
-                queue.insert((ff_l.clear.net(), ff_r.clear.net()));
+                // queue.insert((ff_l.clear.net(), ff_r.clear.net()));
                 queue.insert((ff_l.reset.net(), ff_r.reset.net()));
                 queue.insert((ff_l.enable.net(), ff_r.enable.net()));
                 if ff_l.clock.is_positive() != ff_r.clock.is_positive()

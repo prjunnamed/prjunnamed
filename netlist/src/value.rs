@@ -1,9 +1,5 @@
 use std::{
-    borrow::Cow,
-    fmt::{Debug, Display},
-    ops::{Index, IndexMut},
-    hash::Hash,
-    slice::SliceIndex,
+    borrow::Cow, fmt::{Debug, Display}, hash::Hash, ops::{Deref, Index, IndexMut}, slice::SliceIndex
 };
 
 use crate::{Const, Design, Trit};
@@ -712,6 +708,273 @@ impl Display for ControlNet {
         match self {
             ControlNet::Pos(net) => write!(f, "{net}"),
             ControlNet::Neg(net) => write!(f, "!{net}"),
+        }
+    }
+}
+
+/// A control net is a [`Net`] that can be negated.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ControlNets {
+    Pos(Vec<Net>),
+    Neg(Vec<Net>),
+}
+
+impl ControlNets {
+    
+    pub fn undef(size: usize) -> Self {
+        ControlNets::Pos(vec![Net::UNDEF; size])
+    }
+
+    pub fn zero(size: usize) -> Self {
+        ControlNets::Pos(vec![Net::ZERO; size])
+    }
+
+    pub fn one(size: usize) -> Self {
+        ControlNets::Pos(vec![Net::ONE; size])
+    }
+
+    pub fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> ControlNets {
+        let nets = match self {
+            ControlNets::Pos(nets) | ControlNets::Neg(nets) => nets,
+        };
+        let sliced_nets = nets[(range.start_bound().cloned(), range.end_bound().cloned())].to_vec();
+        match self {
+            ControlNets::Pos(_) => ControlNets::Pos(sliced_nets),
+            ControlNets::Neg(_) => ControlNets::Neg(sliced_nets),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            ControlNets::Pos(nets) | ControlNets::Neg(nets) => nets.len(),
+        }
+    } 
+
+    pub fn push(&mut self, net: Net) {
+        match self {
+            ControlNets::Pos(nets) | ControlNets::Neg(nets) => nets.push(net),
+        }
+    }
+
+    pub fn from_control_net(control_net: ControlNet) -> Self {
+        match control_net {
+            ControlNet::Pos(net) => ControlNets::Pos(vec![net]),
+            ControlNet::Neg(net) => ControlNets::Neg(vec![net]),
+        }
+    }
+
+    pub fn from_net_invert(net: Net, invert: bool) -> Self {
+        match invert {
+            false => ControlNets::Pos(vec![net]),
+            true => ControlNets::Neg(vec![net]),
+        }
+    }
+
+    pub fn nets(&self) -> &[Net] {
+        match self {
+            Self::Pos(nets) | Self::Neg(nets) => nets,
+        }
+    }
+
+    pub fn nets_mut(&mut self) -> &mut [Net] {
+        match self {
+            Self::Pos(nets) | Self::Neg(nets) => nets,
+        }
+    }
+
+    pub fn control_nets(self) -> Vec<ControlNet> {
+        self.nets().iter().map(|&net| {
+            match self {
+                ControlNets::Pos(_) => ControlNet::Pos(net),
+                ControlNets::Neg(_) => ControlNet::Neg(net),
+            }
+        }).collect()
+    }
+    
+    pub fn is_positive(&self) -> bool {
+        matches!(self, Self::Pos(_))
+    }
+
+    pub fn is_negative(&self) -> bool {
+        matches!(self, Self::Neg(_))
+    }
+
+    pub fn is_active(&self) -> Option<bool> {
+
+        let nets =  self.nets();
+        if nets.len() != 1 {
+            return None;
+        }
+        let net = nets[0];
+        match self {
+            Self::Pos(_) if net == Net::ZERO => Some(false),
+            Self::Neg(_) if net == Net::ONE => Some(false),
+            Self::Pos(_) if net == Net::ONE => Some(true),
+            Self::Neg(_) if net == Net::ZERO => Some(true),
+            _ => None,
+        }
+    }
+
+    pub fn is_always(&self, active: bool) -> bool {
+        self.is_active() == Some(active)
+    }
+
+    pub fn is_const(&self) -> bool {
+        self.nets().iter().all(|net| net.as_const().is_some())
+    }
+
+    pub fn canonicalize(self) -> Self {
+        // match self {
+        //     Self::Neg(net) if net == Net::UNDEF => Self::Pos(net),
+        //     Self::Neg(net) if net == Net::ZERO => Self::Pos(Net::ONE),
+        //     Self::Neg(net) if net == Net::ONE => Self::Pos(Net::ZERO),
+        //     _ => self,
+        // }
+        match self {
+            Self::Neg(nets) => {
+                let new_nets: Vec<Net> = nets.into_iter().map(|net| {
+                    if net == Net::UNDEF {
+                        net
+                    } else if net == Net::ZERO {
+                        Net::ONE
+                    } else if net == Net::ONE {
+                        Net::ZERO
+                    } else {
+                        net
+                    }
+                }).collect();
+                ControlNets::Pos(new_nets)
+            }
+            _ => self,
+        }
+    }
+
+    pub fn into_pos(&self, design: &Design) -> &[Net] {
+        todo!("Fix into_pos for ControlNets");
+        // match self {
+        //     ControlNets::Pos(nets) => nets,
+        //     ControlNets::Neg(nets) => {
+        //         if let Some(trit) = net.as_const() {
+        //             Net::from(!trit)
+        //         } else {
+        //             design.add_not(net).unwrap_net()
+        //         }
+        //     }
+        // }
+    }
+
+    pub fn into_neg(&self, design: &Design) -> &[Net] {
+        todo!("Fix into_neg for ControlNets");
+        // match self {
+        //     ControlNet::Pos(net) => {
+        //         if let Some(trit) = net.as_const() {
+        //             Net::from(!trit)
+        //         } else {
+        //             design.add_not(net).unwrap_net()
+        //         }
+        //     }
+        //     ControlNet::Neg(net) => net,
+    }
+
+    pub fn visit(&self, mut f: impl FnMut(Net)) {
+        match self {
+            ControlNets::Pos(nets) | ControlNets::Neg(nets) => {
+                for &net in nets.iter() {
+                    net.visit(&mut f);
+                }
+            },
+        }
+    }
+
+    pub fn visit_mut(&mut self, mut f: impl FnMut(&mut Net)) {
+        match self {
+            ControlNets::Pos(nets) | ControlNets::Neg(nets) => {
+                for net in nets.iter_mut() {
+                    f(net);
+                }
+            },
+        }
+    }
+}
+
+impl Into<Vec<ControlNet>> for ControlNets {
+    fn into(self) -> Vec<ControlNet> {
+        match self {
+            ControlNets::Pos(nets) => nets.into_iter().map(ControlNet::Pos).collect(),
+            ControlNets::Neg(nets) => nets.into_iter().map(ControlNet::Neg).collect(),
+        }
+    }
+}
+
+impl std::ops::Not for ControlNets {
+    type Output = ControlNets;
+
+    fn not(self) -> Self::Output {
+        match self {
+            ControlNets::Pos(nets) => ControlNets::Neg(nets),
+            ControlNets::Neg(nets) => ControlNets::Pos(nets),
+        }
+        .canonicalize()
+    }
+}
+
+impl From<Net> for ControlNets {
+    fn from(net: Net) -> Self {
+        ControlNets::Pos(vec![net])
+    }
+}
+
+impl From<ControlNet> for ControlNets {
+    fn from(control_net: ControlNet) -> Self {
+        match control_net {
+            ControlNet::Pos(net) => ControlNets::Pos(vec![net]),
+            ControlNet::Neg(net) => ControlNets::Neg(vec![net]),
+        }
+    }
+}
+
+impl TryInto<ControlNet> for ControlNets {
+    type Error = Box<dyn std::error::Error>;
+
+    fn try_into(self) -> Result<ControlNet, Self::Error> {
+        if self.len() == 1 {
+            match self {
+                ControlNets::Pos(nets) => Ok(ControlNet::Pos(nets[0])),
+                ControlNets::Neg(nets) => Ok(ControlNet::Neg(nets[0])),
+            }
+        } else {
+            Err("Cannot convert ControlNets to ControlNet: more than one net".into())
+        }
+    }
+}
+
+impl Display for ControlNets {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ControlNets::Pos(nets) => write!(f, "{nets:?}"),
+            ControlNets::Neg(nets) => write!(f, "!{nets:?}"),
+        }
+    }
+}
+
+impl<I: SliceIndex<[Net]>> Index<I> for ControlNets {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &Self::Output {
+        &self.nets()[index]
+    }
+}
+
+impl<I: SliceIndex<[Net]>> IndexMut<I> for ControlNets {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        &mut self.nets_mut()[index]
+    }
+}
+
+impl Extend<Net> for ControlNets {
+    fn extend<T: IntoIterator<Item = Net>>(&mut self, iter: T) {
+        for net in iter {
+            self.push(net);
         }
     }
 }
