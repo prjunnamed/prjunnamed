@@ -58,15 +58,16 @@ The debug information model in prjunnamed is composed of three interconnected la
 1. A tree of *scopes* describing the hierarchy of the design (corresponding to HDL modules and blocks).  Scopes provide the skeleton to which named objects are attached.
 2. Named objects:
 
-   - *named nets*, which allow a value to be observed
-   - *named signals* and *named registers*, which allow a value to be read or written
-   - *named cells*, which allow specific target cell instances to be accessed (in unspecified ways)
+   - *named nets*, which are points that allow a value to be read
+   - *named signals* and *named registers*, which are points that allow a value to be read or written
+   - *named cells*, which allow specific target cell instances to be located for the purpose of access by other tooling (the nature of which we leave unspecified)
+   - *ports*, which are represented as named nets, signals, or registers with a special annotation
 
 3. *Data types*, which describe how the values of named nets and registers are to be interpretted or displayed.
 
 ## Scopes
 
-The prjunammed IR is flat by nature: there are no modules, only a single design.  Scopes are a type of metadata that describes the hierarchy of the design as originally elaborated, and can be used to associate named objects and IR cells with their location in it.  Every scope and named object has a *hierarchical name*, which is unique in the design.  The hierarchical name is essentially a path from the root scope, consisting of names and indices of all parent scopes.
+The prjunammed IR is flat by nature: there are no modules, only a single design.  Scopes are a type of metadata that describes the hierarchy of the design as originally elaborated, and can be used to associate named objects and IR cells with their location in the hierarchy.  Every scope and named object has a *hierarchical name*, which is unique in the design.  The hierarchical name is essentially a path from the root scope, consisting of names and indices of all parent scopes.
 
 Scopes come in three kinds:
 
@@ -105,26 +106,26 @@ It would be described as follows in the IR:
 # a named scope, within the implicit root scope, representing the top module instance
 !1 = scope "top" type=module("top")
 # a named scope, within the above top scope, representing the loop
-!2 = scope "loop" in=!1 type=array
+!2 = scope "loop" parent=!1 type=array
 # an indexed scope representing a single iteration of the loop
-!3 = scope #0 in=!2 type=block
-!4 = scope "inst0" in=!3 type=module("abc")
-!5 = scope "inst1" in=!3 type=module("abc")
-!6 = scope #1 in=!2 type=block
-!7 = scope "inst0" in=!6 type=module("abc")
-!8 = scope "inst1" in=!6 type=module("abc")
-!9 = scope #2 in=!2 type=block
-!10 = scope "inst0" in=!9 type=module("abc")
-!11 = scope "inst1" in=!9 type=module("abc")
+!3 = scope #0 parent=!2 type=block
+!4 = scope "inst0" parent=!3 type=module("abc")
+!5 = scope "inst1" parent=!3 type=module("abc")
+!6 = scope #1 parent=!2 type=block
+!7 = scope "inst0" parent=!6 type=module("abc")
+!8 = scope "inst1" parent=!6 type=module("abc")
+!9 = scope #2 parent=!2 type=block
+!10 = scope "inst0" parent=!9 type=module("abc")
+!11 = scope "inst1" parent=!9 type=module("abc")
 # a named scope representing a module instance array
-!12 = scope "inst2" in=!1 type=array
+!12 = scope "inst2" parent=!1 type=array
 # an indexed scopr representing a specific instance in the array
-!13 = scope #0 in=!12 type=module("xyz") 
-!14 = scope "a" in=!13 type=block
-!15 = scope #1 in=!12 type=module("xyz") 
-!16 = scope "a" in=!15 type=block
-!17 = scope #2 in=!12 type=module("xyz") 
-!18 = scope "a" in=!17 type=block
+!13 = scope #0 parent=!12 type=module("xyz") 
+!14 = scope "a" parent=!13 type=block
+!15 = scope #1 parent=!12 type=module("xyz") 
+!16 = scope "a" parent=!15 type=block
+!17 = scope #2 parent=!12 type=module("xyz") 
+!18 = scope "a" parent=!17 type=block
 ```
 
 The hierarchical names of the scopes (written in Verilog convention) would be:
@@ -148,7 +149,9 @@ The hierarchical names of the scopes (written in Verilog convention) would be:
 - `!17`: top.inst2[0]
 - `!18`: top.inst2[0].a
 
-Scopes can have one of several predefined types (such as module or block), which are advisory and carry no semantics to prjunnamed itself.  They can also have source locations.  Scopes are metadata and as such can be attached to cells to signify their origin, but their main role is to contain named objects.
+Scopes can have one of several predefined types (module, block, interface, struct, array).  They can also have source locations.  Scopes are metadata and as such can be attached to cells to signify their origin, but their main role is to contain named objects.
+
+Module scopes are the main building blocks of hierarchy.  Block scopes represent subdivisions of logic within a module.  Interface scopes are used to group together related module ports.  Struct scopes are used to represent a group of nets, signals or registers that was a single named struct-typed object in the HDL.  Array scopes represent arrays of any of the other type of scopes.
 
 ## Named objects
 
@@ -170,7 +173,7 @@ endmodule
 %1:4 = [...] # b
 %2:5 = adc %0:4 %1:4 0
 # the metadata declares a net of width 4 in a scope
-!2 = net "y" width=4 in=!1
+!2 = net "y" width=4 scope=!1
 # the name cell is used to actually associate a value with the named net
 %3:0 = name %2:4 !2
 ```
@@ -182,7 +185,7 @@ A name cell may be *partial*, and describe a slice of the associated named net. 
 ```
 # as above, but two top bits have been optimized out
 %2:3 = adc %0:2 %1:2 0
-!2 = net "y" width=4 in=!1
+!2 = net "y" width=4 scope=!1
 %3:0 = name %2:2 !2+0:2
 ```
 
@@ -191,14 +194,14 @@ There may be several name cells associated with a net, to cover disjoint slices 
 Normally, a name cell is effecively a "weak reference" to a value: the flow can delete a name, or any subset of its bits, if it is unused or stands in the way of optimization.  To prevent a value from being optimized out (making the name cell a strong reference), a net may be marked as "keep":
 
 ```
-!2 = net "y" width=4 in=!1 keep
+!2 = net "y" width=4 scope=!1 keep
 %3:0 = name %2:4 !2
 ```
 
 The name is associated with a value, not with the cell driving it.  Even if marked as "keep", the flow is free to optimize the logic driving it in any way that preserves its semantics.  For example, if it determines that a net always have a constant value, one may end up with a named constant:
 
 ```
-!2 = net "y" width=4 in=!1
+!2 = net "y" width=4 scope=!1
 %3:0 = name 0101 !2
 ```
 
@@ -218,7 +221,7 @@ wire[3:0] y = x + c;
 # add a + b
 %3:5 = adc %0:4 %1:4 0
 # the named signal, consuming the above value
-%4:4 = signal %3:4 "x" in=!1
+%4:4 = signal %3:4 "x" scope=!1
 # add x + c
 %5:5 = adc %4:4 %2:4 0
 ```
@@ -226,47 +229,6 @@ wire[3:0] y = x + c;
 A named signal acts as an optimization barrier: the flow cannot assume that the value of `x` flowing into the second addition is the same as the result of the first addition, as it could be overriden by something external.
 
 Named signals are a debugging tool that is not normally used, and should only be emitted by explicit user request.  They always act as a strong reference, and will not be optimized out.
-
-
-### Ports
-
-Ports between modules in the hierarchy are represented by named nets or signals with specifiic annotations:
-
-```
-module top;
-    wire ia, iy;
-    inv inst0(.a(ia), .y(iy));
-endmodule
-
-module inv(input a, output y);
-    assign y = !a;
-endmodule
-```
-
-```
-!1 = scope "top" type=module("top")
-!2 = scope "inst0" type="module("inv") in=!1
-%0 = [...] # ia
-%1 = signal %0 "a" in=!2 input
-%2 = not %1
-%3 = signal %2 "y" in=!2 output
-```
-
-Likewise, named signals are used for top-level ports, obsoleting the current `input` and `output` cells:
-
-```
-module top(input a, output y);
-    assign y = !a;
-endmodule
-```
-
-```
-!1 = scope "top"
-# top-level input port represented as a signal cell with undefined input
-%0 = signal X "a" in=!1 input
-%1:1 = not %0
-# top-level output port represented as a signal cell with unused output
-%2:1 = signal %1 "y" in=!2 output
 ```
 
 
@@ -281,9 +243,9 @@ always @(posedge clk)
 ```
 
 ```
-%0 = <clk>
+%0:1 = <clk>
 %1:4 = <d>
-!2 = reg "q" width=4 in=!1
+!2 = reg "q" width=4 scope=!1
 %2:4 = dff %1:4 clk=%0 init=0 name=!2
 ```
 
@@ -306,7 +268,61 @@ Like named nets, by default named registers are considered to be "weak reference
 1. `keep`: the register must remain both readable and writable by external entities.  Every bit of the register must be mapped to at least one bit of storage in the netlist, and (like `signal`) the output of the register must be treated as an optimization barrier (to ensure an externally written value is properly observed)
 2. `keep_write`: the register must remain writable by external entities, but read access is not required.  Behaves like `keep`, but allows the synthesis tool to delete bits that are unused by the netlist (an external entity can write to them, which is treated as a no-op).
 3. `keep_read`: the register must remain readable by external entities, but write access is not required.  If convenient for optimization, this register (or any subset of its bits) can be "decayed" into a named net with the `keep` annotation.
-4. Default: the register or any subset of its bits can be deleted, or decayed into a named net.
+4. Default: the register or any subset of its bits can be deleted, or decayed into a named net, as necessary.
+
+
+### Representing ports
+
+Ports between modules in the hierarchy are represented by named nets, signals, or registers with specific annotations:
+
+```
+module top;
+    wire ia, iy;
+    inv inst0(.a(ia), .y(iy));
+endmodule
+
+module inv(input a, output y);
+    assign y = !a;
+endmodule
+```
+
+```
+!1 = scope "top" type=module("top")
+!2 = scope "inst0" type="module("inv") parent=!1
+%0:1 = [...] # ia
+%1:1 = signal %0 "a" scope=!2 input
+%2:1 = not %1
+%3:1 = signal %2 "y" scope=!2 output
+```
+
+Likewise, named signals are used for top-level ports, obsoleting the current `input` and `output` cells:
+
+```
+module top(input a, output y);
+    assign y = !a;
+endmodule
+```
+
+```
+!1 = scope "top"
+# top-level input port represented as a signal cell with undefined input
+%0:1 = signal X "a" scope=!1 input
+%1:1 = not %0
+# top-level output port represented as a signal cell with unused output
+%2:1 = signal %1 "y" scope=!2 output
+
+A named register can be used to represent ports when an output is directly driven by a register (such as Verilog `output reg ...`).
+
+The way to represent ports depends on the debugging needs.  In the usual circumstances (synth flow with no ICD features requested):
+
+- internal ports: represented as nets, subject to optimization (can be just deleted)
+  - opportunistically, output ports can also be represented as registers if there happens to be one driving the port with the same name, likewise subject to optimization
+- top-level ports:
+  - top-level outputs: represented as a `signal` (with its output value unused); cannot be deleted
+    - alternatively, a net with `keep` would effectively work the same
+  - top-level inputs: represented as a `signal` (with input of `X`, as it is expected to be overriden); cannot be deleted
+
+In a full-debug flow, the internal ports would be represented as signals (or registers) instead of nets.
 
 
 ### Named cells
@@ -321,7 +337,7 @@ endmodule
 
 ```
 !1 = scope "top"
-!2 = cell "mydsp" in=!1
+!2 = cell "mydsp" scope=!1
 %_ = target "DSP48E2" !2 {
     ...
 }
@@ -431,8 +447,8 @@ Compares the value against a list of bit patterns, takes the first matching one,
     }
     1011xxxxxxxxxxxx = "JUMP" {
         field "target" start=#0 width=#12
-    }n
-    [..]
+    }
+    [...]
 }
 ```
 
@@ -442,14 +458,15 @@ Compares the value against a list of bit patterns, takes the first matching one,
 
 The following metadata items are added to the IR:
 
-- `scope <name or index> [in=<scope>] [type=<scope type>] [src=<source>]` (slight modification to existing metadata)
+- `scope <name or index> [parent=<scope>] [type=<scope type>] [src=<source>]` (slight modification to existing metadata)
   - `type=module[(<name>)]`
   - `type=block`
   - `type=interface[(<name>)]`
   - `type=array`
-- `net <name or index> [in=<scope>] [width=<int>] [type=<type>] [lsb=#<num>] [from_msb] [src=<source>] [keep] [input | output]`
-- `reg <name or index> [in=<scope>] [width=<int>] [type=<type>] [lsb=#<num>] [from_msb] [src=<source>] [keep | keep_read | keep_write] [decayed=<mask>] [output]`
-- `cell <name or index> [in=<scope>] [keep]`
+  - `type=struct[(<name>)]`
+- `net <name or index> [scope=<scope>] [width=<int>] [type=<type>] [lsb=#<num>] [from_msb] [src=<source>] [keep] [input | output]`
+- `reg <name or index> [scope=<scope>] [width=<int>] [type=<type>] [lsb=#<num>] [from_msb] [src=<source>] [keep | keep_read | keep_write] [decayed=<mask>] [output]`
+- `cell <name or index> [scope=<scope>] [keep]`
 - `type (bool | bitvec | unsigned | signed)`
 - `type enum #<width> { <values> }`
 - `type struct #<width> { <fields> }`
@@ -462,7 +479,7 @@ The following metadata items are removed:
 
 The following cells are added to the IR:
 
-- `%<id>:<width> = signal <value> <name or index> [in=<scope>] [type=<type>] [lsb=#<num>] [from_msb] [input | output]`
+- `%<id>:<width> = signal <value> <name or index> [scope=<scope>] [type=<type>] [lsb=#<num>] [from_msb] [input | output]`
 - `%<id>:0 = name <value> <meta or meta slice>` (replaces current name cell)
 
 The following cells are removed from the IR:
@@ -491,7 +508,7 @@ The following scope types are defined:
 
 - `module` or `module(<name>)`: represents a Verilog `module` instance, a VHDL `entity` instance, or a similar construct; optionally, the name of the module type may be given for informational purposes
 - `block`: represents a block within a module; corresponds to a Verilog `block`
-- `struct`: represents a struct-typed signal, wire, or similar construct that got split into individual named nets or signals by the backend
+- `struct` or `struct(<name>)`: represents a struct-typed signal, wire, or similar construct that got split into individual named nets or signals by the backend; the name of the struct type may be given for informational purposes
 - `interface` or `interface(<name>)`: represents a grouping of module's input / output ports; like `module`, the name of the interface type may be given for informational purposes
 - `array`: represents an array of blocks, interfaces, or module instances
 
@@ -505,17 +522,17 @@ The `struct` scope type has special constraints:
 
 The `interface` type has special constraints:
 
-- it can only be contained within a `module` or another `interface`, directly or inside `array` scopes (cannot be contained within a `block`)
-- it can only contain (directly or indirectly): named nets, named signals, `interface` scopes, `array` scopes, `struct` scopes (cannot contain `block` or `module scopes, nor other kinds of cells)
+- it can only be contained within a `module` or another `interface`, directly or inside `array` scopes (cannot be contained within a `block` or `struct`)
+- it can only contain (directly or indirectly): named nets, named signals, `interface` scopes, `array` scopes, `struct` scopes (cannot contain `block` or `module` scopes, nor other kinds of cells)
 
-Netlist exporters are expected to deal with arbitrary names and scope hierarchies.  However, scope structures and names not representable in the target format or language may not be preserved (scopes may be flattened or inserted as necessary to legalize the hierarchy; names may be mangled, escaped, or stripped)  Therefore, unusual hierarchy structures and identifier characters should be avoided.
+Netlist exporters are expected to deal with arbitrary names and scope hierarchies.  However, scope structures and names not representable in the target format or language may not be preserved (scopes may be flattened or inserted as necessary to legalize the hierarchy; names may be mangled, escaped, or stripped).  Therefore, unusual hierarchy structures and identifier characters should be avoided.
 
 ## Named nets
 
 A named net is defined by the metadata item.  It has the following attributes:
 
 - the name or index of the net (indexed nets are expected to be placed in `array` scopes)
-- `in=<scope>`: the parent scope, if any
+- `scope=<scope>`: the parent scope, if any
 - `width=#<int>`: the size of the wire, in bits (assumed to be 1 if absent)
 - `lsb=#<int>`: the HDL-level index of the LSB, for display purposes (assumed to be 0 if absent); note that prjunnamed always internally counts bits from 0
 - `from_msb`: specifies that HDL-level bit indices grow from MSB up; therefore, physical bit `i` should be considered to have HDL-level index of `lsb - i` instead of `lsb + i`
@@ -548,7 +565,7 @@ The mapping of named net bits to values is many-to-many:
 A named signal is defined by its cell.  Since it is a non-removable non-duplicatable optimization barrier, there is no need to split the definition into a metadata item.  It has the following attributes, which are essentially the same as for named nets:
 
 - name or index
-- `in=<scope>`
+- `scope=<scope>`
 - `width=#<int>`
 - `lsb=#<int>`
 - `from_msb`
@@ -651,6 +668,8 @@ The distinction between abstract bitvector and an unsigned integer is provided m
 
 The convention used to represent wire indexing (`lsb` and `from_msb`) differs from the one used by yosys for the from_msb case (yosys stores the smaller index of lsb and msb; we always store the lsb). However, it simplifies calculations (the width of the wire is no longer part of the conversion formula, and the difference between the LSB-first and MSB-first cases consists solely of switching an addition into a subtraction).
 
+The syntax for the "containing scope" attribute of metadata annotations is changed from `in=` to `parent=` (for scopes) or `scope=` (for things that aren't scopes) to avoid confusion with the new `input` flag.
+
 
 # Prior art
 [prior-art]: #prior-art
@@ -687,7 +706,6 @@ Currently, keeping a named net available for readout requires actually materiali
 
 While the type system described here is fairly capable, it is far from enough to describe all sorts of crimes commonly committed when packing abstract data types into a vector of bits.  One could imagine all sorts of extension to the system, or perhaps replacing it with actual formatting-based machinery (based on ghost cells?) to allow fancy custom types.
 
-While a `keep` attribute is reasonably well-defined for simulation and similar use-cases, it is not necessarily enough for manipulating bitstreams or inspecting a target via JTAG: the storage elements in an FPGA are not all created equal, and some may not be readable and/or writable from the outside.  We may want more specific `keep` attributes that specifically request the value is placed in an inspectable register, or that memory initialization data can actually be controlled via the bitstream (which might not be the case eg. for memories lowered to FFs on targets where FF initialization value is not directly settable).
+While a `keep` attribute is reasonably well-defined for simulation and similar use-cases, it is not necessarily enough for manipulating bitstreams or inspecting a target via JTAG: the storage elements in an FPGA are not all created equal, and some may not be readable and/or writable from the outside.  We may want more specific `keep` attributes that specifically request the value is placed in an inspectable register, or that memory initialization data can actually be controlled via the bitstream (which might not be the case eg. for memories lowered to FFs on targets where FF initialization value is not directly settable).  Likewise, we may want a way to request that a `signal` be lowerd to something that can be controlled via in-circuit debugging.
 
 At some point, prjunnamed will need an elaboration driver that gathers partial netlists from various HDL frontends, and links them together to the final design.  Such linking will need to be name-based, and have a similar naming and scope model to this RFC.
-
