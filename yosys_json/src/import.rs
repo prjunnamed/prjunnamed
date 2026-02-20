@@ -48,12 +48,12 @@ impl From<yosys::MetadataTypeError> for Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::Io(error) => write!(f, "I/O error: {}", error),
-            Error::Json(error) => write!(f, "JSON parse error: {}", error),
-            Error::Syntax(error) => write!(f, "{}", error),
-            Error::MetaDataType(error) => write!(f, "{}", error),
+            Error::Io(error) => write!(f, "I/O error: {error}"),
+            Error::Json(error) => write!(f, "JSON parse error: {error}"),
+            Error::Syntax(error) => write!(f, "{error}"),
+            Error::MetaDataType(error) => write!(f, "{error}"),
             Error::Semantic => write!(f, "semantic error"),
-            Error::Unsupported(feature) => write!(f, "unsupported feature: {}", feature),
+            Error::Unsupported(feature) => write!(f, "unsupported feature: {feature}"),
         }
     }
 }
@@ -196,10 +196,10 @@ impl ModuleImporter<'_> {
         for (port_name, port) in self.module.ports.iter() {
             let mut is_inout = port.direction == yosys::PortDirection::Inout;
             for &bit in port.bits.iter() {
-                if let yosys::Bit::Net(net) = bit {
-                    if io_net_conns.contains(&net) {
-                        is_inout = true;
-                    }
+                if let yosys::Bit::Net(net) = bit
+                    && io_net_conns.contains(&net)
+                {
+                    is_inout = true;
                 }
             }
             if is_inout {
@@ -315,7 +315,7 @@ impl ModuleImporter<'_> {
     }
 
     fn handle_cell(&mut self, name: &str, cell: &yosys::CellDetails) -> Result<(), Error> {
-        let _guard = self.use_attribute_metadata(&self.design, name, &cell.attributes);
+        let _guard = self.use_attribute_metadata(self.design, name, &cell.attributes);
 
         match &cell.type_[..] {
             "$not" | "$pos" | "$neg" => {
@@ -810,10 +810,10 @@ fn import_module(
     module: &yosys::Module,
     design_io_ports: &BTreeSet<(&str, &str)>,
 ) -> Result<Option<Design>, Error> {
-    if let Some(val) = module.attributes.get("blackbox") {
-        if val.as_bool()? {
-            return Ok(None);
-        }
+    if let Some(val) = module.attributes.get("blackbox")
+        && val.as_bool()?
+    {
+        return Ok(None);
     }
 
     let mut design = Design::with_target(target);
@@ -857,10 +857,10 @@ fn index_io_ports(design: &yosys::Design) -> Result<BTreeSet<(&str, &str)>, Erro
                 continue;
             }
             let Some(net_details) = module.netnames.get(port_name) else { continue };
-            if let Some(val) = net_details.attributes.get("iopad_external_pin") {
-                if val.as_bool()? == true {
-                    io_ports.insert((mod_name, port_name));
-                }
+            if let Some(val) = net_details.attributes.get("iopad_external_pin")
+                && val.as_bool()?
+            {
+                io_ports.insert((mod_name, port_name));
             }
         }
     }

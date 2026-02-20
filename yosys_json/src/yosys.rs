@@ -315,12 +315,12 @@ impl From<MetadataValue> for JsonValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Metadata(pub BTreeMap<String, MetadataValue>);
 
 impl Metadata {
     pub fn new() -> Metadata {
-        Metadata(BTreeMap::new())
+        Default::default()
     }
 
     pub fn iter(&self) -> btree_map::Iter<'_, String, MetadataValue> {
@@ -384,6 +384,12 @@ impl<V> Map<V> {
 
     pub fn add(&mut self, key: &str, value: V) {
         self.0.insert(key.to_owned(), value);
+    }
+}
+
+impl<V> Default for Map<V> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -696,7 +702,7 @@ impl From<NetDetails> for JsonValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Module {
     pub attributes: Metadata,
     pub parameter_default_values: Metadata,
@@ -708,14 +714,7 @@ pub struct Module {
 
 impl Module {
     pub fn new() -> Module {
-        Module {
-            attributes: Metadata::new(),
-            parameter_default_values: Metadata::new(),
-            ports: Map::new(),
-            cells: Map::new(),
-            memories: Map::new(),
-            netnames: Map::new(),
-        }
+        Default::default()
     }
 }
 

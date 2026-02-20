@@ -34,7 +34,7 @@ impl Display for IoNet {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Default)]
 pub struct IoValue {
     nets: Vec<IoNet>,
 }

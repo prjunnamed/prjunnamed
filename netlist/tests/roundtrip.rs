@@ -9,7 +9,7 @@ fn onewaytrip(text: &str, expect: &str) {
         Ok(design) => design,
         Err(error) => panic!("{}", error),
     };
-    assert_eq!(format!("{:#}", design), format!("{}", expect))
+    assert_eq!(format!("{design:#}"), *expect)
 }
 
 #[track_caller]
@@ -130,7 +130,9 @@ fn test_cells() {
     roundtrip("%0:2 = buf 00\n%2:1 = smod_floor %0+0 %0+1\n");
     roundtrip("%0:2 = buf 00\n%2:3 = match %0:2 { (00 01) 10 11 }\n");
     roundtrip("%0:2 = buf 00\n%2:2 = match en=%0+1 %0+0 { 0 1 }\n");
-    roundtrip("%0:16 = buf 0000000000000000\n%16:8 = match en=%0+1 %0:16 {\n  0000000000000001\n  0000000000000010\n  0000000000000100\n  0000000000001000\n  0000000000010000\n  0000000000100000\n  0000000001000000\n  0000000010000000\n}\n");
+    roundtrip(
+        "%0:16 = buf 0000000000000000\n%16:8 = match en=%0+1 %0:16 {\n  0000000000000001\n  0000000000000010\n  0000000000000100\n  0000000000001000\n  0000000000010000\n  0000000000100000\n  0000000001000000\n  0000000010000000\n}\n",
+    );
     roundtrip("%0:4 = buf 0000\n%4:2 = assign %0+0:2 %0+2:2\n");
     roundtrip("%0:4 = buf 0000\n%4:2 = assign en=%0+2 %0+0:2 %0+3 at=#1\n");
     roundtrip("%0:2 = buf 00\n%2:1 = dff %0+0 clk=%0+1\n");
@@ -147,7 +149,9 @@ fn test_cells() {
 #[test]
 fn test_cells_metadata() {
     roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n; source file://top.py#2\n%0:1 = buf 0 !0\n");
-    roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n%0:2 = buf 00\n; source file://top.py#2\n%2:3 = match %0:2 !0 { (00 01) 10 11 }\n");
+    roundtrip(
+        "!0 = source \"top.py\" (#1 #2) (#3 #4)\n%0:2 = buf 00\n; source file://top.py#2\n%2:3 = match %0:2 !0 { (00 01) 10 11 }\n",
+    );
 }
 
 #[test]
@@ -251,7 +255,9 @@ fn test_memories() {
 
 #[test]
 fn test_memories_metadata() {
-    roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n; source file://top.py#2\n%0:_ = memory depth=#1 width=#1 !0 {\n  init 1\n}\n");
+    roundtrip(
+        "!0 = source \"top.py\" (#1 #2) (#3 #4)\n; source file://top.py#2\n%0:_ = memory depth=#1 width=#1 !0 {\n  init 1\n}\n",
+    );
 }
 
 #[test]
@@ -272,7 +278,9 @@ fn test_instances() {
 
 #[test]
 fn test_instances_metadata() {
-    roundtrip("!0 = source \"top.py\" (#1 #2) (#3 #4)\n%0:1 = buf 0\n; source file://top.py#2\n%1:_ = \"TBUF\" !0 {\n  input \"EN\" = %0\n}\n");
+    roundtrip(
+        "!0 = source \"top.py\" (#1 #2) (#3 #4)\n%0:1 = buf 0\n; source file://top.py#2\n%1:_ = \"TBUF\" !0 {\n  input \"EN\" = %0\n}\n",
+    );
 }
 
 #[test]

@@ -28,11 +28,7 @@ impl Instance {
 
     pub fn get_param_string(&self, name: &str) -> Option<&str> {
         let val = self.params.get(name)?;
-        if let ParamValue::String(val) = val {
-            Some(val)
-        } else {
-            None
-        }
+        if let ParamValue::String(val) = val { Some(val) } else { None }
     }
 
     pub fn add_param(&mut self, name: impl Into<String>, value: impl Into<ParamValue>) {

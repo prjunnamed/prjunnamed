@@ -90,7 +90,7 @@ pub fn split(design: &mut Design) -> bool {
         let _guard = design.use_metadata_from(&[cell_ref]);
         let cell = cell_ref.get();
         let cell_output = cell_ref.output();
-        let count_live = cell_output.iter().filter(|net| live_nets.contains(&net)).count();
+        let count_live = cell_output.iter().filter(|net| live_nets.contains(net)).count();
         if cell.has_effects(design) {
             continue; // root
         } else if count_live == cell_ref.output_len() {

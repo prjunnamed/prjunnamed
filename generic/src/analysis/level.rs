@@ -2,13 +2,14 @@ use std::{cell::RefCell, collections::HashMap};
 
 use prjunnamed_netlist::{Cell, Design, Net, RewriteRuleset, Value};
 
+#[derive(Default)]
 pub struct LevelAnalysis {
     levels: RefCell<HashMap<Net, u32>>,
 }
 
 impl LevelAnalysis {
     pub fn new() -> Self {
-        LevelAnalysis { levels: Default::default() }
+        Default::default()
     }
 
     pub fn get(&self, net: Net) -> u32 {

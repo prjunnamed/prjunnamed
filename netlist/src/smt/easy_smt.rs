@@ -35,11 +35,7 @@ impl SmtEngine for EasySmtEngine {
     type BitVec = SExpr;
 
     fn build_bool_lit(&self, value: bool) -> Self::Bool {
-        if value {
-            self.context().true_()
-        } else {
-            self.context().false_()
-        }
+        if value { self.context().true_() } else { self.context().false_() }
     }
 
     fn build_bool_eq(&self, arg1: Self::Bool, arg2: Self::Bool) -> Self::Bool {
@@ -220,10 +216,10 @@ impl SmtEngine for EasySmtEngine {
     fn get_bitvec(&self, term: &Self::BitVec) -> Result<Const, Self::Error> {
         let value = self.get_value(*term)?;
         let ctx = self.context();
-        if let SExprData::Atom(data) = ctx.get(value) {
-            if data.starts_with("#b") {
-                return Ok(Const::lit(&data[2..]));
-            }
+        if let SExprData::Atom(data) = ctx.get(value)
+            && data.starts_with("#b")
+        {
+            return Ok(Const::lit(&data[2..]));
         }
         panic!("illegal BitVec value: {:?}", ctx.get(value))
     }

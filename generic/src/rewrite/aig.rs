@@ -205,7 +205,7 @@ impl RewriteRuleset for SimpleAigOpt {
                                             let xor = rewriter.add_cell_meta(xor, xor_meta);
                                             return Cell::Not(xor).into();
                                         } else {
-                                            return RewriteResult::CellMeta(xor.into(), xor_meta);
+                                            return RewriteResult::CellMeta(xor, xor_meta);
                                         }
                                     }
                                 }
@@ -329,10 +329,7 @@ impl RewriteRuleset for SimpleAigOpt {
                                     // (aa ^ ab) ^ (aa ^ bb) -> ab ^ bb
                                     if net_aa == net_ba {
                                         let meta = meta.merge(meta_a).merge(meta_b);
-                                        return RewriteResult::CellMeta(
-                                            Cell::Xor(net_ab.into(), net_bb.into()).into(),
-                                            meta,
-                                        );
+                                        return RewriteResult::CellMeta(Cell::Xor(net_ab.into(), net_bb.into()), meta);
                                     }
                                 }
                             }

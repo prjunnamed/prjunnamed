@@ -151,7 +151,7 @@ impl RewriteRuleset for ChainRebalance<'_> {
                     } else {
                         aig_chains.insert(result, chain);
                     }
-                    return result.into();
+                    result.into()
                 } else {
                     if net_a.is_negative() {
                         let chain = AigChain {
@@ -252,7 +252,7 @@ impl RewriteRuleset for ChainRebalance<'_> {
                     // now push the new last entry
                     chain.full_trees.push(XorFullTree { level: level_top, net: net_top, cumulative_net: net_top });
                     xor_chains.insert(cumulative_net, chain);
-                    return cumulative_net.into();
+                    cumulative_net.into()
                 } else {
                     let chain = XorChain {
                         min_level: level_a - 1,

@@ -27,3 +27,6 @@ trace = [
     "prjunnamed-pattern/trace",
     "prjunnamed-generic/trace",
 ]
+
+[lints]
+workspace = true

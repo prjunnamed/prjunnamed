@@ -378,10 +378,8 @@ impl Target for SiliconBlueTarget {
                             input.extend([Net::UNDEF]);
                         }
                     }
-                    if !input.is_undef() {
-                        if instance.inputs.insert("I".into(), input).is_some() {
-                            return Err(TargetImportError::unknown_input(cell_ref, "I"));
-                        }
+                    if !input.is_undef() && instance.inputs.insert("I".into(), input).is_some() {
+                        return Err(TargetImportError::unknown_input(cell_ref, "I"));
                     }
                 }
                 "SB_DFF" | "SB_DFFR" | "SB_DFFS" | "SB_DFFSR" | "SB_DFFSS" | "SB_DFFE" | "SB_DFFER" | "SB_DFFES"
@@ -506,13 +504,13 @@ impl Target for SiliconBlueTarget {
                 _ => {}
             }
             if let Some(prototype) = self.prototypes.get(&instance.kind) {
-                if let Some(value) = instance.params.get_mut("IO_STANDARD") {
-                    if let ParamValue::String(value) = value {
-                        if value.starts_with("SB_LVCMOS") && value != "SB_LVCMOS" {
-                            eprintln!("fix your shit please");
-                            *value = "SB_LVCMOS".into();
-                        }
-                    }
+                if let Some(value) = instance.params.get_mut("IO_STANDARD")
+                    && let ParamValue::String(value) = value
+                    && value.starts_with("SB_LVCMOS")
+                    && value != "SB_LVCMOS"
+                {
+                    eprintln!("fix your shit please");
+                    *value = "SB_LVCMOS".into();
                 }
 
                 cell_ref.unalive();
