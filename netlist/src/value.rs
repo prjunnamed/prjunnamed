@@ -179,10 +179,7 @@ impl Eq for ValueRepr {}
 
 impl PartialOrd for ValueRepr {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match (self, other) {
-            (ValueRepr::Some(lft), ValueRepr::Some(rgt)) => lft.partial_cmp(rgt),
-            _ => self.as_slice().partial_cmp(other.as_slice()),
-        }
+        Some(self.cmp(other))
     }
 }
 
@@ -327,7 +324,7 @@ impl Value {
                 }
             }
         }
-        result.checked_mul(stride).unwrap_or(usize::MAX)
+        result.saturating_mul(stride)
     }
 
     pub fn shl<'a>(&self, other: impl Into<Cow<'a, Const>>, stride: u32) -> Value {
@@ -404,7 +401,7 @@ impl Debug for Value {
             if index != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{:?}", net)?;
+            write!(f, "{net:?}")?;
         }
         write!(f, "])")?;
         Ok(())
@@ -420,7 +417,7 @@ impl Display for Value {
         } else {
             write!(f, "[")?;
             for net in self.iter().rev() {
-                write!(f, " {}", net)?;
+                write!(f, " {net}")?;
             }
             write!(f, " ]")
         }
@@ -542,7 +539,7 @@ impl FromIterator<Net> for Value {
                     None => Value::new(),
                     Some(net) => Value::from(net),
                 };
-                while let Some(net) = iter.next() {
+                for net in iter {
                     value.push(net);
                 }
                 value
@@ -554,10 +551,10 @@ impl FromIterator<Net> for Value {
 
 impl<'a> IntoIterator for &'a Value {
     type Item = Net;
-    type IntoIter = std::iter::Cloned<std::slice::Iter<'a, Net>>;
+    type IntoIter = std::iter::Copied<std::slice::Iter<'a, Net>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.as_slice().into_iter().cloned()
+        self.0.as_slice().iter().copied()
     }
 }
 

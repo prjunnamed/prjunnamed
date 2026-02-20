@@ -34,11 +34,10 @@ impl<P1: Pattern<Value>, P2: Pattern<Value>, P3: Pattern<Net>> Pattern<Value> fo
         } else {
             return None;
         }
-        self.0.execute(design, &cap1).and_then(|cap1| {
-            self.1.execute(design, &cap2).and_then(|cap2| {
-                self.2.execute(design, &cap3).and_then(|cap3| Some((target.clone(), cap1, cap2, cap3)))
-            })
-        })
+        let cap1 = self.0.execute(design, &cap1)?;
+        let cap2 = self.1.execute(design, &cap2)?;
+        let cap3 = self.2.execute(design, &cap3)?;
+        Some((target.clone(), cap1, cap2, cap3))
     }
 }
 
@@ -72,9 +71,9 @@ macro_rules! compare_patterns {
                 } else {
                     return None
                 }
-                self.0.execute(design, &cap1).and_then(|cap1|
-                    self.1.execute(design, &cap2).and_then(|cap2|
-                        Some((target, cap1, cap2))))
+                let cap1 = self.0.execute(design, &cap1)?;
+                let cap2 = self.1.execute(design, &cap2)?;
+                Some((target, cap1, cap2))
             }
         }
 
@@ -115,9 +114,9 @@ macro_rules! arithmetic_patterns {
                 } else {
                     return None
                 }
-                self.0.execute(design, &cap1).and_then(|cap1|
-                    self.1.execute(design, &cap2).and_then(|cap2|
-                        Some((target.clone(), cap1, cap2))))
+                let cap1 = self.0.execute(design, &cap1)?;
+                let cap2 = self.1.execute(design, &cap2)?;
+                Some((target.clone(), cap1, cap2))
             }
         }
 

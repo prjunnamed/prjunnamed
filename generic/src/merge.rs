@@ -87,10 +87,8 @@ pub fn merge(design: &mut Design) -> bool {
             }
             _ => numberer.find_or_insert(cell, &output),
         };
-        if cfg!(feature = "trace") {
-            if output != canon {
-                eprintln!(">merge {} => {}", design.display_value(&output), design.display_value(&canon));
-            }
+        if cfg!(feature = "trace") && output != canon {
+            eprintln!(">merge {} => {}", design.display_value(&output), design.display_value(&canon));
         }
         for canon_net in canon.iter() {
             let Ok((canon_cell_ref, _offset)) = design.find_cell(canon_net) else { unreachable!() };

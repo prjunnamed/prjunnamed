@@ -464,11 +464,11 @@ impl MemoryExt for Memory {
         for bit_index in 0..self.width {
             'check_slices: loop {
                 for (port_index, &port_granularity) in write_port_granularity.iter().enumerate() {
-                    if result.len() % port_granularity != 0 {
-                        if mask_slices[bit_index][port_index] != mask_slices[bit_index - 1][port_index] {
-                            result.push(None);
-                            continue 'check_slices;
-                        }
+                    if !result.len().is_multiple_of(port_granularity)
+                        && mask_slices[bit_index][port_index] != mask_slices[bit_index - 1][port_index]
+                    {
+                        result.push(None);
+                        continue 'check_slices;
                     }
                 }
                 break;
@@ -477,7 +477,7 @@ impl MemoryExt for Memory {
         }
         'align: loop {
             for &port_granularity in write_port_granularity {
-                if result.len() % port_granularity != 0 {
+                if !result.len().is_multiple_of(port_granularity) {
                     result.push(None);
                     continue 'align;
                 }

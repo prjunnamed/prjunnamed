@@ -17,3 +17,6 @@ prjunnamed-pattern.workspace = true
 [features]
 trace = []
 verify = ["prjunnamed-netlist/verify"] # for tests only
+
+[lints]
+workspace = true

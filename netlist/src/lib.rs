@@ -20,7 +20,7 @@ mod target;
 mod isomorphic;
 mod smt;
 
-pub use logic::{Trit, Const};
+pub use logic::{Trit, Const, ConstToIntError, InvalidTritCharacter};
 pub use value::{Net, ControlNet, Value};
 pub use param::ParamValue;
 pub use io::{IoNet, IoValue};

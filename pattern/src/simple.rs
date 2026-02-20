@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+
 use prjunnamed_netlist::{Cell, Const, Net, Trit, Value};
 
 use crate::{DesignDyn, NetOrValue, Pattern};
@@ -32,7 +34,7 @@ impl<T: Clone, P: Pattern<T>> Pattern<T> for PBind<P> {
 
     #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
-        self.0.execute(design, target).and_then(|capture| Some((target.clone(), capture)))
+        self.0.execute(design, target).map(|capture| (target.clone(), capture))
     }
 }
 
@@ -58,7 +60,7 @@ impl Pattern<Value> for PConst {
 
     #[inline]
     fn execute(&self, _design: &dyn DesignDyn, target: &Value) -> Option<Self::Capture> {
-        Value::as_const(&target).map(|value| (value,))
+        Value::as_const(target).map(|value| (value,))
     }
 }
 
@@ -75,11 +77,7 @@ impl Pattern<u32> for PZero {
 
     #[inline]
     fn execute(&self, _design: &dyn DesignDyn, target: &u32) -> Option<Self::Capture> {
-        if *target == 0 {
-            Some(((),))
-        } else {
-            None
-        }
+        if *target == 0 { Some(((),)) } else { None }
     }
 }
 
@@ -170,7 +168,9 @@ impl<T: NetOrValue> Pattern<T> for PPow2 {
 
     #[inline]
     fn execute(&self, _design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
-        target.as_const().and_then(|value| value.as_power_of_two().map(|exp| (exp,)))
+        let value = target.as_const()?;
+        let exp = value.as_power_of_two()?;
+        Some((exp,))
     }
 }
 
@@ -189,14 +189,13 @@ impl<T: NetOrValue> Pattern<T> for PInput {
 
     #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &T) -> Option<Self::Capture> {
-        if let Some(net) = target.iter().next() {
-            if let Ok((cell_ref, 0)) = design.find_cell(net) {
-                if let Cell::Input(name, _size) = &*cell_ref.get() {
-                    if target.as_value() == cell_ref.output() && name == self.0 {
-                        return Some((target.clone(),));
-                    }
-                }
-            }
+        if let Some(net) = target.iter().next()
+            && let Ok((cell_ref, 0)) = design.find_cell(net)
+            && let Cell::Input(name, _size) = &*cell_ref.get()
+            && target.as_value() == cell_ref.output()
+            && name == self.0
+        {
+            return Some((target.clone(),));
         }
         None
     }
@@ -217,7 +216,8 @@ impl<P: Pattern<Value>> Pattern<Value> for PZExt<P> {
     #[inline]
     fn execute(&self, design: &dyn DesignDyn, target: &Value) -> Option<Self::Capture> {
         let zext_count = target.iter().rev().take_while(|net| *net == Net::ZERO).count();
-        self.0.execute(design, &target.slice(..target.len() - zext_count)).map(|capture| (target.clone(), capture))
+        let capture = self.0.execute(design, &target.slice(..target.len() - zext_count))?;
+        Some((target.clone(), capture))
     }
 }
 
@@ -239,6 +239,7 @@ impl<P: Pattern<Value>> Pattern<Value> for PSExt<P> {
             return None;
         }
         let sext_count = target.iter().rev().take_while(|net| *net == target.msb()).count() - 1;
-        self.0.execute(design, &target.slice(..target.len() - sext_count)).map(|capture| (target.clone(), capture))
+        let capture = self.0.execute(design, &target.slice(..target.len() - sext_count))?;
+        Some((target.clone(), capture))
     }
 }

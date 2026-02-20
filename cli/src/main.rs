@@ -56,7 +56,7 @@ fn read_input(target: Option<Arc<dyn Target>>, name: String) -> Result<Design, B
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum OutputType {
     YosysJson,
-    UIR,
+    Uir,
     GraphvizDot,
     GraphvizSvg,
 }
@@ -64,7 +64,7 @@ enum OutputType {
 impl OutputType {
     fn for_filename(name: &str) -> Self {
         if name.ends_with(".uir") || name.is_empty() {
-            Self::UIR
+            Self::Uir
         } else if name.ends_with(".json") {
             Self::YosysJson
         } else if name.ends_with(".dot") {
@@ -81,10 +81,10 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
     let output_type = OutputType::for_filename(&name);
     let statistics = design.statistics();
 
-    if export || output_type == OutputType::YosysJson {
-        if let Some(target) = design.target() {
-            target.export(&mut design);
-        }
+    if (export || output_type == OutputType::YosysJson)
+        && let Some(target) = design.target()
+    {
+        target.export(&mut design);
     }
 
     let output = || -> Result<_, Box<dyn Error>> {
@@ -95,7 +95,7 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
     };
 
     match output_type {
-        OutputType::UIR => write!(output()?, "{design}")?,
+        OutputType::Uir => write!(output()?, "{design}")?,
         OutputType::YosysJson => {
             let designs = BTreeMap::from([("top".to_owned(), design)]);
             prjunnamed_yosys_json::export(&mut output()?, designs)?;
@@ -120,7 +120,7 @@ fn write_output(mut design: Design, name: String, export: bool) -> Result<(), Bo
 
     eprintln!("cell counts:");
     for (class, amount) in statistics {
-        eprintln!("{:>7} {}", amount, class);
+        eprintln!("{amount:>7} {class}");
     }
 
     Ok(())
@@ -165,7 +165,7 @@ fn main() {
     env_logger::init();
     prjunnamed_siliconblue::register();
     if let Err(error) = run() {
-        eprintln!("error: {}", error);
+        eprintln!("error: {error}");
         std::process::exit(1)
     }
 }

@@ -1,3 +1,5 @@
+#![allow(clippy::len_without_is_empty)]
+
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 use std::error::Error;
@@ -30,6 +32,8 @@ pub trait Target: Debug {
     /// Convert target cells into generic instances.
     fn export(&self, design: &mut Design);
 
+    // TODO: get a better error type
+    #[allow(clippy::result_unit_err)]
     /// Run the complete synthesis flow.
     fn synthesize(&self, design: &mut Design) -> Result<(), ()>;
 }
@@ -73,11 +77,7 @@ impl TargetParamKind {
             },
             (TargetParamKind::IntEnum(items), ParamValue::Const(value)) => {
                 let value = value.try_into().ok()?;
-                if items.contains(&value) {
-                    Some(ParamValue::Int(value))
-                } else {
-                    None
-                }
+                if items.contains(&value) { Some(ParamValue::Int(value)) } else { None }
             }
             (TargetParamKind::IntEnum(items), ParamValue::Int(value)) if items.contains(value) => {
                 Some(ParamValue::Int(*value))
@@ -292,7 +292,7 @@ impl TargetPrototype {
         if let Some(TargetParam { index, .. }) = self.get_param(name) {
             target_cell.params[*index] = value.into();
         } else {
-            panic!("parameter {:?} does not exist for target cell", name);
+            panic!("parameter {name:?} does not exist for target cell");
         }
     }
 
@@ -306,7 +306,7 @@ impl TargetPrototype {
         if let Some(TargetInput { range, .. }) = self.get_input(name) {
             target_cell.inputs[range.clone()].copy_from_slice(&value[..]);
         } else {
-            panic!("input {:?} does not exist for target cell", name);
+            panic!("input {name:?} does not exist for target cell");
         }
     }
 
@@ -320,7 +320,7 @@ impl TargetPrototype {
         if let Some(TargetIo { range, .. }) = self.get_io(name) {
             target_cell.ios[range.clone()].copy_from_slice(&value[..]);
         } else {
-            panic!("input {:?} does not exist for target cell", name);
+            panic!("input {name:?} does not exist for target cell");
         }
     }
 
@@ -329,7 +329,7 @@ impl TargetPrototype {
         if let Some(TargetParam { index, .. }) = self.get_param(name) {
             &target_cell.params[*index]
         } else {
-            panic!("param {:?} does not exist for target cell", name);
+            panic!("param {name:?} does not exist for target cell");
         }
     }
 
@@ -340,7 +340,7 @@ impl TargetPrototype {
             let ParamValue::Const(ref value) = target_cell.params[*index] else { unreachable!() };
             value[0] == Trit::One
         } else {
-            panic!("param {:?} does not exist for target cell", name);
+            panic!("param {name:?} does not exist for target cell");
         }
     }
 
@@ -349,7 +349,7 @@ impl TargetPrototype {
         if let Some(TargetInput { range, .. }) = self.get_input(name) {
             target_cell.inputs.slice(range.clone())
         } else {
-            panic!("input {:?} does not exist for target cell", name);
+            panic!("input {name:?} does not exist for target cell");
         }
     }
 
@@ -358,7 +358,7 @@ impl TargetPrototype {
         if let Some(TargetOutput { range, .. }) = self.get_output(name) {
             target_cell_output.slice(range.clone())
         } else {
-            panic!("output {:?} does not exist for target cell", name);
+            panic!("output {name:?} does not exist for target cell");
         }
     }
 
@@ -530,6 +530,7 @@ impl Display for UnknownTargetError {
 impl Error for UnknownTargetError {}
 
 // I'm sorry! I'm sorry!! I'm trying to remove this but trait aliases aren't stable yet...
+#[allow(clippy::type_complexity)]
 static REGISTRY: Mutex<
     BTreeMap<String, Box<dyn Fn(BTreeMap<String, String>) -> Result<Arc<dyn Target>, Box<dyn Error>> + Send>>,
 > = Mutex::new(BTreeMap::new());

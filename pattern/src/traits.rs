@@ -6,6 +6,9 @@ use std::{
 use prjunnamed_netlist::{CellRef, Const, Design, Net, Trit, Value};
 
 pub trait NetOrValue: Sized + Clone + Debug + Display {
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     fn len(&self) -> usize;
     fn iter(&self) -> impl Iterator<Item = Net>;
     fn as_value(&self) -> Value {
@@ -24,7 +27,7 @@ impl NetOrValue for Net {
     }
 
     fn as_const(&self) -> Option<Const> {
-        Net::as_const(*self).map(|trit| Const::from(trit))
+        Net::as_const(*self).map(Const::from)
     }
 
     fn iter(&self) -> impl Iterator<Item = Net> {
@@ -32,11 +35,7 @@ impl NetOrValue for Net {
     }
 
     fn try_from(other: impl NetOrValue) -> Option<Self> {
-        if other.len() == 1 {
-            other.iter().next()
-        } else {
-            None
-        }
+        if other.len() == 1 { other.iter().next() } else { None }
     }
 
     fn accumulate(capture: &mut Option<Self>, net: Net) -> bool {

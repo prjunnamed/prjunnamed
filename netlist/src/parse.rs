@@ -76,7 +76,7 @@ impl Context {
                     panic!("reference %{}+{} out of bounds for definition %{}:{}", index, offset, index, output.len());
                 }
             } else {
-                panic!("unresolved reference %{}", index)
+                panic!("unresolved reference %{index}")
             }
         }
         self.design.apply();
@@ -124,7 +124,7 @@ fn parse_newline(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Opti
 }
 
 fn parse_decimal<T: FromStr>(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<T> {
-    t.take_while(|c| c.is_digit(10) || *c == '-').parse::<T, String>().ok()
+    t.take_while(|c| c.is_ascii_digit() || *c == '-').parse::<T, String>().ok()
 }
 
 fn parse_integer<T: FromStr>(t: &mut WithContext<impl Tokens<Item = char>, Context>) -> Option<T> {

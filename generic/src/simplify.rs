@@ -331,21 +331,17 @@ fn make_adc(design: &Design, a: impl Into<Value>, b: impl Into<Value>, ci: impl 
 
 fn fold_controls(design: &Design, cell_ref: CellRef) {
     let uninvert = |net: Net| -> Option<Net> {
-        if let Ok((cell_ref, offset)) = design.find_cell(net) {
-            if let Cell::Not(value) = &*cell_ref.get() {
-                return Some(value[offset]);
-            }
+        if let Ok((cell_ref, offset)) = design.find_cell(net)
+            && let Cell::Not(value) = &*cell_ref.get()
+        {
+            return Some(value[offset]);
         }
         None
     };
 
     let fold_control_net = |control_net: ControlNet| {
         if let Some(net) = uninvert(control_net.net()) {
-            if control_net.is_positive() {
-                ControlNet::Neg(net)
-            } else {
-                ControlNet::Pos(net)
-            }
+            if control_net.is_positive() { ControlNet::Neg(net) } else { ControlNet::Pos(net) }
         } else {
             control_net.canonicalize()
         }
@@ -470,11 +466,7 @@ mod test {
     fn iter_interesting_const_pairs() -> impl Iterator<Item = (Const, Const)> {
         iter_interesting_consts().flat_map(|value1| {
             iter_interesting_consts().filter_map(move |value2| {
-                if value1.len() == value2.len() {
-                    Some((value1.clone(), value2))
-                } else {
-                    None
-                }
+                if value1.len() == value2.len() { Some((value1.clone(), value2)) } else { None }
             })
         })
     }

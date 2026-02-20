@@ -20,13 +20,16 @@ pub enum Trit {
     One = 1,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct InvalidTritCharacter;
+
 impl Trit {
-    pub fn from_char(chr: char) -> Result<Self, ()> {
+    pub fn from_char(chr: char) -> Result<Self, InvalidTritCharacter> {
         match chr {
             '0' => Ok(Trit::Zero),
             '1' => Ok(Trit::One),
             'X' => Ok(Trit::Undef),
-            _ => Err(()),
+            _ => Err(InvalidTritCharacter),
         }
     }
 
@@ -245,7 +248,7 @@ impl Const {
     }
 
     pub fn has_undef(&self) -> bool {
-        self.trits.iter().any(|&trit| trit == Trit::Undef)
+        self.trits.contains(&Trit::Undef)
     }
 
     pub fn as_power_of_two(&self) -> Option<u32> {
@@ -343,11 +346,7 @@ impl Const {
                 return Trit::Zero;
             }
         }
-        if undef {
-            Trit::Undef
-        } else {
-            Trit::One
-        }
+        if undef { Trit::Undef } else { Trit::One }
     }
 
     pub fn ult<'a>(&self, other: impl Into<Cow<'a, Const>>) -> Trit {
@@ -408,7 +407,7 @@ impl Debug for Const {
             if index != 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{:?}", trit)?;
+            write!(f, "{trit:?}")?;
         }
         write!(f, "])")?;
         Ok(())
@@ -418,14 +417,14 @@ impl Debug for Const {
 impl Display for Const {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         for trit in self.trits.iter().rev() {
-            write!(f, "{}", trit)?;
+            write!(f, "{trit}")?;
         }
         Ok(())
     }
 }
 
 impl FromStr for Const {
-    type Err = ();
+    type Err = InvalidTritCharacter;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut trits = vec![];
@@ -436,18 +435,24 @@ impl FromStr for Const {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum ConstToIntError {
+    HasUndef,
+    Overflow,
+}
+
 impl TryFrom<&Const> for u64 {
-    type Error = ();
+    type Error = ConstToIntError;
 
     fn try_from(value: &Const) -> Result<Self, Self::Error> {
         if value.has_undef() {
-            return Err(());
+            return Err(ConstToIntError::HasUndef);
         }
         let mut result = 0;
         for (index, trit) in value.iter().enumerate() {
             if trit == Trit::One {
                 if index >= 64 {
-                    return Err(());
+                    return Err(ConstToIntError::Overflow);
                 }
                 result |= 1 << index;
             }
@@ -457,18 +462,18 @@ impl TryFrom<&Const> for u64 {
 }
 
 impl TryFrom<&Const> for i64 {
-    type Error = ();
+    type Error = ConstToIntError;
 
     fn try_from(value: &Const) -> Result<Self, Self::Error> {
         if value.has_undef() {
-            return Err(());
+            return Err(ConstToIntError::HasUndef);
         }
         let mut width = value.len();
         while width > 1 && value[width - 1] == value[width - 2] {
             width -= 1;
         }
         if width > Self::BITS as usize {
-            return Err(());
+            return Err(ConstToIntError::Overflow);
         }
         let mut result = 0;
         for (index, trit) in value.iter().enumerate() {

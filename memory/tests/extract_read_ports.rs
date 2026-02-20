@@ -7,8 +7,8 @@ fn extract_even_odd(design: &mut Design) {
     for cell_ref in design.iter_cells() {
         if let Cell::Memory(memory) = &*cell_ref.get() {
             let output = cell_ref.output();
-            let even_ports = Vec::from_iter((0..memory.read_ports.len()).filter(|index| index % 2 == 0));
-            let odd_ports = Vec::from_iter((0..memory.read_ports.len()).filter(|index| index % 2 == 1));
+            let even_ports = Vec::from_iter((0..memory.read_ports.len()).filter(|index| index.is_multiple_of(2)));
+            let odd_ports = Vec::from_iter((0..memory.read_ports.len()).filter(|index| !index.is_multiple_of(2)));
             let (mem0, output0) = memory.extract_read_ports(&even_ports, &output);
             let (mem1, output1) = memory.extract_read_ports(&odd_ports, &output);
             cell_ref.unalive();

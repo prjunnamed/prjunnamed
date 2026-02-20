@@ -24,7 +24,7 @@ impl SiliconBlueTarget {
         if memory.read_ports.iter().any(|port| port.flip_flop.is_none()) {
             return None;
         }
-        let write_port = memory.write_ports.get(0);
+        let write_port = memory.write_ports.first();
         let mut read_port_swizzles = vec![];
         for (read_port_index, read_port) in memory.read_ports.iter().enumerate() {
             let mut cand_swizzles = vec![];
@@ -79,7 +79,7 @@ impl SiliconBlueTarget {
                     .min_by_key(|swizzle| {
                         let num_brams = memory.swizzle_depths(swizzle).len();
                         let (write_mux_bits, read_mux_bits) = memory.swizzle_mux_bits(&[read_port_index], swizzle);
-                        let write_mux_bits = write_mux_bits.get(0).copied().unwrap_or(0);
+                        let write_mux_bits = write_mux_bits.first().copied().unwrap_or(0);
                         let read_mux_bits = read_mux_bits[0];
                         (num_brams, read_mux_bits, write_mux_bits)
                     })
@@ -90,7 +90,7 @@ impl SiliconBlueTarget {
                     .min_by_key(|swizzle| {
                         let num_brams = memory.swizzle_depths(swizzle).len();
                         let (write_mux_bits, read_mux_bits) = memory.swizzle_mux_bits(&[read_port_index], swizzle);
-                        let write_mux_bits = write_mux_bits.get(0).copied().unwrap_or(0);
+                        let write_mux_bits = write_mux_bits.first().copied().unwrap_or(0);
                         let read_mux_bits = read_mux_bits[0];
                         (read_mux_bits, num_brams, write_mux_bits)
                     })
@@ -122,7 +122,7 @@ impl SiliconBlueTarget {
         assert_eq!(memory.read_ports.len(), 1);
         assert!(memory.depth * memory.width <= 0x1000);
 
-        if let Some(write_port) = memory.write_ports.get(0) {
+        if let Some(write_port) = memory.write_ports.first() {
             prototype.apply_param(&mut target_cell, "IS_WCLK_INVERTED", write_port.clock.is_negative());
             prototype.apply_input(&mut target_cell, "WCLK", write_port.clock.net());
             prototype.apply_input(&mut target_cell, "WE", Net::ONE);
@@ -159,13 +159,13 @@ impl SiliconBlueTarget {
                     prototype.apply_input(
                         &mut target_cell,
                         "WDATA",
-                        Value::from_iter(SWIZZLE16.into_iter().map(|index| {
-                            if index < 8 {
-                                write_port.data[index]
-                            } else {
-                                Net::UNDEF
-                            }
-                        })),
+                        Value::from_iter(
+                            SWIZZLE16.into_iter().map(
+                                |index| {
+                                    if index < 8 { write_port.data[index] } else { Net::UNDEF }
+                                },
+                            ),
+                        ),
                     );
                 }
                 4 => {
@@ -173,11 +173,7 @@ impl SiliconBlueTarget {
                         &mut target_cell,
                         "WDATA",
                         Value::from_iter(SWIZZLE16.into_iter().map(|index| {
-                            if index >= 8 && index < 12 {
-                                write_port.data[index - 8]
-                            } else {
-                                Net::UNDEF
-                            }
+                            if (8..12).contains(&index) { write_port.data[index - 8] } else { Net::UNDEF }
                         })),
                     );
                 }
@@ -186,11 +182,7 @@ impl SiliconBlueTarget {
                         &mut target_cell,
                         "WDATA",
                         Value::from_iter(SWIZZLE16.into_iter().map(|index| {
-                            if index >= 12 && index < 14 {
-                                write_port.data[index - 12]
-                            } else {
-                                Net::UNDEF
-                            }
+                            if (12..14).contains(&index) { write_port.data[index - 12] } else { Net::UNDEF }
                         })),
                     );
                 }
@@ -218,11 +210,7 @@ impl SiliconBlueTarget {
 
         let init_value = Const::from_iter((0..0x1000).map(|index| {
             let swz_index = (index & 0xff0) | SWIZZLE16[index & 0xf];
-            if swz_index < memory.init_value.len() {
-                memory.init_value[swz_index]
-            } else {
-                Trit::Undef
-            }
+            if swz_index < memory.init_value.len() { memory.init_value[swz_index] } else { Trit::Undef }
         }));
         prototype.apply_param(&mut target_cell, "INIT", init_value);
 
@@ -243,14 +231,14 @@ impl SiliconBlueTarget {
             }
             4 => {
                 for (rdata_bit, index) in SWIZZLE16.into_iter().enumerate() {
-                    if index >= 8 && index < 12 {
+                    if (8..12).contains(&index) {
                         design.replace_net(output[index - 8], rdata[rdata_bit]);
                     }
                 }
             }
             2 => {
                 for (rdata_bit, index) in SWIZZLE16.into_iter().enumerate() {
-                    if index >= 12 && index < 14 {
+                    if (12..14).contains(&index) {
                         design.replace_net(output[index - 12], rdata[rdata_bit]);
                     }
                 }
@@ -282,10 +270,12 @@ impl SiliconBlueTarget {
             let bram_lowering = self.find_bram_lowering(memory);
             let fallback_ok = memory.can_lower_fallback();
             let fallback_reasonable =
-                fallback_ok && if memory.write_ports.len() != 0 { memory.depth <= 1 } else { memory.depth <= 5 };
+                fallback_ok && if !memory.write_ports.is_empty() { memory.depth <= 1 } else { memory.depth <= 5 };
             cell_ref.unalive();
-            if bram_lowering.is_some() && !fallback_reasonable {
-                self.lower_to_bram(design, memory, &output, bram_lowering.unwrap());
+            if let Some(bram_lowering) = bram_lowering
+                && !fallback_reasonable
+            {
+                self.lower_to_bram(design, memory, &output, bram_lowering);
             } else {
                 memory.clone().lower_fallback(design, &output);
             }
