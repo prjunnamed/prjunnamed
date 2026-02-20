@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `netlist/src/smt.rs`."><title>smt.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_netlist" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_netlist/</div>smt.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `netlist/src/smt.rs`."><title>smt.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_netlist" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_netlist/</div>smt.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{borrow::Cow, cell::RefCell, collections::BTreeMap};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use crate</span>::{AssignCell, Cell, Const, ControlNet, Design, MatchCell, Net, Trit, Value};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -97,7 +97,7 @@
 <a href=#97 id=97 data-nosnippet>97</a>    }
 <a href=#98 id=98 data-nosnippet>98</a>
 <a href=#99 id=99 data-nosnippet>99</a>    <span class="kw">fn </span>bv_lit&lt;<span class="lifetime">'b</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw">impl </span>Into&lt;Cow&lt;<span class="lifetime">'b</span>, Const&gt;&gt;) -&gt; SMT::BitVec {
-<a href=#100 id=100 data-nosnippet>100</a>        <span class="self">self</span>.engine.build_bitvec_lit(<span class="kw-2">&amp;*</span>value.into())
+<a href=#100 id=100 data-nosnippet>100</a>        <span class="self">self</span>.engine.build_bitvec_lit(<span class="kw-2">&amp;</span>value.into())
 <a href=#101 id=101 data-nosnippet>101</a>    }
 <a href=#102 id=102 data-nosnippet>102</a>
 <a href=#103 id=103 data-nosnippet>103</a>    <span class="kw">fn </span>bv_const(<span class="kw-2">&amp;</span><span class="self">self</span>, prefix: <span class="kw-2">&amp;</span>str, index: usize, suffix: <span class="kw-2">&amp;</span>str, width: usize) -&gt; <span class="prelude-ty">Result</span>&lt;SMT::BitVec, SMT::Error&gt; {
@@ -297,7 +297,7 @@
 <a href=#297 id=297 data-nosnippet>297</a>    }
 <a href=#298 id=298 data-nosnippet>298</a>
 <a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">fn </span>curr_value(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Value) -&gt; <span class="prelude-ty">Result</span>&lt;SmtTritVec&lt;SMT&gt;, SMT::Error&gt; {
-<a href=#300 id=300 data-nosnippet>300</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.tv_concat(value.iter().map(|net| <span class="self">self</span>.curr_net(net)).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>.into_iter()))
+<a href=#300 id=300 data-nosnippet>300</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.tv_concat(value.iter().map(|net| <span class="self">self</span>.curr_net(net)).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>))
 <a href=#301 id=301 data-nosnippet>301</a>    }
 <a href=#302 id=302 data-nosnippet>302</a>
 <a href=#303 id=303 data-nosnippet>303</a>    <span class="kw">fn </span>past_net(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;SmtTritVec&lt;SMT&gt;, SMT::Error&gt; {
@@ -312,15 +312,15 @@
 <a href=#312 id=312 data-nosnippet>312</a>    }
 <a href=#313 id=313 data-nosnippet>313</a>
 <a href=#314 id=314 data-nosnippet>314</a>    <span class="kw">fn </span>past_value(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Value) -&gt; <span class="prelude-ty">Result</span>&lt;SmtTritVec&lt;SMT&gt;, SMT::Error&gt; {
-<a href=#315 id=315 data-nosnippet>315</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.tv_concat(value.iter().map(|net| <span class="self">self</span>.past_net(net)).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>.into_iter()))
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.tv_concat(value.iter().map(|net| <span class="self">self</span>.past_net(net)).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>))
 <a href=#316 id=316 data-nosnippet>316</a>    }
 <a href=#317 id=317 data-nosnippet>317</a>
 <a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">fn </span>net(<span class="kw-2">&amp;</span><span class="self">self</span>, net: Net) -&gt; <span class="prelude-ty">Result</span>&lt;SmtTritVec&lt;SMT&gt;, SMT::Error&gt; {
-<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(index) = net.as_cell_index() {
-<a href=#320 id=320 data-nosnippet>320</a>            <span class="kw">if </span>!<span class="self">self</span>.design.is_valid_cell_index(index) {
-<a href=#321 id=321 data-nosnippet>321</a>                <span class="kw">return </span><span class="self">self</span>.curr_net(net); <span class="comment">// FIXME: is this even sound?
-<a href=#322 id=322 data-nosnippet>322</a>            </span>}
-<a href=#323 id=323 data-nosnippet>323</a>        }
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(index) = net.as_cell_index()
+<a href=#320 id=320 data-nosnippet>320</a>            &amp;&amp; !<span class="self">self</span>.design.is_valid_cell_index(index)
+<a href=#321 id=321 data-nosnippet>321</a>        {
+<a href=#322 id=322 data-nosnippet>322</a>            <span class="kw">return </span><span class="self">self</span>.curr_net(net); <span class="comment">// FIXME: is this even sound?
+<a href=#323 id=323 data-nosnippet>323</a>        </span>}
 <a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">match </span><span class="self">self</span>.design.find_cell(net) {
 <a href=#325 id=325 data-nosnippet>325</a>            <span class="prelude-val">Ok</span>((cell_ref, _offset)) <span class="kw">if </span><span class="macro">matches!</span>(<span class="kw-2">&amp;*</span>cell_ref.get(), Cell::Dff(<span class="kw">_</span>)) =&gt; <span class="self">self</span>.past_net(net),
 <a href=#326 id=326 data-nosnippet>326</a>            <span class="kw">_ </span>=&gt; <span class="self">self</span>.curr_net(net),
@@ -328,7 +328,7 @@
 <a href=#328 id=328 data-nosnippet>328</a>    }
 <a href=#329 id=329 data-nosnippet>329</a>
 <a href=#330 id=330 data-nosnippet>330</a>    <span class="kw">fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Value) -&gt; <span class="prelude-ty">Result</span>&lt;SmtTritVec&lt;SMT&gt;, SMT::Error&gt; {
-<a href=#331 id=331 data-nosnippet>331</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.tv_concat(value.iter().map(|net| <span class="self">self</span>.net(net)).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>.into_iter()))
+<a href=#331 id=331 data-nosnippet>331</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.tv_concat(value.iter().map(|net| <span class="self">self</span>.net(net)).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>))
 <a href=#332 id=332 data-nosnippet>332</a>    }
 <a href=#333 id=333 data-nosnippet>333</a>
 <a href=#334 id=334 data-nosnippet>334</a>    <span class="kw">fn </span>invert_net(<span class="kw-2">&amp;</span><span class="self">self</span>, control_net: ControlNet, tv_net: SmtTritVec&lt;SMT&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;SmtTritVec&lt;SMT&gt;, SMT::Error&gt; {
@@ -359,7 +359,7 @@
 <a href=#359 id=359 data-nosnippet>359</a>            <span class="prelude-val">Ok</span>((width, tv_value_ext, tv_amount_ext, bv_amount_mul))
 <a href=#360 id=360 data-nosnippet>360</a>        };
 <a href=#361 id=361 data-nosnippet>361</a>
-<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>bv_cell = <span class="kw">match </span><span class="kw-2">&amp;*</span>cell {
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw">let </span>bv_cell = <span class="kw">match </span><span class="kw-2">&amp;</span>cell {
 <a href=#363 id=363 data-nosnippet>363</a>            Cell::Buf(a) =&gt; <span class="self">self</span>.value(a)<span class="question-mark">?</span>,
 <a href=#364 id=364 data-nosnippet>364</a>            Cell::Not(a) =&gt; <span class="self">self</span>.tv_not(<span class="self">self</span>.value(a)<span class="question-mark">?</span>),
 <a href=#365 id=365 data-nosnippet>365</a>            Cell::And(a, b) =&gt; <span class="self">self</span>.tv_and(<span class="self">self</span>.value(a)<span class="question-mark">?</span>, <span class="self">self</span>.value(b)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>,
@@ -511,7 +511,7 @@
 <a href=#511 id=511 data-nosnippet>511</a>                    <span class="kw">let </span><span class="kw-2">mut </span>tv_sum = <span class="self">self</span>.tv_lit(Trit::Zero);
 <a href=#512 id=512 data-nosnippet>512</a>                    <span class="kw">for </span>pattern <span class="kw">in </span>alternates {
 <a href=#513 id=513 data-nosnippet>513</a>                        <span class="kw">let </span><span class="kw-2">mut </span>tv_prd = <span class="self">self</span>.tv_lit(Trit::One);
-<a href=#514 id=514 data-nosnippet>514</a>                        <span class="kw">for </span>(index, mask) <span class="kw">in </span>pattern.iter().enumerate().filter(|(_index, mask)| <span class="kw-2">*</span>mask != Trit::Undef) {
+<a href=#514 id=514 data-nosnippet>514</a>                        <span class="kw">for </span>(index, mask) <span class="kw">in </span>pattern.iter().enumerate().filter(|(_index, mask)| <span class="kw-2">*</span><span class="macro">mask !</span>= Trit::Undef) {
 <a href=#515 id=515 data-nosnippet>515</a>                            <span class="kw">let </span>tv_eq = <span class="self">self</span>.tv_not(<span class="self">self</span>.tv_xor(<span class="self">self</span>.net(value[index])<span class="question-mark">?</span>, <span class="self">self</span>.net(mask.into())<span class="question-mark">?</span>));
 <a href=#516 id=516 data-nosnippet>516</a>                            tv_prd = <span class="self">self</span>.tv_and(tv_prd, tv_eq, <span class="number">1</span>)<span class="question-mark">?</span>;
 <a href=#517 id=517 data-nosnippet>517</a>                        }
@@ -521,12 +521,12 @@
 <a href=#521 id=521 data-nosnippet>521</a>                }
 <a href=#522 id=522 data-nosnippet>522</a>                <span class="kw">let </span>tv_matches = <span class="self">self</span>.tv_bind(<span class="self">self</span>.tv_concat(tv_matches), patterns.len())<span class="question-mark">?</span>;
 <a href=#523 id=523 data-nosnippet>523</a>                <span class="kw">let </span>tv_enable = <span class="self">self</span>.net(<span class="kw-2">*</span>enable)<span class="question-mark">?</span>;
-<a href=#524 id=524 data-nosnippet>524</a>                <span class="kw">let </span>tv_all_cold = <span class="self">self</span>.tv_lit(<span class="kw-2">&amp;</span>Const::zero(patterns.len()));
+<a href=#524 id=524 data-nosnippet>524</a>                <span class="kw">let </span>tv_all_cold = <span class="self">self</span>.tv_lit(Const::zero(patterns.len()));
 <a href=#525 id=525 data-nosnippet>525</a>                <span class="kw">let </span><span class="kw-2">mut </span>tv_result = tv_all_cold.clone();
 <a href=#526 id=526 data-nosnippet>526</a>                <span class="kw">for </span>index <span class="kw">in </span>(<span class="number">0</span>..patterns.len()).rev() {
 <a href=#527 id=527 data-nosnippet>527</a>                    tv_result = <span class="self">self</span>.tv_mux(
 <a href=#528 id=528 data-nosnippet>528</a>                        <span class="self">self</span>.tv_extract(index, index, tv_matches.clone()),
-<a href=#529 id=529 data-nosnippet>529</a>                        <span class="self">self</span>.tv_lit(<span class="kw-2">&amp;</span>Const::one_hot(patterns.len(), index)),
+<a href=#529 id=529 data-nosnippet>529</a>                        <span class="self">self</span>.tv_lit(Const::one_hot(patterns.len(), index)),
 <a href=#530 id=530 data-nosnippet>530</a>                        tv_result,
 <a href=#531 id=531 data-nosnippet>531</a>                        patterns.len(),
 <a href=#532 id=532 data-nosnippet>532</a>                    )<span class="question-mark">?</span>;
@@ -549,14 +549,14 @@
 <a href=#549 id=549 data-nosnippet>549</a>                <span class="kw">let </span>reset = <span class="self">self</span>.control_net(flip_flop.reset)<span class="question-mark">?</span>;
 <a href=#550 id=550 data-nosnippet>550</a>                <span class="kw">let </span>enable = <span class="self">self</span>.control_net(flip_flop.enable)<span class="question-mark">?</span>;
 <a href=#551 id=551 data-nosnippet>551</a>                <span class="kw">if </span>flip_flop.reset_over_enable {
-<a href=#552 id=552 data-nosnippet>552</a>                    data = <span class="self">self</span>.tv_mux(enable, data, <span class="self">self</span>.past_value(<span class="kw-2">&amp;</span>output)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>;
+<a href=#552 id=552 data-nosnippet>552</a>                    data = <span class="self">self</span>.tv_mux(enable, data, <span class="self">self</span>.past_value(output)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>;
 <a href=#553 id=553 data-nosnippet>553</a>                    data = <span class="self">self</span>.tv_mux(reset, <span class="self">self</span>.tv_lit(<span class="kw-2">&amp;</span>flip_flop.reset_value), data, output.len())<span class="question-mark">?</span>;
 <a href=#554 id=554 data-nosnippet>554</a>                } <span class="kw">else </span>{
 <a href=#555 id=555 data-nosnippet>555</a>                    data = <span class="self">self</span>.tv_mux(reset, <span class="self">self</span>.tv_lit(<span class="kw-2">&amp;</span>flip_flop.reset_value), data, output.len())<span class="question-mark">?</span>;
-<a href=#556 id=556 data-nosnippet>556</a>                    data = <span class="self">self</span>.tv_mux(enable, data, <span class="self">self</span>.past_value(<span class="kw-2">&amp;</span>output)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>;
+<a href=#556 id=556 data-nosnippet>556</a>                    data = <span class="self">self</span>.tv_mux(enable, data, <span class="self">self</span>.past_value(output)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>;
 <a href=#557 id=557 data-nosnippet>557</a>                }
 <a href=#558 id=558 data-nosnippet>558</a>                <span class="kw">let </span>active_edge = <span class="self">self</span>.clock_net(flip_flop.clock)<span class="question-mark">?</span>;
-<a href=#559 id=559 data-nosnippet>559</a>                <span class="kw">let </span>value = <span class="self">self</span>.tv_mux(active_edge, data, <span class="self">self</span>.past_value(<span class="kw-2">&amp;</span>output)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>;
+<a href=#559 id=559 data-nosnippet>559</a>                <span class="kw">let </span>value = <span class="self">self</span>.tv_mux(active_edge, data, <span class="self">self</span>.past_value(output)<span class="question-mark">?</span>, output.len())<span class="question-mark">?</span>;
 <a href=#560 id=560 data-nosnippet>560</a>                <span class="kw">if </span>flip_flop.has_clear() {
 <a href=#561 id=561 data-nosnippet>561</a>                    <span class="self">self</span>.tv_mux(clear, <span class="self">self</span>.tv_lit(<span class="kw-2">&amp;</span>flip_flop.clear_value), value, output.len())<span class="question-mark">?
 <a href=#562 id=562 data-nosnippet>562</a>                </span>} <span class="kw">else </span>{
@@ -666,4 +666,5 @@
 <a href=#666 id=666 data-nosnippet>666</a>        }
 <a href=#667 id=667 data-nosnippet>667</a>        <span class="prelude-val">Some</span>(result)
 <a href=#668 id=668 data-nosnippet>668</a>    }
-<a href=#669 id=669 data-nosnippet>669</a>}</code></pre></div></section></main></body></html>
+<a href=#669 id=669 data-nosnippet>669</a>}
+</code></pre></div></section></main></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `netlist/src/parse.rs`."><title>parse.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_netlist" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_netlist/</div>parse.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{collections::BTreeMap, fmt::Display, ops::Range, str::FromStr, sync::Arc};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `netlist/src/parse.rs`."><title>parse.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_netlist" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_netlist/</div>parse.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{collections::BTreeMap, fmt::Display, ops::Range, str::FromStr, sync::Arc};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>yap::{one_of, types::WithContext, IntoTokens, TokenLocation, Tokens};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -76,7 +76,7 @@
 <a href=#76 id=76 data-nosnippet>76</a>                    <span class="macro">panic!</span>(<span class="string">"reference %{}+{} out of bounds for definition %{}:{}"</span>, index, offset, index, output.len());
 <a href=#77 id=77 data-nosnippet>77</a>                }
 <a href=#78 id=78 data-nosnippet>78</a>            } <span class="kw">else </span>{
-<a href=#79 id=79 data-nosnippet>79</a>                <span class="macro">panic!</span>(<span class="string">"unresolved reference %{}"</span>, index)
+<a href=#79 id=79 data-nosnippet>79</a>                <span class="macro">panic!</span>(<span class="string">"unresolved reference %{index}"</span>)
 <a href=#80 id=80 data-nosnippet>80</a>            }
 <a href=#81 id=81 data-nosnippet>81</a>        }
 <a href=#82 id=82 data-nosnippet>82</a>        <span class="self">self</span>.design.apply();
@@ -92,7 +92,7 @@
 <a href=#92 id=92 data-nosnippet>92</a>    <span class="kw">if </span>!t.token(<span class="string">';'</span>) {
 <a href=#93 id=93 data-nosnippet>93</a>        <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#94 id=94 data-nosnippet>94</a>    }
-<a href=#95 id=95 data-nosnippet>95</a>    t.skip_while(|c| <span class="kw-2">*</span>c != <span class="string">'\n'</span>);
+<a href=#95 id=95 data-nosnippet>95</a>    t.skip_while(|c| <span class="kw-2">*</span><span class="macro">c !</span>= <span class="string">'\n'</span>);
 <a href=#96 id=96 data-nosnippet>96</a>    <span class="bool-val">true
 <a href=#97 id=97 data-nosnippet>97</a></span>}
 <a href=#98 id=98 data-nosnippet>98</a>
@@ -104,7 +104,7 @@
 <a href=#104 id=104 data-nosnippet>104</a>
 <a href=#105 id=105 data-nosnippet>105</a><span class="attr">#[must_use]
 <a href=#106 id=106 data-nosnippet>106</a></span><span class="kw">fn </span>parse_symbol(t: <span class="kw-2">&amp;mut </span>WithContext&lt;<span class="kw">impl </span>Tokens&lt;Item = char&gt;, Context&gt;, symbol: char) -&gt; <span class="prelude-ty">Option</span>&lt;()&gt; {
-<a href=#107 id=107 data-nosnippet>107</a>    <span class="macro">debug_assert!</span>(symbol != <span class="string">'\n'</span>, <span class="string">"use parse_newline()"</span>);
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="macro">debug_assert!</span>(<span class="macro">symbol !</span>= <span class="string">'\n'</span>, <span class="string">"use parse_newline()"</span>);
 <a href=#108 id=108 data-nosnippet>108</a>    <span class="kw">if </span>!t.token(symbol) {
 <a href=#109 id=109 data-nosnippet>109</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#110 id=110 data-nosnippet>110</a>    }
@@ -124,7 +124,7 @@
 <a href=#124 id=124 data-nosnippet>124</a>}
 <a href=#125 id=125 data-nosnippet>125</a>
 <a href=#126 id=126 data-nosnippet>126</a><span class="kw">fn </span>parse_decimal&lt;T: FromStr&gt;(t: <span class="kw-2">&amp;mut </span>WithContext&lt;<span class="kw">impl </span>Tokens&lt;Item = char&gt;, Context&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
-<a href=#127 id=127 data-nosnippet>127</a>    t.take_while(|c| c.is_digit(<span class="number">10</span>) || <span class="kw-2">*</span>c == <span class="string">'-'</span>).parse::&lt;T, String&gt;().ok()
+<a href=#127 id=127 data-nosnippet>127</a>    t.take_while(|c| c.is_ascii_digit() || <span class="kw-2">*</span>c == <span class="string">'-'</span>).parse::&lt;T, String&gt;().ok()
 <a href=#128 id=128 data-nosnippet>128</a>}
 <a href=#129 id=129 data-nosnippet>129</a>
 <a href=#130 id=130 data-nosnippet>130</a><span class="kw">fn </span>parse_integer&lt;T: FromStr&gt;(t: <span class="kw-2">&amp;mut </span>WithContext&lt;<span class="kw">impl </span>Tokens&lt;Item = char&gt;, Context&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
@@ -189,7 +189,7 @@
 <a href=#189 id=189 data-nosnippet>189</a><span class="attr">#[must_use]
 <a href=#190 id=190 data-nosnippet>190</a></span><span class="kw">fn </span>parse_keyword_expect(t: <span class="kw-2">&amp;mut </span>WithContext&lt;<span class="kw">impl </span>Tokens&lt;Item = char&gt;, Context&gt;, expected: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;()&gt; {
 <a href=#191 id=191 data-nosnippet>191</a>    <span class="kw">let </span>keyword = parse_keyword(t)<span class="question-mark">?</span>;
-<a href=#192 id=192 data-nosnippet>192</a>    <span class="kw">if </span>keyword != expected {
+<a href=#192 id=192 data-nosnippet>192</a>    <span class="kw">if </span><span class="macro">keyword !</span>= expected {
 <a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#194 id=194 data-nosnippet>194</a>    }
 <a href=#195 id=195 data-nosnippet>195</a>    <span class="prelude-val">Some</span>(())
@@ -198,7 +198,7 @@
 <a href=#198 id=198 data-nosnippet>198</a><span class="attr">#[must_use]
 <a href=#199 id=199 data-nosnippet>199</a></span><span class="kw">fn </span>parse_keyword_eq_expect(t: <span class="kw-2">&amp;mut </span>WithContext&lt;<span class="kw">impl </span>Tokens&lt;Item = char&gt;, Context&gt;, expected: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;()&gt; {
 <a href=#200 id=200 data-nosnippet>200</a>    <span class="kw">let </span>keyword = parse_keyword_eq(t)<span class="question-mark">?</span>;
-<a href=#201 id=201 data-nosnippet>201</a>    <span class="kw">if </span>keyword != expected {
+<a href=#201 id=201 data-nosnippet>201</a>    <span class="kw">if </span><span class="macro">keyword !</span>= expected {
 <a href=#202 id=202 data-nosnippet>202</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#203 id=203 data-nosnippet>203</a>    }
 <a href=#204 id=204 data-nosnippet>204</a>    <span class="prelude-val">Some</span>(())
@@ -1085,4 +1085,5 @@
 <a href=#1085 id=1085 data-nosnippet>1085</a>    <span class="kw">fn </span>from_str(source: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
 <a href=#1086 id=1086 data-nosnippet>1086</a>        <span class="kw">crate</span>::parse(<span class="prelude-val">None</span>, source)
 <a href=#1087 id=1087 data-nosnippet>1087</a>    }
-<a href=#1088 id=1088 data-nosnippet>1088</a>}</code></pre></div></section></main></body></html>
+<a href=#1088 id=1088 data-nosnippet>1088</a>}
+</code></pre></div></section></main></body></html>

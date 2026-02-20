@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `generic/src/rewrite/aig.rs`."><title>aig.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="prjunnamed_generic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_generic/rewrite/</div>aig.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>prjunnamed_netlist::{
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `generic/src/rewrite/aig.rs`."><title>aig.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="prjunnamed_generic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_generic/rewrite/</div>aig.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>prjunnamed_netlist::{
 <a href=#2 id=2 data-nosnippet>2</a>    Cell, ControlNet, MetaItemRef, Net, RewriteNetSource, RewriteResult, RewriteRuleset, Rewriter, Value,
 <a href=#3 id=3 data-nosnippet>3</a>};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -205,7 +205,7 @@
 <a href=#205 id=205 data-nosnippet>205</a>                                            <span class="kw">let </span>xor = rewriter.add_cell_meta(xor, xor_meta);
 <a href=#206 id=206 data-nosnippet>206</a>                                            <span class="kw">return </span>Cell::Not(xor).into();
 <a href=#207 id=207 data-nosnippet>207</a>                                        } <span class="kw">else </span>{
-<a href=#208 id=208 data-nosnippet>208</a>                                            <span class="kw">return </span>RewriteResult::CellMeta(xor.into(), xor_meta);
+<a href=#208 id=208 data-nosnippet>208</a>                                            <span class="kw">return </span>RewriteResult::CellMeta(xor, xor_meta);
 <a href=#209 id=209 data-nosnippet>209</a>                                        }
 <a href=#210 id=210 data-nosnippet>210</a>                                    }
 <a href=#211 id=211 data-nosnippet>211</a>                                }
@@ -329,53 +329,51 @@
 <a href=#329 id=329 data-nosnippet>329</a>                                    <span class="comment">// (aa ^ ab) ^ (aa ^ bb) -&gt; ab ^ bb
 <a href=#330 id=330 data-nosnippet>330</a>                                    </span><span class="kw">if </span>net_aa == net_ba {
 <a href=#331 id=331 data-nosnippet>331</a>                                        <span class="kw">let </span>meta = meta.merge(meta_a).merge(meta_b);
-<a href=#332 id=332 data-nosnippet>332</a>                                        <span class="kw">return </span>RewriteResult::CellMeta(
-<a href=#333 id=333 data-nosnippet>333</a>                                            Cell::Xor(net_ab.into(), net_bb.into()).into(),
-<a href=#334 id=334 data-nosnippet>334</a>                                            meta,
-<a href=#335 id=335 data-nosnippet>335</a>                                        );
-<a href=#336 id=336 data-nosnippet>336</a>                                    }
-<a href=#337 id=337 data-nosnippet>337</a>                                }
-<a href=#338 id=338 data-nosnippet>338</a>                            }
-<a href=#339 id=339 data-nosnippet>339</a>                        }
-<a href=#340 id=340 data-nosnippet>340</a>                    }
-<a href=#341 id=341 data-nosnippet>341</a>                }
-<a href=#342 id=342 data-nosnippet>342</a>                RewriteResult::None
-<a href=#343 id=343 data-nosnippet>343</a>            }
-<a href=#344 id=344 data-nosnippet>344</a>
-<a href=#345 id=345 data-nosnippet>345</a>            <span class="comment">// Split bitwise Not and Xor into single-bit cells.
-<a href=#346 id=346 data-nosnippet>346</a>            </span>Cell::Not(<span class="kw-2">ref </span>val) =&gt; {
-<a href=#347 id=347 data-nosnippet>347</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
-<a href=#348 id=348 data-nosnippet>348</a>                <span class="kw">for </span>net <span class="kw">in </span>val {
-<a href=#349 id=349 data-nosnippet>349</a>                    result.extend(rewriter.add_cell(Cell::Not(net.into())));
-<a href=#350 id=350 data-nosnippet>350</a>                }
-<a href=#351 id=351 data-nosnippet>351</a>                result.into()
-<a href=#352 id=352 data-nosnippet>352</a>            }
-<a href=#353 id=353 data-nosnippet>353</a>            Cell::Xor(<span class="kw-2">ref </span>val_a, <span class="kw-2">ref </span>val_b) =&gt; {
-<a href=#354 id=354 data-nosnippet>354</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
-<a href=#355 id=355 data-nosnippet>355</a>                <span class="kw">for </span>(net_a, net_b) <span class="kw">in </span>val_a.iter().zip(val_b.iter()) {
-<a href=#356 id=356 data-nosnippet>356</a>                    result.extend(rewriter.add_cell(Cell::Xor(net_a.into(), net_b.into())));
-<a href=#357 id=357 data-nosnippet>357</a>                }
-<a href=#358 id=358 data-nosnippet>358</a>                result.into()
-<a href=#359 id=359 data-nosnippet>359</a>            }
-<a href=#360 id=360 data-nosnippet>360</a>
-<a href=#361 id=361 data-nosnippet>361</a>            <span class="comment">// Convert And and Or into AIG.
-<a href=#362 id=362 data-nosnippet>362</a>            </span>Cell::And(<span class="kw-2">ref </span>val_a, <span class="kw-2">ref </span>val_b) =&gt; {
-<a href=#363 id=363 data-nosnippet>363</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
-<a href=#364 id=364 data-nosnippet>364</a>                <span class="kw">for </span>(net_a, net_b) <span class="kw">in </span>val_a.iter().zip(val_b.iter()) {
-<a href=#365 id=365 data-nosnippet>365</a>                    result.extend(rewriter.add_cell(Cell::Aig(net_a.into(), net_b.into())));
-<a href=#366 id=366 data-nosnippet>366</a>                }
-<a href=#367 id=367 data-nosnippet>367</a>                result.into()
-<a href=#368 id=368 data-nosnippet>368</a>            }
-<a href=#369 id=369 data-nosnippet>369</a>            Cell::Or(<span class="kw-2">ref </span>val_a, <span class="kw-2">ref </span>val_b) =&gt; {
-<a href=#370 id=370 data-nosnippet>370</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
-<a href=#371 id=371 data-nosnippet>371</a>                <span class="kw">for </span>(net_a, net_b) <span class="kw">in </span>val_a.iter().zip(val_b.iter()) {
-<a href=#372 id=372 data-nosnippet>372</a>                    <span class="kw">let </span>aig = rewriter.add_cell(Cell::Aig(ControlNet::Neg(net_a), ControlNet::Neg(net_b)));
-<a href=#373 id=373 data-nosnippet>373</a>                    result.extend(rewriter.add_cell(Cell::Not(aig)));
-<a href=#374 id=374 data-nosnippet>374</a>                }
-<a href=#375 id=375 data-nosnippet>375</a>                result.into()
-<a href=#376 id=376 data-nosnippet>376</a>            }
-<a href=#377 id=377 data-nosnippet>377</a>
-<a href=#378 id=378 data-nosnippet>378</a>            <span class="kw">_ </span>=&gt; RewriteResult::None,
-<a href=#379 id=379 data-nosnippet>379</a>        }
-<a href=#380 id=380 data-nosnippet>380</a>    }
-<a href=#381 id=381 data-nosnippet>381</a>}</code></pre></div></section></main></body></html>
+<a href=#332 id=332 data-nosnippet>332</a>                                        <span class="kw">return </span>RewriteResult::CellMeta(Cell::Xor(net_ab.into(), net_bb.into()), meta);
+<a href=#333 id=333 data-nosnippet>333</a>                                    }
+<a href=#334 id=334 data-nosnippet>334</a>                                }
+<a href=#335 id=335 data-nosnippet>335</a>                            }
+<a href=#336 id=336 data-nosnippet>336</a>                        }
+<a href=#337 id=337 data-nosnippet>337</a>                    }
+<a href=#338 id=338 data-nosnippet>338</a>                }
+<a href=#339 id=339 data-nosnippet>339</a>                RewriteResult::None
+<a href=#340 id=340 data-nosnippet>340</a>            }
+<a href=#341 id=341 data-nosnippet>341</a>
+<a href=#342 id=342 data-nosnippet>342</a>            <span class="comment">// Split bitwise Not and Xor into single-bit cells.
+<a href=#343 id=343 data-nosnippet>343</a>            </span>Cell::Not(<span class="kw-2">ref </span>val) =&gt; {
+<a href=#344 id=344 data-nosnippet>344</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
+<a href=#345 id=345 data-nosnippet>345</a>                <span class="kw">for </span>net <span class="kw">in </span>val {
+<a href=#346 id=346 data-nosnippet>346</a>                    result.extend(rewriter.add_cell(Cell::Not(net.into())));
+<a href=#347 id=347 data-nosnippet>347</a>                }
+<a href=#348 id=348 data-nosnippet>348</a>                result.into()
+<a href=#349 id=349 data-nosnippet>349</a>            }
+<a href=#350 id=350 data-nosnippet>350</a>            Cell::Xor(<span class="kw-2">ref </span>val_a, <span class="kw-2">ref </span>val_b) =&gt; {
+<a href=#351 id=351 data-nosnippet>351</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
+<a href=#352 id=352 data-nosnippet>352</a>                <span class="kw">for </span>(net_a, net_b) <span class="kw">in </span>val_a.iter().zip(val_b.iter()) {
+<a href=#353 id=353 data-nosnippet>353</a>                    result.extend(rewriter.add_cell(Cell::Xor(net_a.into(), net_b.into())));
+<a href=#354 id=354 data-nosnippet>354</a>                }
+<a href=#355 id=355 data-nosnippet>355</a>                result.into()
+<a href=#356 id=356 data-nosnippet>356</a>            }
+<a href=#357 id=357 data-nosnippet>357</a>
+<a href=#358 id=358 data-nosnippet>358</a>            <span class="comment">// Convert And and Or into AIG.
+<a href=#359 id=359 data-nosnippet>359</a>            </span>Cell::And(<span class="kw-2">ref </span>val_a, <span class="kw-2">ref </span>val_b) =&gt; {
+<a href=#360 id=360 data-nosnippet>360</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
+<a href=#361 id=361 data-nosnippet>361</a>                <span class="kw">for </span>(net_a, net_b) <span class="kw">in </span>val_a.iter().zip(val_b.iter()) {
+<a href=#362 id=362 data-nosnippet>362</a>                    result.extend(rewriter.add_cell(Cell::Aig(net_a.into(), net_b.into())));
+<a href=#363 id=363 data-nosnippet>363</a>                }
+<a href=#364 id=364 data-nosnippet>364</a>                result.into()
+<a href=#365 id=365 data-nosnippet>365</a>            }
+<a href=#366 id=366 data-nosnippet>366</a>            Cell::Or(<span class="kw-2">ref </span>val_a, <span class="kw-2">ref </span>val_b) =&gt; {
+<a href=#367 id=367 data-nosnippet>367</a>                <span class="kw">let </span><span class="kw-2">mut </span>result = Value::new();
+<a href=#368 id=368 data-nosnippet>368</a>                <span class="kw">for </span>(net_a, net_b) <span class="kw">in </span>val_a.iter().zip(val_b.iter()) {
+<a href=#369 id=369 data-nosnippet>369</a>                    <span class="kw">let </span>aig = rewriter.add_cell(Cell::Aig(ControlNet::Neg(net_a), ControlNet::Neg(net_b)));
+<a href=#370 id=370 data-nosnippet>370</a>                    result.extend(rewriter.add_cell(Cell::Not(aig)));
+<a href=#371 id=371 data-nosnippet>371</a>                }
+<a href=#372 id=372 data-nosnippet>372</a>                result.into()
+<a href=#373 id=373 data-nosnippet>373</a>            }
+<a href=#374 id=374 data-nosnippet>374</a>
+<a href=#375 id=375 data-nosnippet>375</a>            <span class="kw">_ </span>=&gt; RewriteResult::None,
+<a href=#376 id=376 data-nosnippet>376</a>        }
+<a href=#377 id=377 data-nosnippet>377</a>    }
+<a href=#378 id=378 data-nosnippet>378</a>}
+</code></pre></div></section></main></body></html>

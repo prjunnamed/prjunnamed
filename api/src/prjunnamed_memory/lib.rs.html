@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `memory/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_memory" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_memory/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! This library contains various common utilities for writing target-specific memory lowering passes.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `memory/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_memory" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_memory/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! This library contains various common utilities for writing target-specific memory lowering passes.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! Target-specific memory lowering passes are organized roughly as follows:
 <a href=#4 id=4 data-nosnippet>4</a>//!
@@ -464,11 +464,11 @@
 <a href=#464 id=464 data-nosnippet>464</a>        <span class="kw">for </span>bit_index <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.width {
 <a href=#465 id=465 data-nosnippet>465</a>            <span class="lifetime">'check_slices</span>: <span class="kw">loop </span>{
 <a href=#466 id=466 data-nosnippet>466</a>                <span class="kw">for </span>(port_index, <span class="kw-2">&amp;</span>port_granularity) <span class="kw">in </span>write_port_granularity.iter().enumerate() {
-<a href=#467 id=467 data-nosnippet>467</a>                    <span class="kw">if </span>result.len() % port_granularity != <span class="number">0 </span>{
-<a href=#468 id=468 data-nosnippet>468</a>                        <span class="kw">if </span>mask_slices[bit_index][port_index] != mask_slices[bit_index - <span class="number">1</span>][port_index] {
-<a href=#469 id=469 data-nosnippet>469</a>                            result.push(<span class="prelude-val">None</span>);
-<a href=#470 id=470 data-nosnippet>470</a>                            <span class="kw">continue </span><span class="lifetime">'check_slices</span>;
-<a href=#471 id=471 data-nosnippet>471</a>                        }
+<a href=#467 id=467 data-nosnippet>467</a>                    <span class="kw">if </span>!result.len().is_multiple_of(port_granularity)
+<a href=#468 id=468 data-nosnippet>468</a>                        &amp;&amp; mask_slices[bit_index][port_index] != mask_slices[bit_index - <span class="number">1</span>][port_index]
+<a href=#469 id=469 data-nosnippet>469</a>                    {
+<a href=#470 id=470 data-nosnippet>470</a>                        result.push(<span class="prelude-val">None</span>);
+<a href=#471 id=471 data-nosnippet>471</a>                        <span class="kw">continue </span><span class="lifetime">'check_slices</span>;
 <a href=#472 id=472 data-nosnippet>472</a>                    }
 <a href=#473 id=473 data-nosnippet>473</a>                }
 <a href=#474 id=474 data-nosnippet>474</a>                <span class="kw">break</span>;
@@ -477,7 +477,7 @@
 <a href=#477 id=477 data-nosnippet>477</a>        }
 <a href=#478 id=478 data-nosnippet>478</a>        <span class="lifetime">'align</span>: <span class="kw">loop </span>{
 <a href=#479 id=479 data-nosnippet>479</a>            <span class="kw">for </span><span class="kw-2">&amp;</span>port_granularity <span class="kw">in </span>write_port_granularity {
-<a href=#480 id=480 data-nosnippet>480</a>                <span class="kw">if </span>result.len() % port_granularity != <span class="number">0 </span>{
+<a href=#480 id=480 data-nosnippet>480</a>                <span class="kw">if </span>!result.len().is_multiple_of(port_granularity) {
 <a href=#481 id=481 data-nosnippet>481</a>                    result.push(<span class="prelude-val">None</span>);
 <a href=#482 id=482 data-nosnippet>482</a>                    <span class="kw">continue </span><span class="lifetime">'align</span>;
 <a href=#483 id=483 data-nosnippet>483</a>                }
@@ -501,7 +501,7 @@
 <a href=#501 id=501 data-nosnippet>501</a>        <span class="comment">// determine how much of the width of memory created in step 5 requires the full depth
 <a href=#502 id=502 data-nosnippet>502</a>        </span><span class="kw">let </span>width_full = base_width * num_chunks_full;
 <a href=#503 id=503 data-nosnippet>503</a>        <span class="comment">// and determine its total width
-<a href=#504 id=504 data-nosnippet>504</a>        </span><span class="kw">let </span>width_total = <span class="kw">if </span>depth_partial != <span class="number">0 </span>{ width_full + base_width } <span class="kw">else </span>{ width_full };
+<a href=#504 id=504 data-nosnippet>504</a>        </span><span class="kw">let </span>width_total = <span class="kw">if </span><span class="macro">depth_partial !</span>= <span class="number">0 </span>{ width_full + base_width } <span class="kw">else </span>{ width_full };
 <a href=#505 id=505 data-nosnippet>505</a>        <span class="comment">// now align up both of these numbers to `data_width_unit` chunks
 <a href=#506 id=506 data-nosnippet>506</a>        </span><span class="kw">let </span>num_mems_full = width_full.div_ceil(swizzle.data_width_unit);
 <a href=#507 id=507 data-nosnippet>507</a>        <span class="kw">let </span>num_mems_total = width_total.div_ceil(swizzle.data_width_unit);
@@ -607,7 +607,7 @@
 <a href=#607 id=607 data-nosnippet>607</a>                    new_chunk_bit += <span class="number">1</span>;
 <a href=#608 id=608 data-nosnippet>608</a>                    mux_addr.push(addr_bit);
 <a href=#609 id=609 data-nosnippet>609</a>                    num_chunks_port <span class="kw-2">*</span>= <span class="number">2</span>;
-<a href=#610 id=610 data-nosnippet>610</a>                } <span class="kw">else if </span>new_subport_bit != new_wide_log2 {
+<a href=#610 id=610 data-nosnippet>610</a>                } <span class="kw">else if </span><span class="macro">new_subport_bit !</span>= new_wide_log2 {
 <a href=#611 id=611 data-nosnippet>611</a>                    mux_addr_bit_disposition.push(BitDisposition::NewSubportBit(new_subport_bit));
 <a href=#612 id=612 data-nosnippet>612</a>                    new_subport_bit += <span class="number">1</span>;
 <a href=#613 id=613 data-nosnippet>613</a>                    mux_addr.push(addr_bit);
@@ -901,7 +901,7 @@
 <a href=#901 id=901 data-nosnippet>901</a>
 <a href=#902 id=902 data-nosnippet>902</a>    <span class="kw">fn </span>can_lower_fallback(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
 <a href=#903 id=903 data-nosnippet>903</a>        <span class="kw">for </span>port <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.write_ports {
-<a href=#904 id=904 data-nosnippet>904</a>            <span class="kw">if </span>port.clock != <span class="self">self</span>.write_ports[<span class="number">0</span>].clock {
+<a href=#904 id=904 data-nosnippet>904</a>            <span class="kw">if </span>port.<span class="macro">clock !</span>= <span class="self">self</span>.write_ports[<span class="number">0</span>].clock {
 <a href=#905 id=905 data-nosnippet>905</a>                <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#906 id=906 data-nosnippet>906</a>            }
 <a href=#907 id=907 data-nosnippet>907</a>        }
@@ -913,7 +913,7 @@
 <a href=#913 id=913 data-nosnippet>913</a>        <span class="kw">for </span>write_port <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.write_ports {
 <a href=#914 id=914 data-nosnippet>914</a>            <span class="kw">if </span>write_clock.is_none() {
 <a href=#915 id=915 data-nosnippet>915</a>                write_clock = <span class="prelude-val">Some</span>(write_port.clock);
-<a href=#916 id=916 data-nosnippet>916</a>            } <span class="kw">else if </span>write_clock != <span class="prelude-val">Some</span>(write_port.clock) {
+<a href=#916 id=916 data-nosnippet>916</a>            } <span class="kw">else if </span><span class="macro">write_clock !</span>= <span class="prelude-val">Some</span>(write_port.clock) {
 <a href=#917 id=917 data-nosnippet>917</a>                <span class="macro">panic!</span>(<span class="string">"trying to lower memory with multiple write clocks"</span>);
 <a href=#918 id=918 data-nosnippet>918</a>            }
 <a href=#919 id=919 data-nosnippet>919</a>        }
@@ -1054,4 +1054,5 @@
 <a href=#1054 id=1054 data-nosnippet>1054</a>        }
 <a href=#1055 id=1055 data-nosnippet>1055</a>        result
 <a href=#1056 id=1056 data-nosnippet>1056</a>    }
-<a href=#1057 id=1057 data-nosnippet>1057</a>}</code></pre></div></section></main></body></html>
+<a href=#1057 id=1057 data-nosnippet>1057</a>}
+</code></pre></div></section></main></body></html>

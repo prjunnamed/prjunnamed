@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `netlist/src/print.rs`."><title>print.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_netlist" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_netlist/</div>print.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{borrow::Cow, fmt::Display};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `netlist/src/print.rs`."><title>print.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_netlist" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_netlist/</div>print.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{borrow::Cow, fmt::Display};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use crate</span>::{
 <a href=#4 id=4 data-nosnippet>4</a>    metadata::MetaItemIndex, Cell, CellRef, Const, ControlNet, Design, IoNet, IoValue, MemoryPortRelation, Net,
@@ -21,7 +21,7 @@
 <a href=#21 id=21 data-nosnippet>21</a>        <span class="kw">let </span>cell_index = cell_ref.debug_index();
 <a href=#22 id=22 data-nosnippet>22</a>        <span class="kw">match </span><span class="kw-2">&amp;*</span>cell_ref.get() {
 <a href=#23 id=23 data-nosnippet>23</a>            Cell::Other(instance) =&gt; {
-<a href=#24 id=24 data-nosnippet>24</a>                <span class="kw">for </span>(_name, range) <span class="kw">in </span><span class="kw-2">&amp;</span>instance.outputs {
+<a href=#24 id=24 data-nosnippet>24</a>                <span class="kw">for </span>range <span class="kw">in </span>instance.outputs.values() {
 <a href=#25 id=25 data-nosnippet>25</a>                    <span class="kw">if </span>range.contains(<span class="kw-2">&amp;</span>offset) {
 <a href=#26 id=26 data-nosnippet>26</a>                        <span class="kw">return </span><span class="prelude-val">Ok</span>((
 <a href=#27 id=27 data-nosnippet>27</a>                            cell_ref.output().slice(range.clone()),
@@ -71,7 +71,7 @@
 <a href=#71 id=71 data-nosnippet>71</a>                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="kw-2">*</span>byte <span class="kw">as </span>char)<span class="question-mark">?</span>;
 <a href=#72 id=72 data-nosnippet>72</a>            } <span class="kw">else </span>{
 <a href=#73 id=73 data-nosnippet>73</a>                <span class="macro">assert!</span>(byte.is_ascii());
-<a href=#74 id=74 data-nosnippet>74</a>                <span class="macro">write!</span>(f, <span class="string">"\\{:02x}"</span>, byte)<span class="question-mark">?</span>;
+<a href=#74 id=74 data-nosnippet>74</a>                <span class="macro">write!</span>(f, <span class="string">"\\{byte:02x}"</span>)<span class="question-mark">?</span>;
 <a href=#75 id=75 data-nosnippet>75</a>            }
 <a href=#76 id=76 data-nosnippet>76</a>        }
 <a href=#77 id=77 data-nosnippet>77</a>        <span class="macro">write!</span>(f, <span class="string">"\""</span>)<span class="question-mark">?</span>;
@@ -87,7 +87,7 @@
 <a href=#87 id=87 data-nosnippet>87</a>                <span class="prelude-val">Some</span>((name, offset)) =&gt; {
 <a href=#88 id=88 data-nosnippet>88</a>                    Design::write_string(f, name)<span class="question-mark">?</span>;
 <a href=#89 id=89 data-nosnippet>89</a>                    <span class="kw">if </span><span class="self">self</span>.get_io(name).unwrap().len() &gt; <span class="number">1 </span>{
-<a href=#90 id=90 data-nosnippet>90</a>                        <span class="macro">write!</span>(f, <span class="string">"+{}"</span>, offset)<span class="question-mark">?</span>;
+<a href=#90 id=90 data-nosnippet>90</a>                        <span class="macro">write!</span>(f, <span class="string">"+{offset}"</span>)<span class="question-mark">?</span>;
 <a href=#91 id=91 data-nosnippet>91</a>                    }
 <a href=#92 id=92 data-nosnippet>92</a>                    <span class="prelude-val">Ok</span>(())
 <a href=#93 id=93 data-nosnippet>93</a>                }
@@ -104,13 +104,13 @@
 <a href=#104 id=104 data-nosnippet>104</a>        } <span class="kw">else if </span>io_value.iter().all(IoNet::is_floating) {
 <a href=#105 id=105 data-nosnippet>105</a>            <span class="macro">write!</span>(f, <span class="string">"&amp;_:{}"</span>, io_value.len())
 <a href=#106 id=106 data-nosnippet>106</a>        } <span class="kw">else </span>{
-<a href=#107 id=107 data-nosnippet>107</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>((name, _offset)) = <span class="self">self</span>.find_io(io_value[<span class="number">0</span>]) {
-<a href=#108 id=108 data-nosnippet>108</a>                <span class="kw">if </span><span class="self">self</span>.get_io(name).unwrap() == <span class="kw-2">*</span>io_value {
-<a href=#109 id=109 data-nosnippet>109</a>                    <span class="macro">write!</span>(f, <span class="string">"&amp;"</span>)<span class="question-mark">?</span>;
-<a href=#110 id=110 data-nosnippet>110</a>                    Design::write_string(f, name)<span class="question-mark">?</span>;
-<a href=#111 id=111 data-nosnippet>111</a>                    <span class="macro">write!</span>(f, <span class="string">":{}"</span>, io_value.len())<span class="question-mark">?</span>;
-<a href=#112 id=112 data-nosnippet>112</a>                    <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-<a href=#113 id=113 data-nosnippet>113</a>                }
+<a href=#107 id=107 data-nosnippet>107</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>((name, _offset)) = <span class="self">self</span>.find_io(io_value[<span class="number">0</span>])
+<a href=#108 id=108 data-nosnippet>108</a>                &amp;&amp; <span class="self">self</span>.get_io(name).unwrap() == <span class="kw-2">*</span>io_value
+<a href=#109 id=109 data-nosnippet>109</a>            {
+<a href=#110 id=110 data-nosnippet>110</a>                <span class="macro">write!</span>(f, <span class="string">"&amp;"</span>)<span class="question-mark">?</span>;
+<a href=#111 id=111 data-nosnippet>111</a>                Design::write_string(f, name)<span class="question-mark">?</span>;
+<a href=#112 id=112 data-nosnippet>112</a>                <span class="macro">write!</span>(f, <span class="string">":{}"</span>, io_value.len())<span class="question-mark">?</span>;
+<a href=#113 id=113 data-nosnippet>113</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(());
 <a href=#114 id=114 data-nosnippet>114</a>            }
 <a href=#115 id=115 data-nosnippet>115</a>            <span class="macro">write!</span>(f, <span class="string">"["</span>)<span class="question-mark">?</span>;
 <a href=#116 id=116 data-nosnippet>116</a>            <span class="kw">for </span>io_net <span class="kw">in </span>io_value.iter().rev() {
@@ -122,10 +122,10 @@
 <a href=#122 id=122 data-nosnippet>122</a>    }
 <a href=#123 id=123 data-nosnippet>123</a>
 <a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_net(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter, net: Net) -&gt; std::fmt::Result {
-<a href=#125 id=125 data-nosnippet>125</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(index) = net.as_cell_index() {
-<a href=#126 id=126 data-nosnippet>126</a>            <span class="kw">if </span>!<span class="self">self</span>.is_valid_cell_index(index) {
-<a href=#127 id=127 data-nosnippet>127</a>                <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"%_{index}"</span>);
-<a href=#128 id=128 data-nosnippet>128</a>            }
+<a href=#125 id=125 data-nosnippet>125</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(index) = net.as_cell_index()
+<a href=#126 id=126 data-nosnippet>126</a>            &amp;&amp; !<span class="self">self</span>.is_valid_cell_index(index)
+<a href=#127 id=127 data-nosnippet>127</a>        {
+<a href=#128 id=128 data-nosnippet>128</a>            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"%_{index}"</span>);
 <a href=#129 id=129 data-nosnippet>129</a>        }
 <a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">match </span><span class="self">self</span>.find_cell_output(net) {
 <a href=#131 id=131 data-nosnippet>131</a>            <span class="prelude-val">Ok</span>((output, index, offset)) =&gt; {
@@ -177,7 +177,7 @@
 <a href=#177 id=177 data-nosnippet>177</a>                        </span>}
 <a href=#178 id=178 data-nosnippet>178</a>                    })
 <a href=#179 id=179 data-nosnippet>179</a>                    .count();
-<a href=#180 id=180 data-nosnippet>180</a>                <span class="macro">assert!</span>(count != <span class="number">0</span>);
+<a href=#180 id=180 data-nosnippet>180</a>                <span class="macro">assert!</span>(<span class="macro">count !</span>= <span class="number">0</span>);
 <a href=#181 id=181 data-nosnippet>181</a>                <span class="kw">let </span><span class="kw-2">mut </span>repeat = <span class="number">1</span>;
 <a href=#182 id=182 data-nosnippet>182</a>                <span class="kw">while </span>index + (repeat + <span class="number">1</span>) * count &lt;= value.len()
 <a href=#183 id=183 data-nosnippet>183</a>                    &amp;&amp; value[index..index + count] == value[index + repeat * count..index + (repeat + <span class="number">1</span>) * count]
@@ -213,19 +213,19 @@
 <a href=#213 id=213 data-nosnippet>213</a>            <span class="kw">match </span>chunk {
 <a href=#214 id=214 data-nosnippet>214</a>                Chunk::Slice { cell_index, offset, width, repeat } =&gt; {
 <a href=#215 id=215 data-nosnippet>215</a>                    <span class="macro">write!</span>(f, <span class="string">"%{cell_index}+{offset}"</span>)<span class="question-mark">?</span>;
-<a href=#216 id=216 data-nosnippet>216</a>                    <span class="kw">if </span>width != <span class="number">1 </span>{
+<a href=#216 id=216 data-nosnippet>216</a>                    <span class="kw">if </span><span class="macro">width !</span>= <span class="number">1 </span>{
 <a href=#217 id=217 data-nosnippet>217</a>                        <span class="macro">write!</span>(f, <span class="string">":{width}"</span>)<span class="question-mark">?</span>;
 <a href=#218 id=218 data-nosnippet>218</a>                    }
-<a href=#219 id=219 data-nosnippet>219</a>                    <span class="kw">if </span>repeat != <span class="number">1 </span>{
+<a href=#219 id=219 data-nosnippet>219</a>                    <span class="kw">if </span><span class="macro">repeat !</span>= <span class="number">1 </span>{
 <a href=#220 id=220 data-nosnippet>220</a>                        <span class="macro">write!</span>(f, <span class="string">"*{repeat}"</span>)<span class="question-mark">?</span>;
 <a href=#221 id=221 data-nosnippet>221</a>                    }
 <a href=#222 id=222 data-nosnippet>222</a>                }
 <a href=#223 id=223 data-nosnippet>223</a>                Chunk::WholeGrainCell { cell_index, width, repeat } =&gt; {
 <a href=#224 id=224 data-nosnippet>224</a>                    <span class="macro">write!</span>(f, <span class="string">"%{cell_index}"</span>)<span class="question-mark">?</span>;
-<a href=#225 id=225 data-nosnippet>225</a>                    <span class="kw">if </span>width != <span class="number">1 </span>{
+<a href=#225 id=225 data-nosnippet>225</a>                    <span class="kw">if </span><span class="macro">width !</span>= <span class="number">1 </span>{
 <a href=#226 id=226 data-nosnippet>226</a>                        <span class="macro">write!</span>(f, <span class="string">":{width}"</span>)<span class="question-mark">?</span>;
 <a href=#227 id=227 data-nosnippet>227</a>                    }
-<a href=#228 id=228 data-nosnippet>228</a>                    <span class="kw">if </span>repeat != <span class="number">1 </span>{
+<a href=#228 id=228 data-nosnippet>228</a>                    <span class="kw">if </span><span class="macro">repeat !</span>= <span class="number">1 </span>{
 <a href=#229 id=229 data-nosnippet>229</a>                        <span class="macro">write!</span>(f, <span class="string">"*{repeat}"</span>)<span class="question-mark">?</span>;
 <a href=#230 id=230 data-nosnippet>230</a>                    }
 <a href=#231 id=231 data-nosnippet>231</a>                }
@@ -234,7 +234,7 @@
 <a href=#234 id=234 data-nosnippet>234</a>                }
 <a href=#235 id=235 data-nosnippet>235</a>                Chunk::NewNet { net, repeat } =&gt; {
 <a href=#236 id=236 data-nosnippet>236</a>                    <span class="self">self</span>.write_net(f, net)<span class="question-mark">?</span>;
-<a href=#237 id=237 data-nosnippet>237</a>                    <span class="kw">if </span>repeat != <span class="number">1 </span>{
+<a href=#237 id=237 data-nosnippet>237</a>                    <span class="kw">if </span><span class="macro">repeat !</span>= <span class="number">1 </span>{
 <a href=#238 id=238 data-nosnippet>238</a>                        <span class="macro">write!</span>(f, <span class="string">"*{repeat}"</span>)<span class="question-mark">?</span>;
 <a href=#239 id=239 data-nosnippet>239</a>                    }
 <a href=#240 id=240 data-nosnippet>240</a>                }
@@ -257,16 +257,16 @@
 <a href=#257 id=257 data-nosnippet>257</a>        <span class="kw">let </span>newline = <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"\n{prefix}"</span>);
 <a href=#258 id=258 data-nosnippet>258</a>
 <a href=#259 id=259 data-nosnippet>259</a>        <span class="kw">let </span>write_metadata = |f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter| -&gt; std::fmt::Result {
-<a href=#260 id=260 data-nosnippet>260</a>            <span class="kw">if </span>metadata != MetaItemIndex::NONE { <span class="macro">write!</span>(f, <span class="string">" {metadata}"</span>) } <span class="kw">else </span>{ <span class="prelude-val">Ok</span>(()) }
+<a href=#260 id=260 data-nosnippet>260</a>            <span class="kw">if </span><span class="macro">metadata !</span>= MetaItemIndex::NONE { <span class="macro">write!</span>(f, <span class="string">" {metadata}"</span>) } <span class="kw">else </span>{ <span class="prelude-val">Ok</span>(()) }
 <a href=#261 id=261 data-nosnippet>261</a>        };
 <a href=#262 id=262 data-nosnippet>262</a>
 <a href=#263 id=263 data-nosnippet>263</a>        <span class="kw">let </span>write_control = |f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter, name: <span class="kw-2">&amp;</span>str, control_net: ControlNet| -&gt; std::fmt::Result {
-<a href=#264 id=264 data-nosnippet>264</a>            <span class="macro">write!</span>(f, <span class="string">"{}="</span>, name)<span class="question-mark">?</span>;
+<a href=#264 id=264 data-nosnippet>264</a>            <span class="macro">write!</span>(f, <span class="string">"{name}="</span>)<span class="question-mark">?</span>;
 <a href=#265 id=265 data-nosnippet>265</a>            <span class="self">self</span>.write_control_net(f, control_net)
 <a href=#266 id=266 data-nosnippet>266</a>        };
 <a href=#267 id=267 data-nosnippet>267</a>
 <a href=#268 id=268 data-nosnippet>268</a>        <span class="kw">let </span>write_common = |f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter, name: <span class="kw-2">&amp;</span>str, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Value]| -&gt; std::fmt::Result {
-<a href=#269 id=269 data-nosnippet>269</a>            <span class="macro">write!</span>(f, <span class="string">"{}"</span>, name)<span class="question-mark">?</span>;
+<a href=#269 id=269 data-nosnippet>269</a>            <span class="macro">write!</span>(f, <span class="string">"{name}"</span>)<span class="question-mark">?</span>;
 <a href=#270 id=270 data-nosnippet>270</a>            <span class="kw">for </span>arg <span class="kw">in </span>args {
 <a href=#271 id=271 data-nosnippet>271</a>                <span class="macro">write!</span>(f, <span class="string">" "</span>)<span class="question-mark">?</span>;
 <a href=#272 id=272 data-nosnippet>272</a>                <span class="self">self</span>.write_value(f, arg)<span class="question-mark">?</span>;
@@ -276,7 +276,7 @@
 <a href=#276 id=276 data-nosnippet>276</a>
 <a href=#277 id=277 data-nosnippet>277</a>        <span class="kw">let </span>write_shift =
 <a href=#278 id=278 data-nosnippet>278</a>            |f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter, name: <span class="kw-2">&amp;</span>str, arg1: <span class="kw-2">&amp;</span>Value, arg2: <span class="kw-2">&amp;</span>Value, stride: u32| -&gt; std::fmt::Result {
-<a href=#279 id=279 data-nosnippet>279</a>                <span class="macro">write!</span>(f, <span class="string">"{} "</span>, name)<span class="question-mark">?</span>;
+<a href=#279 id=279 data-nosnippet>279</a>                <span class="macro">write!</span>(f, <span class="string">"{name} "</span>)<span class="question-mark">?</span>;
 <a href=#280 id=280 data-nosnippet>280</a>                <span class="self">self</span>.write_value(f, arg1)<span class="question-mark">?</span>;
 <a href=#281 id=281 data-nosnippet>281</a>                <span class="macro">write!</span>(f, <span class="string">" "</span>)<span class="question-mark">?</span>;
 <a href=#282 id=282 data-nosnippet>282</a>                <span class="self">self</span>.write_value(f, arg2)<span class="question-mark">?</span>;
@@ -298,9 +298,9 @@
 <a href=#298 id=298 data-nosnippet>298</a>            <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
 <a href=#299 id=299 data-nosnippet>299</a>        };
 <a href=#300 id=300 data-nosnippet>300</a>        <span class="kw">if </span>single_output {
-<a href=#301 id=301 data-nosnippet>301</a>            <span class="macro">write!</span>(f, <span class="string">"{prefix}%{}:{} = "</span>, index, cell.output_len())<span class="question-mark">?</span>;
+<a href=#301 id=301 data-nosnippet>301</a>            <span class="macro">write!</span>(f, <span class="string">"{prefix}%{index}:{width} = "</span>, width = cell.output_len())<span class="question-mark">?</span>;
 <a href=#302 id=302 data-nosnippet>302</a>        } <span class="kw">else </span>{
-<a href=#303 id=303 data-nosnippet>303</a>            <span class="macro">write!</span>(f, <span class="string">"{prefix}%{}:_ = "</span>, index)<span class="question-mark">?</span>; <span class="comment">// to be able to find any cell by its index
+<a href=#303 id=303 data-nosnippet>303</a>            <span class="macro">write!</span>(f, <span class="string">"{prefix}%{index}:_ = "</span>)<span class="question-mark">?</span>; <span class="comment">// to be able to find any cell by its index
 <a href=#304 id=304 data-nosnippet>304</a>        </span>}
 <a href=#305 id=305 data-nosnippet>305</a>        <span class="kw">match </span><span class="kw-2">&amp;</span>cell {
 <a href=#306 id=306 data-nosnippet>306</a>            Cell::Buf(arg) =&gt; write_common(f, <span class="string">"buf"</span>, <span class="kw-2">&amp;</span>[arg])<span class="question-mark">?</span>,
@@ -350,7 +350,7 @@
 <a href=#350 id=350 data-nosnippet>350</a>
 <a href=#351 id=351 data-nosnippet>351</a>            Cell::Match(match_cell) =&gt; {
 <a href=#352 id=352 data-nosnippet>352</a>                <span class="macro">write!</span>(f, <span class="string">"match"</span>)<span class="question-mark">?</span>;
-<a href=#353 id=353 data-nosnippet>353</a>                <span class="kw">if </span>match_cell.enable != Net::ONE {
+<a href=#353 id=353 data-nosnippet>353</a>                <span class="kw">if </span>match_cell.<span class="macro">enable !</span>= Net::ONE {
 <a href=#354 id=354 data-nosnippet>354</a>                    <span class="macro">write!</span>(f, <span class="string">" en="</span>)<span class="question-mark">?</span>;
 <a href=#355 id=355 data-nosnippet>355</a>                    <span class="self">self</span>.write_net(f, match_cell.enable)<span class="question-mark">?</span>;
 <a href=#356 id=356 data-nosnippet>356</a>                }
@@ -397,7 +397,7 @@
 <a href=#397 id=397 data-nosnippet>397</a>            }
 <a href=#398 id=398 data-nosnippet>398</a>            Cell::Assign(assign_cell) =&gt; {
 <a href=#399 id=399 data-nosnippet>399</a>                <span class="macro">write!</span>(f, <span class="string">"assign"</span>)<span class="question-mark">?</span>;
-<a href=#400 id=400 data-nosnippet>400</a>                <span class="kw">if </span>assign_cell.enable != Net::ONE {
+<a href=#400 id=400 data-nosnippet>400</a>                <span class="kw">if </span>assign_cell.<span class="macro">enable !</span>= Net::ONE {
 <a href=#401 id=401 data-nosnippet>401</a>                    <span class="macro">write!</span>(f, <span class="string">" en="</span>)<span class="question-mark">?</span>;
 <a href=#402 id=402 data-nosnippet>402</a>                    <span class="self">self</span>.write_net(f, assign_cell.enable)<span class="question-mark">?</span>;
 <a href=#403 id=403 data-nosnippet>403</a>                }
@@ -405,7 +405,7 @@
 <a href=#405 id=405 data-nosnippet>405</a>                <span class="self">self</span>.write_value(f, <span class="kw-2">&amp;</span>assign_cell.value)<span class="question-mark">?</span>;
 <a href=#406 id=406 data-nosnippet>406</a>                <span class="macro">write!</span>(f, <span class="string">" "</span>)<span class="question-mark">?</span>;
 <a href=#407 id=407 data-nosnippet>407</a>                <span class="self">self</span>.write_value(f, <span class="kw-2">&amp;</span>assign_cell.update)<span class="question-mark">?</span>;
-<a href=#408 id=408 data-nosnippet>408</a>                <span class="kw">if </span>assign_cell.offset != <span class="number">0 </span>{
+<a href=#408 id=408 data-nosnippet>408</a>                <span class="kw">if </span>assign_cell.<span class="macro">offset !</span>= <span class="number">0 </span>{
 <a href=#409 id=409 data-nosnippet>409</a>                    <span class="macro">write!</span>(f, <span class="string">" at=#{}"</span>, assign_cell.offset)<span class="question-mark">?</span>;
 <a href=#410 id=410 data-nosnippet>410</a>                }
 <a href=#411 id=411 data-nosnippet>411</a>            }
@@ -415,13 +415,13 @@
 <a href=#415 id=415 data-nosnippet>415</a>                write_control(f, <span class="string">" clk"</span>, flip_flop.clock)<span class="question-mark">?</span>;
 <a href=#416 id=416 data-nosnippet>416</a>                <span class="kw">if </span>flip_flop.has_clear() {
 <a href=#417 id=417 data-nosnippet>417</a>                    write_control(f, <span class="string">" clr"</span>, flip_flop.clear)<span class="question-mark">?</span>;
-<a href=#418 id=418 data-nosnippet>418</a>                    <span class="kw">if </span>flip_flop.clear_value != flip_flop.init_value {
+<a href=#418 id=418 data-nosnippet>418</a>                    <span class="kw">if </span>flip_flop.<span class="macro">clear_value !</span>= flip_flop.init_value {
 <a href=#419 id=419 data-nosnippet>419</a>                        <span class="macro">write!</span>(f, <span class="string">",{}"</span>, flip_flop.clear_value)<span class="question-mark">?</span>;
 <a href=#420 id=420 data-nosnippet>420</a>                    }
 <a href=#421 id=421 data-nosnippet>421</a>                }
 <a href=#422 id=422 data-nosnippet>422</a>                <span class="kw">if </span>flip_flop.has_reset() {
 <a href=#423 id=423 data-nosnippet>423</a>                    write_control(f, <span class="string">" rst"</span>, flip_flop.reset)<span class="question-mark">?</span>;
-<a href=#424 id=424 data-nosnippet>424</a>                    <span class="kw">if </span>flip_flop.reset_value != flip_flop.init_value {
+<a href=#424 id=424 data-nosnippet>424</a>                    <span class="kw">if </span>flip_flop.<span class="macro">reset_value !</span>= flip_flop.init_value {
 <a href=#425 id=425 data-nosnippet>425</a>                        <span class="macro">write!</span>(f, <span class="string">",{}"</span>, flip_flop.reset_value)<span class="question-mark">?</span>;
 <a href=#426 id=426 data-nosnippet>426</a>                    }
 <a href=#427 id=427 data-nosnippet>427</a>                }
@@ -463,13 +463,13 @@
 <a href=#463 id=463 data-nosnippet>463</a>                        write_control(f, <span class="string">" clk"</span>, flip_flop.clock)<span class="question-mark">?</span>;
 <a href=#464 id=464 data-nosnippet>464</a>                        <span class="kw">if </span>flip_flop.has_clear() {
 <a href=#465 id=465 data-nosnippet>465</a>                            write_control(f, <span class="string">" clr"</span>, flip_flop.clear)<span class="question-mark">?</span>;
-<a href=#466 id=466 data-nosnippet>466</a>                            <span class="kw">if </span>flip_flop.clear_value != flip_flop.init_value {
+<a href=#466 id=466 data-nosnippet>466</a>                            <span class="kw">if </span>flip_flop.<span class="macro">clear_value !</span>= flip_flop.init_value {
 <a href=#467 id=467 data-nosnippet>467</a>                                <span class="macro">write!</span>(f, <span class="string">",{}"</span>, flip_flop.clear_value)<span class="question-mark">?</span>;
 <a href=#468 id=468 data-nosnippet>468</a>                            }
 <a href=#469 id=469 data-nosnippet>469</a>                        }
 <a href=#470 id=470 data-nosnippet>470</a>                        <span class="kw">if </span>flip_flop.has_reset() {
 <a href=#471 id=471 data-nosnippet>471</a>                            write_control(f, <span class="string">" rst"</span>, flip_flop.reset)<span class="question-mark">?</span>;
-<a href=#472 id=472 data-nosnippet>472</a>                            <span class="kw">if </span>flip_flop.reset_value != flip_flop.init_value {
+<a href=#472 id=472 data-nosnippet>472</a>                            <span class="kw">if </span>flip_flop.<span class="macro">reset_value !</span>= flip_flop.init_value {
 <a href=#473 id=473 data-nosnippet>473</a>                                <span class="macro">write!</span>(f, <span class="string">",{}"</span>, flip_flop.reset_value)<span class="question-mark">?</span>;
 <a href=#474 id=474 data-nosnippet>474</a>                            }
 <a href=#475 id=475 data-nosnippet>475</a>                        }
@@ -543,7 +543,7 @@
 <a href=#543 id=543 data-nosnippet>543</a>                }
 <a href=#544 id=544 data-nosnippet>544</a>                <span class="kw">for </span>(name, range) <span class="kw">in </span>instance.outputs.iter() {
 <a href=#545 id=545 data-nosnippet>545</a>                    <span class="macro">write!</span>(f, <span class="string">"  %{}:{} = output "</span>, index + range.start, range.len())<span class="question-mark">?</span>;
-<a href=#546 id=546 data-nosnippet>546</a>                    Design::write_string(f, <span class="kw-2">&amp;</span>name)<span class="question-mark">?</span>;
+<a href=#546 id=546 data-nosnippet>546</a>                    Design::write_string(f, name)<span class="question-mark">?</span>;
 <a href=#547 id=547 data-nosnippet>547</a>                    <span class="macro">write!</span>(f, <span class="string">"{newline}"</span>)<span class="question-mark">?</span>;
 <a href=#548 id=548 data-nosnippet>548</a>                }
 <a href=#549 id=549 data-nosnippet>549</a>                <span class="kw">for </span>(name, value) <span class="kw">in </span>instance.ios.iter() {
@@ -630,7 +630,8 @@
 <a href=#630 id=630 data-nosnippet>630</a>
 <a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">pub fn </span>display_cell&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, cell_ref: CellRef&lt;<span class="lifetime">'a</span>&gt;) -&gt; <span class="kw">impl </span>Display + <span class="lifetime">'a </span>{
 <a href=#632 id=632 data-nosnippet>632</a>        DisplayFn(<span class="self">self</span>, <span class="kw">move </span>|design: <span class="kw-2">&amp;</span>Design, f| {
-<a href=#633 id=633 data-nosnippet>633</a>            design.write_cell(f, <span class="string">""</span>, cell_ref.debug_index(), <span class="kw-2">&amp;*</span>cell_ref.get(), cell_ref.metadata().index())
+<a href=#633 id=633 data-nosnippet>633</a>            design.write_cell(f, <span class="string">""</span>, cell_ref.debug_index(), <span class="kw-2">&amp;</span>cell_ref.get(), cell_ref.metadata().index())
 <a href=#634 id=634 data-nosnippet>634</a>        })
 <a href=#635 id=635 data-nosnippet>635</a>    }
-<a href=#636 id=636 data-nosnippet>636</a>}</code></pre></div></section></main></body></html>
+<a href=#636 id=636 data-nosnippet>636</a>}
+</code></pre></div></section></main></body></html>

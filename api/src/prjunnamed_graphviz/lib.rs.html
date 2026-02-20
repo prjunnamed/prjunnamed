@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `graphviz/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_graphviz" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_graphviz/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::collections::{BTreeMap, BTreeSet};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `graphviz/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prjunnamed_graphviz" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">prjunnamed_graphviz/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::collections::{BTreeMap, BTreeSet};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::fmt::Write;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::io;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, Value};
@@ -150,7 +150,7 @@
 <a href=#150 id=150 data-nosnippet>150</a>                <span class="kw">let </span><span class="kw-2">mut </span>iter = clarify.into_iter();
 <a href=#151 id=151 data-nosnippet>151</a>                <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>label, <span class="string">"{:?}"</span>, iter.next().unwrap()).unwrap();
 <a href=#152 id=152 data-nosnippet>152</a>                <span class="kw">for </span>input <span class="kw">in </span>iter {
-<a href=#153 id=153 data-nosnippet>153</a>                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>label, <span class="string">", {:?}"</span>, input).unwrap();
+<a href=#153 id=153 data-nosnippet>153</a>                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>label, <span class="string">", {input:?}"</span>).unwrap();
 <a href=#154 id=154 data-nosnippet>154</a>                }
 <a href=#155 id=155 data-nosnippet>155</a>                <span class="macro">writeln!</span>(<span class="kw-2">&amp;mut </span>label, <span class="string">")"</span>).unwrap();
 <a href=#156 id=156 data-nosnippet>156</a>            } <span class="kw">else if </span>!arg.ends_with(<span class="string">'\n'</span>) {
@@ -170,7 +170,7 @@
 <a href=#170 id=170 data-nosnippet>170</a>            <span class="kw">let </span>input_index = input.from_cell.debug_index();
 <a href=#171 id=171 data-nosnippet>171</a>            <span class="kw">let </span>port = <span class="kw">match </span>input.to_arg {
 <a href=#172 id=172 data-nosnippet>172</a>                <span class="prelude-val">Some</span>(n) =&gt; <span class="macro">format!</span>(<span class="string">"arg{n}"</span>),
-<a href=#173 id=173 data-nosnippet>173</a>                <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"out"</span>),
+<a href=#173 id=173 data-nosnippet>173</a>                <span class="prelude-val">None </span>=&gt; <span class="string">"out"</span>.to_string(),
 <a href=#174 id=174 data-nosnippet>174</a>            };
 <a href=#175 id=175 data-nosnippet>175</a>
 <a href=#176 id=176 data-nosnippet>176</a>            <span class="macro">writeln!</span>(writer, <span class="string">"  node_{input_index}:out -&gt; node_{index}:{port};"</span>)<span class="question-mark">?</span>;
@@ -213,7 +213,7 @@
 <a href=#213 id=213 data-nosnippet>213</a>                <span class="kw">for </span>net <span class="kw">in </span>value.iter() {
 <a href=#214 id=214 data-nosnippet>214</a>                    <span class="kw">let </span><span class="prelude-val">Ok</span>((target, <span class="kw">_</span>)) = design.find_cell(net) <span class="kw">else </span>{ <span class="kw">continue </span><span class="lifetime">'outer </span>};
 <a href=#215 id=215 data-nosnippet>215</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(prev) = prev {
-<a href=#216 id=216 data-nosnippet>216</a>                        <span class="kw">if </span>prev != target {
+<a href=#216 id=216 data-nosnippet>216</a>                        <span class="kw">if </span><span class="macro">prev !</span>= target {
 <a href=#217 id=217 data-nosnippet>217</a>                            <span class="kw">continue </span><span class="lifetime">'outer</span>;
 <a href=#218 id=218 data-nosnippet>218</a>                        }
 <a href=#219 id=219 data-nosnippet>219</a>                    } <span class="kw">else </span>{
@@ -272,12 +272,12 @@
 <a href=#272 id=272 data-nosnippet>272</a>                <span class="kw">let </span><span class="kw-2">mut </span>node = Node::from_name(cell, <span class="string">"dff"</span>).value(<span class="kw-2">&amp;</span>flop.data).control(<span class="string">"clk"</span>, flop.clock, <span class="prelude-val">None</span>);
 <a href=#273 id=273 data-nosnippet>273</a>
 <a href=#274 id=274 data-nosnippet>274</a>                <span class="kw">if </span>flop.has_clear() {
-<a href=#275 id=275 data-nosnippet>275</a>                    <span class="kw">let </span>has_value = flop.clear_value != flop.init_value;
+<a href=#275 id=275 data-nosnippet>275</a>                    <span class="kw">let </span>has_value = flop.<span class="macro">clear_value !</span>= flop.init_value;
 <a href=#276 id=276 data-nosnippet>276</a>                    node = node.control(<span class="string">"clr"</span>, flop.clear, has_value.then(|| flop.clear_value.to_string()));
 <a href=#277 id=277 data-nosnippet>277</a>                }
 <a href=#278 id=278 data-nosnippet>278</a>
 <a href=#279 id=279 data-nosnippet>279</a>                <span class="kw">if </span>flop.has_reset() {
-<a href=#280 id=280 data-nosnippet>280</a>                    <span class="kw">let </span>has_value = flop.reset_value != flop.init_value;
+<a href=#280 id=280 data-nosnippet>280</a>                    <span class="kw">let </span>has_value = flop.<span class="macro">reset_value !</span>= flop.init_value;
 <a href=#281 id=281 data-nosnippet>281</a>                    node = node.control(<span class="string">"rst"</span>, flop.reset, has_value.then(|| flop.reset_value.to_string()));
 <a href=#282 id=282 data-nosnippet>282</a>                }
 <a href=#283 id=283 data-nosnippet>283</a>
@@ -334,12 +334,12 @@
 <a href=#334 id=334 data-nosnippet>334</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(flop) = <span class="kw-2">&amp;</span>port.flip_flop {
 <a href=#335 id=335 data-nosnippet>335</a>                        node = node.control(<span class="string">". clk"</span>, flop.clock, <span class="prelude-val">None</span>);
 <a href=#336 id=336 data-nosnippet>336</a>                        <span class="kw">if </span>flop.has_clear() {
-<a href=#337 id=337 data-nosnippet>337</a>                            <span class="kw">let </span>has_value = flop.clear_value != flop.init_value;
+<a href=#337 id=337 data-nosnippet>337</a>                            <span class="kw">let </span>has_value = flop.<span class="macro">clear_value !</span>= flop.init_value;
 <a href=#338 id=338 data-nosnippet>338</a>                            node = node.control(<span class="string">". clr"</span>, flop.clear, has_value.then(|| flop.clear_value.to_string()));
 <a href=#339 id=339 data-nosnippet>339</a>                        }
 <a href=#340 id=340 data-nosnippet>340</a>
 <a href=#341 id=341 data-nosnippet>341</a>                        <span class="kw">if </span>flop.has_reset() {
-<a href=#342 id=342 data-nosnippet>342</a>                            <span class="kw">let </span>has_value = flop.reset_value != flop.init_value;
+<a href=#342 id=342 data-nosnippet>342</a>                            <span class="kw">let </span>has_value = flop.<span class="macro">reset_value !</span>= flop.init_value;
 <a href=#343 id=343 data-nosnippet>343</a>                            node = node.control(<span class="string">". rst"</span>, flop.reset, has_value.then(|| flop.reset_value.to_string()));
 <a href=#344 id=344 data-nosnippet>344</a>                        }
 <a href=#345 id=345 data-nosnippet>345</a>
@@ -405,4 +405,5 @@
 <a href=#405 id=405 data-nosnippet>405</a>    }
 <a href=#406 id=406 data-nosnippet>406</a>
 <a href=#407 id=407 data-nosnippet>407</a>    ctx.print(writer)
-<a href=#408 id=408 data-nosnippet>408</a>}</code></pre></div></section></main></body></html>
+<a href=#408 id=408 data-nosnippet>408</a>}
+</code></pre></div></section></main></body></html>
