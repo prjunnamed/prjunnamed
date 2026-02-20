@@ -452,6 +452,45 @@ Compares the value against a list of bit patterns, takes the first matching one,
 }
 ```
 
+## Simulator interface
+
+This RFC does not define a particular simulator or ICD interface.  However, we provide a guideline for the abstract operations such interfaces can provide.
+
+A simulator interface has the following operations:
+
+- hierarchically iterate available scopes and named objects
+- get meta-information about scopes and named objects (names, types, widths, input/output marks, other attributes)
+- read the current value of a named net
+  - input: hierarchical name (must refer to a net)
+  - input: slice of the value to read (ie. can select all of the value, or just a subset of bits)
+  - output: for each bit of the selected slice of the net, one of the following:
+    - the value of the net (`0`, `1`, `X`)
+    - "value not available" error: there is no value in the netlist corresponding to the named net, or such value is inaccessible (eg. for ICD if the value is not at a location that can be tapped)
+- read the current value of a named signal: similar to the above
+  - TODO: if the signal is overriden, do we return the cell input, or the current override? both?
+- override a signal:
+  - input: hierarchical name (must refer to a signal)
+  - input: slice of the signal to override
+  - input: value to be driven onto the signal slice (must have width matching signal)
+  - from now on, the `signal` cell in the netlist will have the given value on output, until explicitly released or overriden again
+- release a signal:
+  - input: hierarchical name (must refer to a signal)
+  - removes the override previously put on the signal, if any; from now on, the `signal` cell once again passes its input through to its output
+- read the current value of a named register: similar to reading a named net or signal
+- write the value of a named register
+  - input: hierarchical name (must refer to a register)
+  - input: slice of the register to write
+  - input: value to put into the register slice
+  - the register slice is instantaneously set to the given value, similar to what happens on an active and enabled clock edge
+  - as opposed to overriding named signals, this does *not* result in a persistent override: the value written via the debug interface will be replaced by the next active clock edge, or similar triggers from the netlist
+  - in particular, this is a no-op if an async reset is currently active (as the reset will immediately flip the changed value back)
+  - an error is returned if any of the selected register bits is not writable
+- run target-specific or simulator-specific operation on a named cell
+  - input: hierarchical name (must refer to a named cell)
+  - example: "set the analog input on this ADC cell to the given f64"
+
+The above set of available operations is just a guideline, and may be heavily adapted to the given usecase (eg. operating on symbolic values for formal verification).
+
 
 # Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
@@ -702,6 +741,10 @@ The `signal` cell provides an optimization barrier, which is a primitive that cu
 # Future possibilities
 [future-possibilities]: #future-possibilities
 
+Having proposed an abstract simulator interface, the obvious next step would be to implement an actual simulator.
+
+We should have a proper interface for formal verification that builds on debuginfo to provide access to the values.
+
 Currently, keeping a named net available for readout requires actually materializing it in the final design.  However, this is not strictly necessary: all that is needed is having a way to compute it from the available design state.  We could allow "ghost cells" in the netlist, which are combinational cells used only by `name` cells to compute named net value from other values in the design, when the actual circuitry of the net was optimized out, but the underlying storage it is computed from was not.  Such cells would be ignored by technology mapping, P&R, and emitting the bitstream, effectively being a kind of metadata.
 
 While the type system described here is fairly capable, it is far from enough to describe all sorts of crimes commonly committed when packing abstract data types into a vector of bits.  One could imagine all sorts of extension to the system, or perhaps replacing it with actual formatting-based machinery (based on ghost cells?) to allow fancy custom types.
@@ -709,3 +752,5 @@ While the type system described here is fairly capable, it is far from enough to
 While a `keep` attribute is reasonably well-defined for simulation and similar use-cases, it is not necessarily enough for manipulating bitstreams or inspecting a target via JTAG: the storage elements in an FPGA are not all created equal, and some may not be readable and/or writable from the outside.  We may want more specific `keep` attributes that specifically request the value is placed in an inspectable register, or that memory initialization data can actually be controlled via the bitstream (which might not be the case eg. for memories lowered to FFs on targets where FF initialization value is not directly settable).  Likewise, we may want a way to request that a `signal` be lowerd to something that can be controlled via in-circuit debugging.
 
 At some point, prjunnamed will need an elaboration driver that gathers partial netlists from various HDL frontends, and links them together to the final design.  Such linking will need to be name-based, and have a similar naming and scope model to this RFC.
+
+Named nets, signals, and registers could be used for automatic scan chain insertion, allowing target-independent ICD access.
