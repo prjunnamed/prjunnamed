@@ -309,6 +309,7 @@ endmodule
 %1:1 = not %0
 # top-level output port represented as a signal cell with unused output
 %2:1 = signal %1 "y" scope=!2 output
+```
 
 A named register can be used to represent ports when an output is directly driven by a register (such as Verilog `output reg ...`).
 
