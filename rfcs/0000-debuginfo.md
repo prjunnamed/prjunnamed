@@ -77,7 +77,7 @@ Scopes come in three kinds:
 
 Consider an example hierarchy:
 
-```
+```verilog
 (* top *)
 module top;
     genver i;
@@ -161,7 +161,7 @@ Named objects represent "points of interest" that can be referenced by their hie
 
 A *named net* associates a name with a value in the netlist.  For example, it can represent a wire:
 
-```
+```verilog
 module top (input[3:0] a, b);
 wire[3:0] y = a + b;
 endmodule
@@ -209,7 +209,7 @@ The name is associated with a value, not with the cell driving it.  Even if mark
 
 A *named signal* is a variant of a named net that can also be used to *drive* a value into the design.  In normal circumstances, it acts as a buffer forwarding its input to output.  However, it can be overriden by an external entity to drive a different value:
 
-```
+```verilog
 wire[3:0] x = a + b;
 wire[3:0] y = x + c;
 ```
@@ -235,7 +235,7 @@ Named signals are a debugging tool that is not normally used, and should only be
 
 A *named register* associates a name with writable storage elements in the netlist, such as flip-flops:
 
-```
+```verilog
 reg [3:0] q = 0;
 always @(posedge clk)
     q <= d;
@@ -274,7 +274,7 @@ Like named nets, by default named registers are considered to be "weak reference
 
 Ports between modules in the hierarchy are represented by named nets, signals, or registers with specific annotations:
 
-```
+```verilog
 module top;
     wire ia, iy;
     inv inst0(.a(ia), .y(iy));
@@ -296,7 +296,7 @@ endmodule
 
 Likewise, named signals are used for top-level ports, obsoleting the current `input` and `output` cells:
 
-```
+```verilog
 module top(input a, output y);
     assign y = !a;
 endmodule
@@ -328,7 +328,7 @@ In a full-debug flow, the internal ports would be represented as signals (or reg
 
 A "named cell" associates a name with an instance, or a target cell.
 
-```
+```verilog
 module top;
 DSP48E2 mydsp([...]);
 endmodule
@@ -419,7 +419,7 @@ Display the value by splitting it into fields, then recursing into fields.  Has 
 
 Used for memories, as well as packed arrays within structs.
 
-```
+```verilog
 reg [31:0] gprs[32];
 ```
 
