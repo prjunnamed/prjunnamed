@@ -229,7 +229,6 @@ wire[3:0] y = x + c;
 A named signal acts as an optimization barrier: the flow cannot assume that the value of `x` flowing into the second addition is the same as the result of the first addition, as it could be overriden by something external.
 
 Named signals are a debugging tool that is not normally used, and should only be emitted by explicit user request.  They always act as a strong reference, and will not be optimized out.
-```
 
 
 ### Named registers
