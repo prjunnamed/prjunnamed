@@ -5,8 +5,8 @@ Project Unnamed
 
 The project is currently in the early stage of research and prototyping, and is not suitable for general use.
 
-[prjunnamed]: https://github.com/prjunnamed/prjunnamed
-[prjcombine]: https://github.com/prjunnamed/prjcombine
+[prjunnamed]: https://codeberg.org/prjunnamed/prjunnamed
+[prjcombine]: https://codeberg.org/prjunnamed/prjcombine
 
 
 Documentation

@@ -8,4 +8,5 @@ language = "en"
 build-dir = "out"
 
 [output.html]
-git-repository-url = "https://github.com/prjunnamed/prjunnamed"
+git-repository-url = "https://codeberg.org/prjunnamed/prjunnamed"
+git-repository-icon = "fas-code-fork"
