@@ -6,10 +6,10 @@
 //! [`CellRef`]: crate::CellRef
 use std::{
     borrow::Cow,
-    cell::Ref,
     collections::BTreeSet,
     fmt::{Debug, Display},
     hash::Hash,
+    sync::Arc,
 };
 use indexmap::IndexSet;
 
@@ -125,8 +125,8 @@ enum MetaItemRepr {
 
 #[derive(Clone, Debug)]
 pub struct MetadataStore {
-    strings: IndexSet<String>,
-    items: IndexSet<MetaItemRepr>,
+    strings: IndexSet<Arc<str>>,
+    items: IndexSet<Arc<MetaItemRepr>>,
 }
 
 #[derive(Clone, Copy)]
@@ -212,7 +212,7 @@ impl MetaItemIndex {
 
 impl MetadataStore {
     pub(crate) fn new() -> Self {
-        Self { strings: IndexSet::from(["".to_owned()]), items: IndexSet::from([MetaItemRepr::None]) }
+        Self { strings: IndexSet::from(["".into()]), items: IndexSet::from([Arc::new(MetaItemRepr::None)]) }
     }
 
     pub(crate) fn add_string<'a>(&mut self, string: impl Into<Cow<'a, str>>) -> MetaStringIndex {
@@ -245,7 +245,7 @@ impl MetadataStore {
             MetaItem::Ident { name, scope } => MetaItemRepr::Ident { scope: scope.index, name: name.index },
             MetaItem::Attr { name, value } => MetaItemRepr::Attr { name: name.index, value: value.clone() },
         };
-        MetaItemIndex(self.items.insert_full(repr).0)
+        MetaItemIndex(self.items.insert_full(Arc::new(repr)).0)
     }
 
     pub(crate) fn ref_item<'a>(&self, design: &'a Design, index: MetaItemIndex) -> MetaItemRef<'a> {
@@ -266,10 +266,9 @@ impl<'a> MetaStringRef<'a> {
         self.index == MetaStringIndex::EMPTY
     }
 
-    pub fn get(&self) -> Ref<'a, str> {
-        Ref::map(self.design.metadata(), |store| {
-            store.strings.get_index(self.index.0).expect("invalid metadata string reference").as_str()
-        })
+    pub fn get(&self) -> Arc<str> {
+        let store = self.design.metadata();
+        store.strings.get_index(self.index.0).expect("invalid metadata string reference").clone()
     }
 }
 
@@ -282,10 +281,9 @@ impl<'a> MetaItemRef<'a> {
         self.index == MetaItemIndex::NONE
     }
 
-    fn get_repr(&self) -> Ref<'a, MetaItemRepr> {
-        Ref::map(self.design.metadata(), |store| {
-            store.items.get_index(self.index.0).expect("invalid metadata item reference")
-        })
+    fn get_repr(&self) -> Arc<MetaItemRepr> {
+        let store = self.design.metadata();
+        store.items.get_index(self.index.0).expect("invalid metadata item reference").clone()
     }
 
     pub fn get(&self) -> MetaItem<'a> {

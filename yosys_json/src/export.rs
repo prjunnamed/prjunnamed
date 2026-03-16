@@ -84,7 +84,7 @@ fn map_metadata(metadata: MetaItemRef) -> Vec<(String, yosys::MetadataValue)> {
                 ));
             }
             MetaItem::Attr { name, value } => {
-                ys_attrs.push((name.get().to_owned(), value.into()));
+                ys_attrs.push((name.get().as_ref().to_string(), value.into()));
             }
             MetaItem::Ident { name, scope } => 'ident: {
                 let mut parts = vec![name.get()];
